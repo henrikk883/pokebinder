@@ -1,0 +1,74 @@
+{
+  "format": "pokebinder-backup",
+  "version": 1,
+  "exportedAt": "2026-10-12T10:00:00.000Z",
+  "binder": {
+    "id": "sample-binder",
+    "name": "Kanto Collection",
+    "mode": "empty",
+    "withReverseHolo": false,
+    "withSecretRares": true,
+    "withPromos": true,
+    "layout": "2x2",
+    "defaultOpeningSide": "right",
+    "cover": { "title": "Kanto Collection", "assetId": "sample-cover" },
+    "pages": [
+      {
+        "id": "sample-page-1",
+        "index": 0,
+        "openingSide": "right",
+        "slots": [
+          {
+            "index": 0,
+            "cardRef": { "cardId": "sv03.5-025", "lang": "de", "variant": "normal" },
+            "owned": true
+          },
+          {
+            "index": 1,
+            "cardRef": { "cardId": "sv03.5-025", "lang": "de", "variant": "reverse" },
+            "owned": false
+          },
+          { "index": 2, "owned": false },
+          {
+            "index": 3,
+            "cardRef": { "cardId": "sv03.5-151", "lang": "de", "variant": "holo" },
+            "owned": true
+          }
+        ],
+        "images": []
+      },
+      {
+        "id": "sample-page-2",
+        "index": 1,
+        "openingSide": "left",
+        "slots": [
+          { "index": 0, "owned": false },
+          { "index": 1, "owned": false },
+          { "index": 2, "owned": false },
+          { "index": 3, "owned": false }
+        ],
+        "images": [
+          {
+            "id": "sample-image-1",
+            "assetId": "sample-cover",
+            "fromSlot": 0,
+            "spanCols": 2,
+            "spanRows": 1,
+            "crop": { "x": 0, "y": 0, "zoom": 1 }
+          }
+        ]
+      }
+    ],
+    "createdAt": "2026-10-12T09:00:00.000Z",
+    "updatedAt": "2026-10-12T09:30:00.000Z"
+  },
+  "assets": [
+    {
+      "id": "sample-cover",
+      "mimeType": "image/png",
+      "width": 1,
+      "height": 1,
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    }
+  ]
+}
