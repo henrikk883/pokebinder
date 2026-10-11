@@ -20,9 +20,14 @@ test('searching for "Glurak" shows German cards with images', async ({ page }) =
   await expect(page.locator('[data-card-id="sv03.5-006"]')).toContainText('151 · 006/165')
 })
 
-test('cards without an image appear as a grey placeholder with their name', async ({ page }) => {
+test('cards without any image appear as a grey placeholder with their name', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('searchbox', { name: searchField }).fill('Glurak')
+  await page.getByRole('button', { name: 'Mehr laden' }).click()
+  await expect(page.getByRole('button', { name: 'Mehr laden' })).toBeHidden()
+
+  // images load only once they scroll into view, and only then it shows that one is missing
+  for (const tile of await page.getByTestId('card-tile').all()) await tile.scrollIntoViewIfNeeded()
 
   const placeholder = page.getByRole('img', { name: 'Glurak (kein Bild vorhanden)' }).first()
   await expect(placeholder).toBeVisible()
@@ -111,6 +116,28 @@ test('name and set filter combine', async ({ page }) => {
   const tiles = page.getByTestId('card-tile')
   await expect(tiles).toHaveCount(3)
   await expect(tiles).toContainText(['006/165', '183/165', '199/165'])
+})
+
+test('a number as printed on the card finds that card', async ({ page }) => {
+  await page.goto('/')
+
+  await page.getByRole('searchbox', { name: searchField }).fill('006/165')
+
+  // 151 and Expedition both have 165 official cards
+  const tiles = page.getByTestId('card-tile')
+  await expect(page.locator('[data-card-id="sv03.5-006"]')).toContainText('Glurak-ex')
+  await expect(tiles).toHaveCount(2)
+  await expect(tiles).toContainText(['006/165', '6/165'])
+})
+
+test('a card without a German scan shows the English one in black and white', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('searchbox', { name: searchField }).fill('Glurak')
+  await page.getByRole('button', { name: 'Mehr laden' }).click()
+
+  const substitute = page.getByRole('img', { name: 'Glurak (englisches Bild)' }).first()
+  await expect(substitute).toHaveAttribute('src', /^https:\/\/assets\.tcgdex\.net\/en\/.+\/low\.webp$/)
+  await expect(substitute).toHaveCSS('filter', 'grayscale(1)')
 })
 
 test('a number alone asks for a set or a name', async ({ page, tcgdex }) => {

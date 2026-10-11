@@ -37,6 +37,8 @@ export interface CardQuery {
   name?: string
   /** Card number within its set, e.g. `25` or `025`. */
   number?: string
+  /** Second half of a printed number like `188/125`: only sets with that official size. */
+  officialCount?: number
   setId?: string
   rarity?: string
   type?: string

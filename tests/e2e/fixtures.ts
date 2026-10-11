@@ -10,13 +10,32 @@ const PIXEL = Buffer.from(
   'base64',
 )
 
-let recorded: Promise<Record<string, string>> | undefined
+interface Recording {
+  /** Request → file with the recorded response. */
+  index: Record<string, string>
+  /** English card scans that exist for cards without a German one. */
+  englishImages: Set<string>
+}
 
-function loadIndex(): Promise<Record<string, string>> {
-  recorded ??= readFile(new URL('index.json', responsesDir), 'utf8').then(
-    (json) => JSON.parse(json) as Record<string, string>,
-  )
+let recorded: Promise<Recording> | undefined
+
+async function readJson<T>(file: string): Promise<T> {
+  return JSON.parse(await readFile(new URL(file, responsesDir), 'utf8')) as T
+}
+
+function loadRecording(): Promise<Recording> {
+  recorded ??= Promise.all([
+    readJson<Record<string, string>>('index.json'),
+    readJson<string[]>('english-images.json'),
+  ]).then(([index, englishImages]) => ({ index, englishImages: new Set(englishImages) }))
   return recorded
+}
+
+/** English card scans exist only where recorded; German scans and logos always "exist". */
+function imageExists(url: URL, englishImages: Set<string>): boolean {
+  const cardImage = /^(.+)\/(?:low|high)\.webp$/.exec(url.href)?.[1]
+  if (!cardImage || !url.pathname.startsWith('/en/')) return true
+  return englishImages.has(cardImage)
 }
 
 /** `de/cards?name=Glurak&…` for a request to the TCGdex API. */
@@ -34,7 +53,7 @@ export interface Tcgdex {
 }
 
 async function mockTcgdex(page: Page): Promise<Tcgdex> {
-  const index = await loadIndex()
+  const { index, englishImages } = await loadRecording()
   const state = { requests: [] as string[], offline: false }
 
   await page.route('https://api.tcgdex.net/**', async (route) => {
@@ -49,11 +68,13 @@ async function mockTcgdex(page: Page): Promise<Tcgdex> {
       path: fileURLToPath(new URL(file, responsesDir)),
     })
   })
-  await page.route('https://assets.tcgdex.net/**', (route) =>
-    state.offline
-      ? route.abort('internetdisconnected')
-      : route.fulfill({ contentType: 'image/png', body: PIXEL }),
-  )
+  await page.route('https://assets.tcgdex.net/**', (route) => {
+    if (state.offline) return route.abort('internetdisconnected')
+    if (!imageExists(new URL(route.request().url()), englishImages)) {
+      return route.fulfill({ status: 404, contentType: 'text/plain', body: 'not found' })
+    }
+    return route.fulfill({ contentType: 'image/png', body: PIXEL })
+  })
 
   return {
     requests: state.requests,

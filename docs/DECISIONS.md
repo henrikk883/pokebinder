@@ -61,8 +61,8 @@ Simuliert IndexedDB in den Unit-Tests der Dexie-Speicherung. Von Henrik freigege
 - Sonder-Reverse: `variants_detailed` nennt Typ und Muster (Pokéball, Meisterball, Kosmos) sowie Stempel-Varianten. Keine manuelle Ergänzung nötig; welche Muster ins Master Set gehören, wird in Phase 5 entschieden.
 - Promos: hängen nur am Promo-Set der Serie (z. B. `svp`), eine Zuordnung zu einem Hauptset gibt es nicht. Der Assistent bietet in Phase 5 die Promos der Serie zur Einzelauswahl an.
 
-## 2026-10-12 – Karten ohne Bild erscheinen als grauer Platzhalter
-Viele deutsche Promo- und Untersets haben bei TCGdex keine Scans. Die Karte wird mit Name und Nummer in Graustufen gezeigt statt ausgeblendet, damit sie im Master Set nicht fehlt. Von Henrik entschieden.
+## 2026-10-12 – Karten ohne deutsches Bild zeigen das englische in Schwarz-Weiß
+Viele deutsche Promo- und Untersets haben bei TCGdex keine Scans. Dann lädt die App das englische Bild derselben Karte und legt einen Graustufen-Filter darüber, damit erkennbar bleibt, dass es nicht die deutsche Karte ist (in einer Stichprobe für 401 von 927 Karten vorhanden). Gibt es auch das nicht, erscheint ein grauer Platzhalter mit Pokéball und Name. Karten werden nie ausgeblendet, damit sie im Master Set nicht fehlen. Von Henrik entschieden.
 
 ## 2026-10-12 – Set-Logo: deutsch, sonst englisch, sonst keines
 Nur 38 von 155 deutschen Sets haben ein Logo. Von Henrik bestätigt.
@@ -74,7 +74,7 @@ Serie `tcgp`, ihre Sets und ihre Seltenheitsstufen tauchen nirgends auf, weil es
 Danach wird neu geladen; schlägt das fehl, gilt der alte Stand weiter. Der eigene Cache des SDK (localStorage, 1 Stunde) ist abgeschaltet. Bilder cacht vorerst nur der Browser; ein Service Worker für den Start ohne Netz folgt als eigener Schritt am Ende des MVP.
 
 ## 2026-10-12 – Suchfeld deutet Zahlen als Kartennummer
-„Pikachu 25“ sucht Name und Nummer. Eine Nummer allein braucht ein gewähltes Set oder einen Namen, sonst träfe sie Karten in jedem Set. Nach Sets wird über die Set-Auswahl gefiltert, nicht über das Textfeld.
+„Pikachu 25“ sucht Name und Nummer. Eine Nummer wie auf der Karte („188/125“) sucht in allen Sets mit dieser offiziellen Kartenanzahl und findet so die eine Karte. Eine Nummer ganz allein („25“) braucht ein gewähltes Set oder einen Namen, sonst träfe sie Karten in jedem Set. Nach Sets wird über die Set-Auswahl gefiltert, nicht über das Textfeld. Von Henrik so gewünscht.
 
 ## 2026-10-12 – Suche über alle Sets ab zwei Buchstaben, 60 Karten pro Seite
 Weitere Treffer über „Mehr laden“. Karten mit Bild stehen vor Karten ohne Bild; innerhalb eines Sets gilt die Nummernreihenfolge.

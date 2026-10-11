@@ -186,7 +186,7 @@ export function createTcgdexClient({ lang, transport, cache }: TcgdexClientOptio
     return catalog
   }
 
-  return {
+  const client: TcgdexClient = {
     lang,
     getCatalog,
 
@@ -196,7 +196,20 @@ export function createTcgdexClient({ lang, transport, cache }: TcgdexClientOptio
     },
 
     async queryCards(query: CardQuery, page: number): Promise<CardPage> {
-      const { number, rarity } = query
+      const { number, rarity, officialCount, ...rest } = query
+
+      // "188/125" without a chosen set: look in every set that has 125 official cards
+      if (officialCount !== undefined && query.setId === undefined) {
+        const { series } = await getCatalog()
+        const candidates = series
+          .flatMap((entry) => entry.sets)
+          .filter((set) => set.cardCount.official === officialCount)
+        const pages = await Promise.all(
+          candidates.map((set) => client.queryCards({ ...rest, number, rarity, setId: set.id }, 1)),
+        )
+        return { cards: pages.flatMap((result) => result.cards), hasMore: false }
+      }
+
       // Narrow queries are fetched in one go, because the exact filters below run on our side.
       const complete = query.setId !== undefined || number !== undefined
       const pageSize = complete ? MAX_CARDS_PER_REQUEST : CARDS_PER_PAGE
@@ -245,4 +258,5 @@ export function createTcgdexClient({ lang, transport, cache }: TcgdexClientOptio
       return [...types].sort((a, b) => a.localeCompare(b, lang))
     },
   }
+  return client
 }

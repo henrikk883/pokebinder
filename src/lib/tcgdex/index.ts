@@ -4,7 +4,7 @@ import { createSdkTransport, createTcgdexClient } from './client'
 
 export { CARDS_PER_PAGE } from './client'
 export { compareLocalId, matchesNumber, setIdOfCard, sortByNumber } from './cardIds'
-export { cardImageUrl, setLogoUrl } from './images'
+export { cardImageUrl, englishCardImage, setLogoUrl, type CardImageSize } from './images'
 export type * from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000

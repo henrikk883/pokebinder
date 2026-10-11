@@ -245,6 +245,43 @@ describe('queryCards', () => {
     expect(hasMore).toBe(false)
   })
 
+  it('finds a printed number like 006/165 in every set of that size', async () => {
+    const calls: Record<string, string | number | boolean>[] = []
+    const client = createTcgdexClient({
+      lang: 'de',
+      cache: passThrough,
+      transport: async (lang, path, params) => {
+        const key = `${lang}/${path.join('/')}`
+        if (key !== 'de/cards') return responses[key]
+        const query = Object.fromEntries(params.map(({ key: k, value }) => [k, value]))
+        calls.push(query)
+        return query['set.id'] === 'eq:sv03.5'
+          ? [card('sv03.5-006', '006', 'Glurak-ex'), card('sv03.5-016', '016', 'Taubsi')]
+          : []
+      },
+    })
+
+    const result = await client.queryCards({ number: '006', officialCount: 165 }, 1)
+
+    // 151 is the only set in the miniature catalog with 165 official cards
+    expect(calls).toEqual([
+      { localId: '6', 'set.id': 'eq:sv03.5', 'pagination:page': 1, 'pagination:itemsPerPage': 1000 },
+    ])
+    expect(result).toEqual({
+      cards: [expect.objectContaining({ id: 'sv03.5-006' })],
+      hasMore: false,
+    })
+  })
+
+  it('finds nothing when no set has that size', async () => {
+    const { client, calls } = setup([card('sv03.5-006', '006', 'Glurak-ex')])
+
+    const result = await client.queryCards({ number: '6', officialCount: 999 }, 1)
+
+    expect(result).toEqual({ cards: [], hasMore: false })
+    expect(calls.some((call) => call.key === 'de/cards')).toBe(false)
+  })
+
   it('filters a plain rarity exactly', async () => {
     const { client, cardParams } = setup([])
 

@@ -42,7 +42,8 @@ export const de = {
     language: 'Deutsch',
     languageHint: 'Weitere Sprachen folgen in einer späteren Version.',
     idle: 'Namen eingeben oder ein Set wählen.',
-    needsContext: 'Für die Suche nach einer Nummer bitte ein Set wählen oder einen Namen ergänzen.',
+    needsContext:
+      'Für die Suche nach einer Nummer bitte ein Set wählen, einen Namen ergänzen oder die Nummer wie auf der Karte eingeben, z. B. 188/125.',
     loading: 'Lädt …',
     error: 'Die Karten konnten nicht geladen werden. Besteht eine Internetverbindung?',
     noResults: 'Keine Karten gefunden.',
@@ -52,6 +53,8 @@ export const de = {
     },
     more: 'Mehr laden',
     noImage: (name: string) => `${name} (kein Bild vorhanden)`,
+    substituteImage: (name: string) => `${name} (englisches Bild)`,
+    substituteHint: 'Kein deutsches Bild vorhanden, gezeigt wird die englische Karte.',
   },
   binder: {
     title: 'Binder',

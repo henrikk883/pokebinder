@@ -8,7 +8,9 @@ describe('parseSearchText', () => {
     ['  Mega-Glurak X-ex  ', { name: 'Mega-Glurak X-ex' }],
     ['025', { number: '025' }],
     ['Pikachu 25', { name: 'Pikachu', number: '25' }],
-    ['025/165 Pikachu', { name: 'Pikachu', number: '025' }],
+    ['188/125', { number: '188', officialCount: 125 }],
+    ['025/165 Pikachu', { name: 'Pikachu', number: '025', officialCount: 165 }],
+    ['188/125 7', { number: '7' }],
     ['Porygon2', { name: 'Porygon2' }],
     ['', {}],
     ['   ', {}],
@@ -47,6 +49,20 @@ describe('planSearch', () => {
     expect(planSearch({ text: 'Pikachu 25' })).toEqual({
       kind: 'query',
       query: { name: 'Pikachu', number: '25' },
+    })
+  })
+
+  it('searches a number as printed on the card across all sets of that size', () => {
+    expect(planSearch({ text: '188/125' })).toEqual({
+      kind: 'query',
+      query: { number: '188', officialCount: 125 },
+    })
+  })
+
+  it('uses the chosen set instead of the printed set size', () => {
+    expect(planSearch({ text: '188/125', setId: 'sv03.5' })).toEqual({
+      kind: 'query',
+      query: { number: '188', setId: 'sv03.5' },
     })
   })
 
