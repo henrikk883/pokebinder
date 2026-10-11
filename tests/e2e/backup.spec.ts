@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 const sampleBackup = fileURLToPath(new URL('../fixtures/sample-backup.json', import.meta.url))
 

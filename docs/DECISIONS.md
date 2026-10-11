@@ -56,5 +56,34 @@ Gilt, bis es die Übersicht „Meine Binder“ gibt.
 ## 2026-10-12 – Dev-Paket `fake-indexeddb`
 Simuliert IndexedDB in den Unit-Tests der Dexie-Speicherung. Von Henrik freigegeben.
 
+## 2026-10-12 – Ergebnis der offenen Datenfragen (TCGdex, abgefragt am 12.10.2026)
+- Koreanisch: 95 Sets gelistet, aber nur 239 Karten abrufbar und keine mit Bild. Für v1 praktisch nicht nutzbar; Japanisch ist vollständig.
+- Sonder-Reverse: `variants_detailed` nennt Typ und Muster (Pokéball, Meisterball, Kosmos) sowie Stempel-Varianten. Keine manuelle Ergänzung nötig; welche Muster ins Master Set gehören, wird in Phase 5 entschieden.
+- Promos: hängen nur am Promo-Set der Serie (z. B. `svp`), eine Zuordnung zu einem Hauptset gibt es nicht. Der Assistent bietet in Phase 5 die Promos der Serie zur Einzelauswahl an.
+
+## 2026-10-12 – Karten ohne Bild erscheinen als grauer Platzhalter
+Viele deutsche Promo- und Untersets haben bei TCGdex keine Scans. Die Karte wird mit Name und Nummer in Graustufen gezeigt statt ausgeblendet, damit sie im Master Set nicht fehlt. Von Henrik entschieden.
+
+## 2026-10-12 – Set-Logo: deutsch, sonst englisch, sonst keines
+Nur 38 von 155 deutschen Sets haben ein Logo. Von Henrik bestätigt.
+
+## 2026-10-12 – Karten aus „Pokémon TCG Pocket“ sind ausgeblendet
+Serie `tcgp`, ihre Sets und ihre Seltenheitsstufen tauchen nirgends auf, weil es die Karten nur im Handyspiel gibt. Von Henrik bestätigt.
+
+## 2026-10-12 – TCGdex-Antworten liegen 24 Stunden in IndexedDB
+Danach wird neu geladen; schlägt das fehl, gilt der alte Stand weiter. Der eigene Cache des SDK (localStorage, 1 Stunde) ist abgeschaltet. Bilder cacht vorerst nur der Browser; ein Service Worker für den Start ohne Netz folgt als eigener Schritt am Ende des MVP.
+
+## 2026-10-12 – Suchfeld deutet Zahlen als Kartennummer
+„Pikachu 25“ sucht Name und Nummer. Eine Nummer allein braucht ein gewähltes Set oder einen Namen, sonst träfe sie Karten in jedem Set. Nach Sets wird über die Set-Auswahl gefiltert, nicht über das Textfeld.
+
+## 2026-10-12 – Suche über alle Sets ab zwei Buchstaben, 60 Karten pro Seite
+Weitere Treffer über „Mehr laden“. Karten mit Bild stehen vor Karten ohne Bild; innerhalb eines Sets gilt die Nummernreihenfolge.
+
+## 2026-10-12 – Seltenheiten mit Komma werden über die Seltenheitsliste gefiltert
+TCGdex wertet ein Komma im Filter als „oder“. Für Stufen wie „Selten, Illustration“ holt die App deshalb die Kartenliste dieser Seltenheit und gleicht ab.
+
+## 2026-10-12 – Playwright-Tests spielen aufgezeichnete TCGdex-Antworten ab
+Aufzeichnung mit `node tests/fixtures/tcgdex/record.mjs`. Grund: Tests sollen nicht vom Netz oder von Datenänderungen bei TCGdex abhängen.
+
 ## 2026-10-12 – Fehler beim Speichern oder Import ohne Rot
 Meldungen erscheinen in neutraler Textfarbe, weil Rot dem Löschen vorbehalten ist.

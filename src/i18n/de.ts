@@ -26,7 +26,32 @@ export const de = {
   },
   search: {
     title: 'Karten suchen',
-    empty: 'Noch keine Karten geladen.',
+    tabs: {
+      cards: 'Karten',
+      images: 'Eigene Bilder',
+    },
+    placeholder: 'Name, Set oder Nummer',
+    setFilter: 'Set',
+    allSets: 'Alle Sets',
+    findSet: 'Set suchen',
+    noSets: 'Kein Set gefunden.',
+    setsLoading: 'Sets werden geladen …',
+    setsError: 'Die Sets konnten nicht geladen werden.',
+    rarity: 'Seltenheit',
+    type: 'Typ',
+    language: 'Deutsch',
+    languageHint: 'Weitere Sprachen folgen in einer späteren Version.',
+    idle: 'Namen eingeben oder ein Set wählen.',
+    needsContext: 'Für die Suche nach einer Nummer bitte ein Set wählen oder einen Namen ergänzen.',
+    loading: 'Lädt …',
+    error: 'Die Karten konnten nicht geladen werden. Besteht eine Internetverbindung?',
+    noResults: 'Keine Karten gefunden.',
+    resultCount: (count: number, hasMore: boolean, setName: string | undefined) => {
+      const cards = `${count}${hasMore ? '+' : ''} ${count === 1 && !hasMore ? 'Karte' : 'Karten'}`
+      return setName ? `${setName} · ${cards}` : cards
+    },
+    more: 'Mehr laden',
+    noImage: (name: string) => `${name} (kein Bild vorhanden)`,
   },
   binder: {
     title: 'Binder',

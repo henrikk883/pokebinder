@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 test('shows the three-column layout in the dark theme', async ({ page }) => {
   await page.goto('/')
