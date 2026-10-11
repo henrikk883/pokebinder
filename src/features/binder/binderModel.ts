@@ -5,6 +5,7 @@ import type {
   Layout,
   OpeningSide,
   Page,
+  PocketOpening,
   Slot,
   SlotPosition,
 } from '../../types/binder'
@@ -27,6 +28,27 @@ export function layoutDimensions(layout: Layout): LayoutDimensions {
 export function slotsPerPage(layout: Layout): number {
   const { rows, cols } = layoutDimensions(layout)
   return rows * cols
+}
+
+/**
+ * The side one pocket opens to. With `mixed` it depends on where the page lies: odd page
+ * numbers are right-hand pages with the rings on their left, even ones are left-hand pages.
+ * There the outermost column opens towards the rings and the others away from them, so on
+ * a right-hand 3 × 3 page the columns open right, right, left, and on a left-hand page
+ * right, left, left.
+ */
+export function pocketOpening(
+  openingSide: OpeningSide,
+  pageIndex: number,
+  slotIndex: number,
+  layout: Layout,
+): PocketOpening {
+  if (openingSide !== 'mixed') return openingSide
+  const { cols } = layoutDimensions(layout)
+  const column = slotIndex % cols
+  const isRightHandPage = pageIndex % 2 === 0
+  if (isRightHandPage) return column === cols - 1 ? 'left' : 'right'
+  return column === 0 ? 'right' : 'left'
 }
 
 export interface NewBinderInput {

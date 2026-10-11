@@ -122,6 +122,9 @@ export function SelectionPanel() {
                 </option>
               ))}
             </select>
+            {page.openingSide === 'mixed' && (
+              <p className="text-xs text-muted">{de.openingMixedHint}</p>
+            )}
             <button type="button" disabled className={outlineButtonClass}>
               {de.selection.addImage}
             </button>

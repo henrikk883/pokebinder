@@ -345,6 +345,39 @@ test('the opening side is set per page and marked on every pocket', async ({ pag
   await expect(page.getByText('Seite 1 · Öffnung links')).toBeVisible()
 })
 
+test('mixed opening follows the pattern of bought binders on right and left pages', async ({ page }) => {
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await dialog.getByLabel('Name').fill('Gekaufter Binder')
+  await dialog.getByText('Öffnung gemischt', { exact: true }).click()
+  await expect(dialog.getByText(/Die äußere Spalte öffnet zur Mitte/)).toBeVisible()
+  await dialog.getByRole('button', { name: 'Anlegen' }).click()
+
+  const sidesOn = (pageNumber: number) =>
+    page
+      .getByRole('region', { name: `Seite ${pageNumber}`, exact: true })
+      .getByTestId('pocket-opening')
+      .evaluateAll((markers) => markers.map((marker) => marker.getAttribute('data-side')))
+  const rows = (pattern: string[]) => [...pattern, ...pattern, ...pattern]
+
+  // page 1 lies on the right
+  await expect(page.getByText('Seite 1 · Öffnung gemischt')).toBeVisible()
+  expect(await sidesOn(1)).toEqual(rows(['right', 'right', 'left']))
+
+  // new pages take over the setting; page 2 lies on the left, page 3 on the right
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).click()
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).click()
+  expect(await sidesOn(2)).toEqual(rows(['right', 'left', 'left']))
+  expect(await sidesOn(3)).toEqual(rows(['right', 'right', 'left']))
+
+  // a single page can still be set differently, and back
+  await pocket(page, 3, 1).click()
+  await page.getByLabel('Öffnung der Seite').selectOption('left')
+  expect(await sidesOn(3)).toEqual(rows(['left', 'left', 'left']))
+  await page.getByLabel('Öffnung der Seite').selectOption('mixed')
+  expect(await sidesOn(3)).toEqual(rows(['right', 'right', 'left']))
+})
+
 test('"Meine Binder" lists the binders; they can be opened and deleted', async ({ page }) => {
   await expect(page.getByText('Noch kein Binder angelegt.')).toBeVisible()
   await createBinder(page, 'Erster Binder')

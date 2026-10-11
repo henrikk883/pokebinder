@@ -3,7 +3,7 @@ import { de } from '../../i18n/de'
 import { setIdOfCard, type Catalog } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
-import type { OpeningSide, Slot, SlotPosition } from '../../types/binder'
+import type { PocketOpening, Slot, SlotPosition } from '../../types/binder'
 import { CardImage } from '../search/CardImage'
 import { pocketId, type DragSource, type DropTarget } from './dragDrop'
 import { useCard } from './useCard'
@@ -12,7 +12,7 @@ interface PocketProps {
   pageId: string
   pageNumber: number
   slot: Slot
-  openingSide: OpeningSide
+  opening: PocketOpening
   catalog: Catalog | undefined
 }
 
@@ -76,7 +76,7 @@ function PocketCard({ position, cardId, owned, catalog }: PocketCardProps) {
   )
 }
 
-export function Pocket({ pageId, pageNumber, slot, openingSide, catalog }: PocketProps) {
+export function Pocket({ pageId, pageNumber, slot, opening, catalog }: PocketProps) {
   const position: SlotPosition = { pageId, slotIndex: slot.index }
   const selected = useEditorStore(
     (state) => state.selection?.pageId === pageId && state.selection.slotIndex === slot.index,
@@ -130,9 +130,9 @@ export function Pocket({ pageId, pageNumber, slot, openingSide, catalog }: Pocke
       <span
         aria-hidden="true"
         data-testid="pocket-opening"
-        data-side={openingSide}
+        data-side={opening}
         className={`pointer-events-none absolute inset-y-[12%] w-0.5 rounded-full bg-text/50 ${
-          openingSide === 'left' ? 'left-0' : 'right-0'
+          opening === 'left' ? 'left-0' : 'right-0'
         }`}
       />
     </div>

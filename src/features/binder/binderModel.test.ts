@@ -6,6 +6,7 @@ import {
   clearSlot,
   createBinder,
   moveCard,
+  pocketOpening,
   removePage,
   setCard,
   setOpeningSide,
@@ -125,6 +126,37 @@ describe('pages', () => {
   it('rejects unknown pages', () => {
     expect(() => removePage(binder, 'nope', ctx)).toThrow(RangeError)
     expect(() => setOpeningSide(binder, 'nope', 'left', ctx)).toThrow(RangeError)
+  })
+})
+
+describe('pocketOpening', () => {
+  const row = (side: 'left' | 'right' | 'mixed', pageIndex: number, layout: '2x2' | '3x3' | '4x4') => {
+    const cols = Number(layout[0])
+    return Array.from({ length: cols * cols }, (_, slot) => pocketOpening(side, pageIndex, slot, layout))
+  }
+
+  it('opens every pocket to the same side for left and right', () => {
+    expect(new Set(row('left', 0, '3x3'))).toEqual(new Set(['left']))
+    expect(new Set(row('right', 1, '3x3'))).toEqual(new Set(['right']))
+  })
+
+  it('mixed on odd pages (right-hand side): right, right, left in every row', () => {
+    const pattern = ['right', 'right', 'left']
+    expect(row('mixed', 0, '3x3')).toEqual([...pattern, ...pattern, ...pattern])
+    expect(row('mixed', 2, '3x3')).toEqual(row('mixed', 0, '3x3'))
+  })
+
+  it('mixed on even pages (left-hand side): right, left, left in every row', () => {
+    const pattern = ['right', 'left', 'left']
+    expect(row('mixed', 1, '3x3')).toEqual([...pattern, ...pattern, ...pattern])
+    expect(row('mixed', 3, '3x3')).toEqual(row('mixed', 1, '3x3'))
+  })
+
+  it('mixed keeps the idea for other layouts: only the outer column opens towards the rings', () => {
+    expect(row('mixed', 0, '2x2').slice(0, 2)).toEqual(['right', 'left'])
+    expect(row('mixed', 1, '2x2').slice(0, 2)).toEqual(['right', 'left'])
+    expect(row('mixed', 0, '4x4').slice(0, 4)).toEqual(['right', 'right', 'right', 'left'])
+    expect(row('mixed', 1, '4x4').slice(0, 4)).toEqual(['right', 'left', 'left', 'left'])
   })
 })
 

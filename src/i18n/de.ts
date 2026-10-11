@@ -87,7 +87,10 @@ export const de = {
   openingSides: {
     left: 'Öffnung links',
     right: 'Öffnung rechts',
+    mixed: 'Öffnung gemischt',
   },
+  openingMixedHint:
+    'Gemischt, wie bei vielen gekauften Bindern: Die äußere Spalte öffnet zur Mitte, alle anderen nach außen.',
   binder: {
     layout: 'Layout',
     confirmLayout:
@@ -116,8 +119,7 @@ export const de = {
     spread: 'Aufgeschlagene Doppelseite',
     coverInside: 'Cover-Innenseite',
     noPage: 'Keine Seite',
-    pageCaption: (page: number, openingSide: 'left' | 'right') =>
-      `Seite ${page} · ${openingSide === 'left' ? 'Öffnung links' : 'Öffnung rechts'}`,
+    pageCaption: (page: number, opening: string) => `Seite ${page} · ${opening}`,
     page: (page: number) => `Seite ${page}`,
     deletePage: 'Seite löschen',
     deletePageLabel: (page: number) => `Seite ${page} löschen`,

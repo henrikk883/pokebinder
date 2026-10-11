@@ -1,8 +1,15 @@
 export const LAYOUTS = ['2x2', '3x3', '4x4'] as const
 export type Layout = (typeof LAYOUTS)[number]
 
-export const OPENING_SIDES = ['left', 'right'] as const
+/**
+ * Where the pockets of a page open. `mixed` is the pattern of many bought binders:
+ * the outermost column opens towards the rings, all other columns away from them.
+ */
+export const OPENING_SIDES = ['left', 'right', 'mixed'] as const
 export type OpeningSide = (typeof OPENING_SIDES)[number]
+
+/** The side a single pocket opens to. */
+export type PocketOpening = 'left' | 'right'
 
 export const BINDER_MODES = ['empty', 'masterSet'] as const
 export type BinderMode = (typeof BINDER_MODES)[number]

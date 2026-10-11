@@ -103,6 +103,9 @@ Die Karten behalten ihre Reihenfolge und fließen auf so viele Seiten wie nötig
 ## 2026-10-12 – Öffnungs-Markierung: helle Kante am offenen Rand
 Jeder Pocket zeigt am offenen Rand eine dünne, helle Linie. Von Henrik bestätigt.
 
+## 2026-10-12 – Dritte Öffnungsart „gemischt“
+Zusätzlich zu links und rechts: wie bei vielen gekauften Bindern öffnet die äußere Spalte zur Mitte, alle anderen nach außen. Auf ungeraden (rechten) Seiten ergibt das bei 3 × 3 je Reihe rechts, rechts, links; auf geraden (linken) Seiten rechts, links, links. Bei 2 × 2 und 4 × 4 gilt dieselbe Regel. Die Richtung jedes Pockets wird aus Seitennummer und Spalte berechnet, nicht gespeichert; rückt eine Seite durch Löschen auf die andere Buchseite, dreht sich das Muster mit. Von Henrik gewünscht.
+
 ## 2026-10-12 – Karten aus der Suche kommen als Variante „normal“ in den Binder
 Die Wahl der Variante (Reverse, Holo usw.) folgt mit dem Master Set in Phase 5.
 

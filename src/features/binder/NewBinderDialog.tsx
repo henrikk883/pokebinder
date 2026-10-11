@@ -9,7 +9,7 @@ interface NewBinderDialogProps {
 }
 
 const choiceClass =
-  'flex h-10 flex-1 cursor-pointer items-center justify-center rounded-control border border-line bg-raised text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-white'
+  'flex h-10 flex-1 cursor-pointer items-center justify-center rounded-control border border-line bg-raised text-center text-sm whitespace-nowrap has-checked:border-accent has-checked:bg-accent has-checked:text-white'
 
 export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
   const [name, setName] = useState('')
@@ -88,6 +88,7 @@ export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
               </label>
             ))}
           </div>
+          {openingSide === 'mixed' && <p className="text-xs text-muted">{de.openingMixedHint}</p>}
         </fieldset>
 
         <div className="flex justify-end gap-3 pt-1">

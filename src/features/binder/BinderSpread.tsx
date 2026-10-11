@@ -3,7 +3,7 @@ import { de } from '../../i18n/de'
 import type { Catalog } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import type { Binder, Page } from '../../types/binder'
-import { layoutDimensions } from './binderModel'
+import { layoutDimensions, pocketOpening } from './binderModel'
 import { Pocket } from './Pocket'
 import type { Spread } from './spreads'
 
@@ -34,14 +34,14 @@ function PageSide({ binder, page, catalog }: { binder: Binder; page: Page; catal
               pageId={page.id}
               pageNumber={pageNumber}
               slot={slot}
-              openingSide={page.openingSide}
+              opening={pocketOpening(page.openingSide, page.index, slot.index, binder.layout)}
               catalog={catalog}
             />
           ))}
         </div>
       </div>
       <p className="mt-2 flex items-center justify-center gap-3 text-xs text-muted">
-        <span>{de.binder.pageCaption(pageNumber, page.openingSide)}</span>
+        <span>{de.binder.pageCaption(pageNumber, de.openingSides[page.openingSide])}</span>
         <button
           type="button"
           aria-label={de.binder.deletePageLabel(pageNumber)}
