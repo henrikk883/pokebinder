@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Flächen: fast schwarz mit Blaustich, Panels eine Stufe heller */
+  --color-bg: #0a0d16;
+  --color-panel: #10141f;
+  --color-raised: #171c2a;
+  --color-line: #222838;
+
+  --color-text: #e7e9f1;
+  --color-muted: #8c93a8;
+
+  /* Violett nur für Hauptaktion und aktive Zustände */
+  --color-accent: #7c4dff;
+  --color-accent-hover: #8f66ff;
+  /* Rot nur für Löschen, Grün nur für „gespeichert“ */
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+
+  --radius-control: 0.5rem;
+  --radius-pocket: 0.375rem;
+  --radius-panel: 0.75rem;
+
+  --spacing-header: 3.5rem;
+  --spacing-sidebar: 18.75rem;
+
+  --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
