@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BinderWorkspace } from '../features/binder/BinderWorkspace'
+import { CardDragLayer } from '../features/binder/CardDragLayer'
 import { SelectionPanel } from '../features/binder/SelectionPanel'
 import { SearchPanel } from '../features/search/SearchPanel'
 import { restoreLastBinder } from '../store/binderStore'
@@ -14,12 +15,14 @@ export function App() {
   }, [])
 
   return (
-    <AppLayout
-      header={<AppHeader />}
-      left={<SearchPanel />}
-      center={<BinderWorkspace />}
-      right={<SelectionPanel />}
-      footer={<AppFooter />}
-    />
+    <CardDragLayer>
+      <AppLayout
+        header={<AppHeader />}
+        left={<SearchPanel />}
+        center={<BinderWorkspace />}
+        right={<SelectionPanel />}
+        footer={<AppFooter />}
+      />
+    </CardDragLayer>
   )
 }

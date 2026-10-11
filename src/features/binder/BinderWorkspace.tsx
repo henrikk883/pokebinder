@@ -1,17 +1,17 @@
-import { de } from '../../i18n/de'
+import { useEffect } from 'react'
 import { useBinderStore } from '../../store/binderStore'
+import { useEditorStore } from '../../store/editorStore'
+import { BinderEditor } from './BinderEditor'
+import { BinderList } from './BinderList'
 
+/** Centre column: the editor for the open binder, otherwise the list of binders. */
 export function BinderWorkspace() {
   const binder = useBinderStore((state) => state.binder)
+  const binderId = binder?.id
 
-  return (
-    <section className="flex h-full flex-col p-5">
-      <h2 className="text-2xl font-semibold">{binder ? binder.name : de.binder.title}</h2>
-      <div className="mt-5 flex min-h-64 flex-1 items-center justify-center rounded-panel border border-dashed border-line bg-panel">
-        <p className="text-sm text-muted">
-          {binder ? de.binder.summary(binder.layout, binder.pages.length) : de.binder.empty}
-        </p>
-      </div>
-    </section>
-  )
+  useEffect(() => {
+    useEditorStore.getState().reset()
+  }, [binderId])
+
+  return binder ? <BinderEditor binder={binder} /> : <BinderList />
 }

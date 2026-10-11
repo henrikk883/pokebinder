@@ -5,6 +5,7 @@ import { SaveStatusBadge } from './SaveStatusBadge'
 
 export function AppHeader() {
   const binderName = useBinderStore((state) => state.binder?.name)
+  const closeBinder = useBinderStore((state) => state.closeBinder)
 
   return (
     <header className="flex h-header shrink-0 items-center gap-6 border-b border-line bg-panel px-5">
@@ -17,7 +18,13 @@ export function AppHeader() {
         <span className="text-xl font-semibold tracking-tight">{de.app.name}</span>
       </div>
       <nav className="flex items-center gap-3 border-l border-line pl-6 text-sm text-muted">
-        <span>{de.header.myBinders}</span>
+        {binderName === undefined ? (
+          <span>{de.header.myBinders}</span>
+        ) : (
+          <button type="button" onClick={closeBinder} className="hover:text-text">
+            {de.header.myBinders}
+          </button>
+        )}
         {binderName !== undefined && (
           <>
             <span aria-hidden="true">/</span>

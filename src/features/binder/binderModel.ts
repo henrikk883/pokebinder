@@ -201,6 +201,76 @@ export function setOwned(
   return writeSlots(binder, [{ position, content: { cardRef: slot.cardRef, owned } }], ctx)
 }
 
+/** A card together with its owned state, detached from the pocket it sits in. */
+export interface PlacedCard {
+  cardRef: CardRef
+  owned: boolean
+}
+
+function cardsOf(pages: readonly Page[]): PlacedCard[] {
+  return pages.flatMap((page) =>
+    page.slots.flatMap((slot) => (slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned }] : [])),
+  )
+}
+
+/** Fills the pockets of a page from `cards`, taking as many as fit. */
+function fillPage(page: Page, cards: PlacedCard[]): Page {
+  return {
+    ...page,
+    slots: page.slots.map((slot): Slot => {
+      const card = cards.shift()
+      return card ? { index: slot.index, cardRef: card.cardRef, owned: card.owned } : emptySlot(slot.index)
+    }),
+  }
+}
+
+/**
+ * Puts the cards of one page, or of the whole binder, into the given order.
+ * They move up to the first pockets; the pockets left over end up empty.
+ */
+export function sortCards(
+  binder: Binder,
+  scope: { pageId?: string },
+  compare: (a: PlacedCard, b: PlacedCard) => number,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const inScope = (page: Page) => scope.pageId === undefined || page.id === scope.pageId
+  if (scope.pageId !== undefined) findPage(binder, scope.pageId)
+
+  const sorted = cardsOf(binder.pages.filter(inScope)).sort(compare)
+  return withPages(
+    binder,
+    binder.pages.map((page) => (inScope(page) ? fillPage(page, sorted) : page)),
+    ctx,
+  )
+}
+
+/**
+ * Switches to another pocket layout. Cards keep their order and flow onto as many pages as
+ * they need; existing pages are never removed. Placed images do not survive, because their
+ * span refers to the old grid.
+ */
+export function changeLayout(
+  binder: Binder,
+  layout: Layout,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  if (layout === binder.layout) return binder
+  const cards = cardsOf(binder.pages)
+  const pageCount = Math.max(binder.pages.length, Math.ceil(cards.length / slotsPerPage(layout)))
+  const pages = Array.from({ length: pageCount }, (_, index) => {
+    const previous = binder.pages[index]
+    const page = createPage(layout, index, previous?.openingSide ?? binder.defaultOpeningSide, ctx)
+    return fillPage(previous ? { ...page, id: previous.id } : page, cards)
+  })
+  return { ...withPages(binder, pages, ctx), layout }
+}
+
+/** Number of pockets that hold a card. */
+export function countCards(binder: Binder): number {
+  return cardsOf(binder.pages).length
+}
+
 export function setOpeningSide(
   binder: Binder,
   pageId: string,

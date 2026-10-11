@@ -74,6 +74,50 @@ describe('binderStore', () => {
     await store.getState().whenSaved()
   })
 
+  it('drops cards from the search and between pockets', async () => {
+    const { store, saved } = setup()
+    store.getState().createBinder({ name: 'Kanto Collection' })
+    const pageId = firstPageId(store.getState().binder)
+    const card = { id: 'sv03.5-006', localId: '006', name: 'Glurak-ex' }
+
+    store.getState().dropCard({ kind: 'search', card }, { kind: 'pocket', position: { pageId, slotIndex: 0 } })
+    store.getState().dropCard(
+      { kind: 'pocket', position: { pageId, slotIndex: 0 }, cardId: card.id },
+      { kind: 'pocket', position: { pageId, slotIndex: 8 } },
+    )
+    await store.getState().whenSaved()
+
+    const slots = store.getState().binder?.pages[0]?.slots
+    expect(slots?.[0]?.cardRef).toBeUndefined()
+    expect(slots?.[8]).toEqual({
+      index: 8,
+      cardRef: { cardId: 'sv03.5-006', lang: 'de', variant: 'normal' },
+      owned: true,
+    })
+    expect(saved.at(-1)).toBe(store.getState().binder)
+  })
+
+  it('sorts cards and changes the layout', async () => {
+    const { store } = setup()
+    store.getState().createBinder({ name: 'Kanto Collection', layout: '2x2' })
+    const pageId = firstPageId(store.getState().binder)
+    store.getState().setCard({ pageId, slotIndex: 3 }, { cardId: 'sv03.5-001', lang: 'de', variant: 'normal' })
+    store.getState().setCard({ pageId, slotIndex: 1 }, pikachu)
+
+    store.getState().sortCards({}, ['sv03.5'])
+    expect(store.getState().binder?.pages[0]?.slots.map((slot) => slot.cardRef?.cardId)).toEqual([
+      'sv03.5-001',
+      'sv03.5-025',
+      undefined,
+      undefined,
+    ])
+
+    store.getState().changeLayout('3x3')
+    expect(store.getState().binder).toMatchObject({ layout: '3x3' })
+    expect(store.getState().binder?.pages[0]?.slots).toHaveLength(9)
+    await store.getState().whenSaved()
+  })
+
   it('does not save when nothing changed', async () => {
     const { store, saved } = setup()
     store.getState().createBinder({ name: 'Kanto Collection' })

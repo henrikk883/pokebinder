@@ -31,7 +31,7 @@ test('cards without any image appear as a grey placeholder with their name', asy
 
   const placeholder = page.getByRole('img', { name: 'Glurak (kein Bild vorhanden)' }).first()
   await expect(placeholder).toBeVisible()
-  await expect(placeholder).toHaveCSS('filter', 'grayscale(1)')
+  await expect(placeholder).toContainText('Glurak')
 })
 
 test('more results load on demand, and Pocket cards never show up', async ({ page }) => {
@@ -130,14 +130,15 @@ test('a number as printed on the card finds that card', async ({ page }) => {
   await expect(tiles).toContainText(['006/165', '6/165'])
 })
 
-test('a card without a German scan shows the English one in black and white', async ({ page }) => {
+test('a card without a German scan shows the English one, in colour', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('searchbox', { name: searchField }).fill('Glurak')
   await page.getByRole('button', { name: 'Mehr laden' }).click()
 
   const substitute = page.getByRole('img', { name: 'Glurak (englisches Bild)' }).first()
   await expect(substitute).toHaveAttribute('src', /^https:\/\/assets\.tcgdex\.net\/en\/.+\/low\.webp$/)
-  await expect(substitute).toHaveCSS('filter', 'grayscale(1)')
+  // black and white is reserved for cards marked as missing in the binder
+  await expect(substitute).toHaveCSS('filter', 'none')
 })
 
 test('a number alone asks for a set or a name', async ({ page, tcgdex }) => {

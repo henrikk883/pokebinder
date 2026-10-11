@@ -54,6 +54,8 @@ export interface TcgdexClient {
   getCatalog(): Promise<Catalog>
   /** All cards of a set in number order. */
   getSetCards(setId: string): Promise<CardSummary[]>
+  /** A single card by id, as stored in a binder; `undefined` when TCGdex does not know it. */
+  getCard(cardId: string): Promise<CardSummary | undefined>
   /** One page of cards matching the query; pages start at 1. */
   queryCards(query: CardQuery, page: number): Promise<CardPage>
   getRarities(): Promise<string[]>

@@ -9,7 +9,7 @@ describe('App shell', () => {
 
     expect(screen.getByRole('banner')).toHaveTextContent(de.app.name)
     expect(screen.getByRole('heading', { name: de.search.title })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: de.binder.title })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: de.binderList.title })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: de.selection.title })).toBeInTheDocument()
     expect(screen.getByRole('contentinfo')).toHaveTextContent(de.footer.disclaimer)
   })
@@ -18,7 +18,7 @@ describe('App shell', () => {
     render(<App />)
 
     expect(screen.getByTestId('column-left')).toHaveTextContent(de.search.title)
-    expect(screen.getByTestId('column-center')).toHaveTextContent(de.binder.title)
+    expect(screen.getByTestId('column-center')).toHaveTextContent(de.binderList.title)
     expect(screen.getByTestId('column-right')).toHaveTextContent(de.selection.title)
   })
 })

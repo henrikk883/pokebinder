@@ -1,7 +1,7 @@
 import TCGdex, { Query } from '@tcgdex/sdk'
 import type { CardLang } from '../../types/binder'
 import type { ResponseCache } from './cache'
-import { matchesNumber, setIdOfCard, sortByNumber } from './cardIds'
+import { matchesNumber, setIdOfCard, setIdOfCardId, sortByNumber } from './cardIds'
 import type {
   CardPage,
   CardQuery,
@@ -186,13 +186,38 @@ export function createTcgdexClient({ lang, transport, cache }: TcgdexClientOptio
     return catalog
   }
 
+  // A binder page asks for many cards of the same set at once; they share one lookup.
+  const setCards = new Map<string, Promise<CardSummary[]>>()
+
+  function getSetCards(setId: string): Promise<CardSummary[]> {
+    let cards = setCards.get(setId)
+    if (!cards) {
+      cards = request<{ cards?: RawCard[] }>(lang, ['sets', setId])
+        .then((set) => sortByNumber((set?.cards ?? []).map(toCard)))
+        .catch((error: unknown) => {
+          setCards.delete(setId)
+          throw error
+        })
+      setCards.set(setId, cards)
+    }
+    return cards
+  }
+
   const client: TcgdexClient = {
     lang,
     getCatalog,
+    getSetCards,
 
-    async getSetCards(setId) {
-      const set = await request<{ cards?: RawCard[] }>(lang, ['sets', setId])
-      return sortByNumber((set?.cards ?? []).map(toCard))
+    async getCard(cardId) {
+      const { setsById } = await getCatalog()
+      const setId = setIdOfCardId(cardId, setsById)
+      if (setId !== undefined) {
+        const card = (await getSetCards(setId)).find((entry) => entry.id === cardId)
+        if (card) return card
+      }
+      // not part of a listed set: ask for the card itself
+      const raw = await request<RawCard>(lang, ['cards', cardId]).catch(() => undefined)
+      return raw ? toCard(raw) : undefined
     },
 
     async queryCards(query: CardQuery, page: number): Promise<CardPage> {

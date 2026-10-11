@@ -10,12 +10,13 @@ test('an imported binder survives a reload and exports unchanged', async ({ page
 
   await page.getByLabel('Backup-Datei auswählen').setInputFiles(sampleBackup)
   await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
-  await expect(page.getByText('Layout 2 × 2 · 2 Seiten')).toBeVisible()
-  await expect(page.getByRole('status')).toHaveText('Lokal gespeichert')
+  await expect(page.getByTestId('pocket')).toHaveCount(4)
+  await expect(page.getByTestId('pocket').first()).toHaveAttribute('data-card-id', 'sv03.5-025')
+  await expect(page.getByRole('banner').getByRole('status')).toHaveText('Lokal gespeichert')
 
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
-  await expect(page.getByRole('status')).toHaveText('Lokal gespeichert')
+  await expect(page.getByRole('banner').getByRole('status')).toHaveText('Lokal gespeichert')
 
   await page.getByRole('button', { name: 'Backup' }).click()
   const downloadPromise = page.waitForEvent('download')

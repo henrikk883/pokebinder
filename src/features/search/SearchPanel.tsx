@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { setIdOfCard, tcgdex } from '../../lib/tcgdex'
+import { useBinderStore } from '../../store/binderStore'
 import { CardTile } from './CardTile'
 import { FilterSelect } from './FilterSelect'
 import { SetPicker } from './SetPicker'
 import { useCardSearch } from './useCardSearch'
+import { useCatalog } from './useCatalog'
 import { useDebouncedValue } from './useDebouncedValue'
 import { useLoaded } from './useLoaded'
 
 /** Results follow the typing after this pause. */
 const SEARCH_DELAY_MS = 300
 
-const loadCatalog = () => tcgdex.getCatalog()
 const loadRarities = () => tcgdex.getRarities()
 const loadTypes = () => tcgdex.getTypes()
 
@@ -33,7 +34,8 @@ export function SearchPanel() {
   const [rarity, setRarity] = useState<string>()
   const [type, setType] = useState<string>()
 
-  const catalog = useLoaded(loadCatalog)
+  const binderOpen = useBinderStore((state) => state.binder !== null)
+  const catalog = useCatalog()
   const rarities = useLoaded(loadRarities)
   const types = useLoaded(loadTypes)
   const search = useCardSearch(useDebouncedValue(text, SEARCH_DELAY_MS), setId, rarity, type)
@@ -125,7 +127,12 @@ export function SearchPanel() {
             </p>
             <ul className="grid grid-cols-2 gap-x-3 gap-y-4">
               {search.cards.map((card) => (
-                <CardTile key={card.id} card={card} set={sets?.get(setIdOfCard(card))} />
+                <CardTile
+                  key={card.id}
+                  card={card}
+                  set={sets?.get(setIdOfCard(card))}
+                  draggable={binderOpen}
+                />
               ))}
             </ul>
             {search.hasMore && (
@@ -145,6 +152,12 @@ export function SearchPanel() {
           </>
         )}
       </div>
+
+      {binderOpen && (
+        <p className="shrink-0 border-t border-line px-4 py-2 text-xs text-muted">
+          {de.search.dragHint}
+        </p>
+      )}
     </section>
   )
 }

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { compareLocalId, matchesNumber, setIdOfCard, sortByNumber } from './cardIds'
+import {
+  chronologicalSetIds,
+  compareLocalId,
+  matchesNumber,
+  setIdOfCard,
+  setIdOfCardId,
+  sortByNumber,
+} from './cardIds'
 
 describe('setIdOfCard', () => {
   it.each([
@@ -16,6 +23,46 @@ describe('setIdOfCard', () => {
   it('falls back to the last dash when the id does not end with the number', () => {
     expect(setIdOfCard({ id: 'base1-4', localId: '004' })).toBe('base1')
     expect(setIdOfCard({ id: 'odd', localId: '1' })).toBe('odd')
+  })
+})
+
+describe('setIdOfCardId', () => {
+  const sets = new Set(['sv03', 'sv03.5', '30th', '30th-c', 'swsh12.5gg', 'P-A'])
+
+  it.each([
+    ['sv03.5-025', 'sv03.5'],
+    ['sv03-025', 'sv03'],
+    ['30th-c-001', '30th-c'],
+    ['30th-001', '30th'],
+    ['swsh12.5gg-GG01', 'swsh12.5gg'],
+    ['P-A-012', 'P-A'],
+  ])('finds the set of %s', (cardId, setId) => {
+    expect(setIdOfCardId(cardId, sets)).toBe(setId)
+  })
+
+  it('returns nothing for a card of an unknown set', () => {
+    expect(setIdOfCardId('mystery-7', sets)).toBeUndefined()
+    expect(setIdOfCardId('nodash', sets)).toBeUndefined()
+  })
+})
+
+describe('chronologicalSetIds', () => {
+  it('lists sets oldest first although the catalog shows the newest series first', () => {
+    const set = (id: string, seriesId: string) => ({
+      id,
+      name: id,
+      seriesId,
+      cardCount: { total: 1, official: 1 },
+    })
+
+    expect(
+      chronologicalSetIds({
+        series: [
+          { id: 'sv', name: 'SV', sets: [set('sv01', 'sv'), set('sv02', 'sv')] },
+          { id: 'swsh', name: 'SWSH', sets: [set('swsh1', 'swsh'), set('swsh2', 'swsh')] },
+        ],
+      }),
+    ).toEqual(['swsh1', 'swsh2', 'sv01', 'sv02'])
   })
 })
 

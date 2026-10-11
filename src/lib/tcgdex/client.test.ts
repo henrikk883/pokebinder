@@ -162,6 +162,36 @@ describe('getSetCards', () => {
   })
 })
 
+describe('getCard', () => {
+  it('finds a binder card through the card list of its set', async () => {
+    const { client, calls } = setup()
+
+    expect(await client.getCard('sv03.5-002')).toEqual({
+      id: 'sv03.5-002',
+      localId: '002',
+      name: 'Bisaknosp',
+      image: 'https://assets.tcgdex.net/de/x/sv03.5-002',
+    })
+    expect(calls.map((call) => call.key)).toContain('de/sets/sv03.5')
+    expect(calls.map((call) => call.key)).not.toContain('de/cards/sv03.5-002')
+  })
+
+  it('loads the set only once for all cards of a page', async () => {
+    const { client, calls } = setup()
+
+    await Promise.all(['sv03.5-001', 'sv03.5-002', 'sv03.5-010'].map((id) => client.getCard(id)))
+
+    expect(calls.filter((call) => call.key === 'de/sets/sv03.5')).toHaveLength(1)
+  })
+
+  it('returns nothing for a card TCGdex does not know', async () => {
+    const { client } = setup()
+
+    expect(await client.getCard('sv03.5-999')).toBeUndefined()
+    expect(await client.getCard('mystery-1')).toBeUndefined()
+  })
+})
+
 describe('queryCards', () => {
   it('searches by name page by page', async () => {
     const page = Array.from({ length: CARDS_PER_PAGE }, (_, i) =>

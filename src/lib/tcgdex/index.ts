@@ -3,7 +3,14 @@ import { createResponseCache } from './cache'
 import { createSdkTransport, createTcgdexClient } from './client'
 
 export { CARDS_PER_PAGE } from './client'
-export { compareLocalId, matchesNumber, setIdOfCard, sortByNumber } from './cardIds'
+export {
+  chronologicalSetIds,
+  compareLocalId,
+  matchesNumber,
+  setIdOfCard,
+  setIdOfCardId,
+  sortByNumber,
+} from './cardIds'
 export { cardImageUrl, englishCardImage, setLogoUrl, type CardImageSize } from './images'
 export type * from './types'
 

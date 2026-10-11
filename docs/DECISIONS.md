@@ -61,8 +61,8 @@ Simuliert IndexedDB in den Unit-Tests der Dexie-Speicherung. Von Henrik freigege
 - Sonder-Reverse: `variants_detailed` nennt Typ und Muster (Pokéball, Meisterball, Kosmos) sowie Stempel-Varianten. Keine manuelle Ergänzung nötig; welche Muster ins Master Set gehören, wird in Phase 5 entschieden.
 - Promos: hängen nur am Promo-Set der Serie (z. B. `svp`), eine Zuordnung zu einem Hauptset gibt es nicht. Der Assistent bietet in Phase 5 die Promos der Serie zur Einzelauswahl an.
 
-## 2026-10-12 – Karten ohne deutsches Bild zeigen das englische in Schwarz-Weiß
-Viele deutsche Promo- und Untersets haben bei TCGdex keine Scans. Dann lädt die App das englische Bild derselben Karte und legt einen Graustufen-Filter darüber, damit erkennbar bleibt, dass es nicht die deutsche Karte ist (in einer Stichprobe für 401 von 927 Karten vorhanden). Gibt es auch das nicht, erscheint ein grauer Platzhalter mit Pokéball und Name. Karten werden nie ausgeblendet, damit sie im Master Set nicht fehlen. Von Henrik entschieden.
+## 2026-10-12 – Karten ohne deutsches Bild zeigen das englische
+Viele deutsche Promo- und Untersets haben bei TCGdex keine Scans. Dann lädt die App das englische Bild derselben Karte (in einer Stichprobe für 401 von 927 Karten vorhanden), in Farbe. Gibt es auch das nicht, erscheint ein grauer Platzhalter mit Pokéball und Name. Karten werden nie ausgeblendet, damit sie im Master Set nicht fehlen. Von Henrik entschieden.
 
 ## 2026-10-12 – Set-Logo: deutsch, sonst englisch, sonst keines
 Nur 38 von 155 deutschen Sets haben ein Logo. Von Henrik bestätigt.
@@ -84,6 +84,42 @@ TCGdex wertet ein Komma im Filter als „oder“. Für Stufen wie „Selten, Ill
 
 ## 2026-10-12 – Playwright-Tests spielen aufgezeichnete TCGdex-Antworten ab
 Aufzeichnung mit `node tests/fixtures/tcgdex/record.mjs`. Grund: Tests sollen nicht vom Netz oder von Datenänderungen bei TCGdex abhängen.
+
+## 2026-10-12 – Schwarz-Weiß heißt „fehlt“, englische Ersatzbilder sind farbig
+Henrik hat klargestellt: Schwarz-Weiß ist den Karten vorbehalten, die im Binder als fehlend markiert sind. Englische Ersatzbilder erscheinen deshalb in Farbe; zuerst hatte ich sie in Graustufen gezeigt.
+
+## 2026-10-12 – „Fehlt“ per Knopf auf der Karte, schon in Phase 3
+Beim Überfahren einer Karte im Binder erscheint ein kleiner Knopf, der sie als fehlend markiert; dasselbe geht über „Vorhanden / Fehlt“ in der rechten Spalte. Von Henrik gewünscht und deshalb aus Phase 5 vorgezogen. Modus „Sammlung“, Fortschritt und Fehlliste bleiben in Phase 5.
+
+## 2026-10-12 – Einfacher Dialog „Neuer Binder“ und Liste „Meine Binder“
+Name, Layout und Öffnungsseite; der Assistent mit „Master Set“ folgt in Phase 5. Ohne offenen Binder zeigt die Mitte die Liste aller Binder (öffnen, löschen). Grund: Ohne beides wäre der Editor nicht benutzbar.
+
+## 2026-10-12 – Seitenzählung nach dem Text, nicht nach dem Mockup
+Seite 1 steht allein rechts neben der Cover-Innenseite, danach 2–3, 4–5 usw. Von Henrik bestätigt.
+
+## 2026-10-12 – Layout-Wechsel verteilt die Karten neu
+Die Karten behalten ihre Reihenfolge und fließen auf so viele Seiten wie nötig; vorhandene Seiten bleiben. Platzierte Bilder gehen dabei verloren, weil ihre Spannweite zum alten Raster gehört. Bei gefülltem Binder fragt die App vorher nach. Von Henrik bestätigt.
+
+## 2026-10-12 – Öffnungs-Markierung: helle Kante am offenen Rand
+Jeder Pocket zeigt am offenen Rand eine dünne, helle Linie. Von Henrik bestätigt.
+
+## 2026-10-12 – Karten aus der Suche kommen als Variante „normal“ in den Binder
+Die Wahl der Variante (Reverse, Holo usw.) folgt mit dem Master Set in Phase 5.
+
+## 2026-10-12 – Sortieren schiebt die Karten nach vorn
+Sortiert wird nach Erscheinungsreihenfolge der Sets, dann Nummer, dann Variante. Die Karten rücken in die ersten Pockets der Seite bzw. des Binders, Lücken wandern ans Ende.
+
+## 2026-10-12 – Kartendaten im Binder kommen über die Set-Liste
+Für eine Karte im Pocket lädt die App die Kartenliste ihres Sets (eine Abfrage für alle Karten des Sets) statt jede Karte einzeln. Grund: ein Master Set braucht so eine Abfrage statt hunderter.
+
+## 2026-10-12 – Zoom-Standard 80 %, Schritte von 5 %
+Bei 80 % passt die Doppelseite auf einem 1440 px breiten Bildschirm ohne Scrollen zwischen die Seitenleisten.
+
+## 2026-10-12 – Drag & Drop vorerst nur mit der Maus
+Ein Ziehen beginnt nach 6 px Bewegung, damit ein Klick die Karte auswählt. Touch- und Tastaturbedienung für das Ziehen sind noch offen.
+
+## 2026-10-12 – Rückfragen über den Browser-Dialog
+Seite löschen, Binder löschen und Layout ändern fragen per `window.confirm` nach. Grund: einfach und zuverlässig; ein eigener Dialog im App-Design kann später folgen.
 
 ## 2026-10-12 – Fehler beim Speichern oder Import ohne Rot
 Meldungen erscheinen in neutraler Textfarbe, weil Rot dem Löschen vorbehalten ist.

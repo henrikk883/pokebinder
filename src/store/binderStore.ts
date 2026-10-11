@@ -3,6 +3,7 @@ import { createStore } from 'zustand/vanilla'
 import { binderRepository } from '../db/binderRepository'
 import {
   addPage,
+  changeLayout,
   clearSlot,
   createBinder,
   moveCard,
@@ -10,9 +11,22 @@ import {
   setCard,
   setOpeningSide,
   setOwned,
+  sortCards,
   type NewBinderInput,
 } from '../features/binder/binderModel'
-import type { Binder, CardRef, OpeningSide, SlotPosition } from '../types/binder'
+import { applyDrop, type DragSource, type DropTarget } from '../features/binder/dragDrop'
+import { createCardComparator } from '../features/binder/sorting'
+import type {
+  Binder,
+  CardLang,
+  CardRef,
+  Layout,
+  OpeningSide,
+  SlotPosition,
+} from '../types/binder'
+
+/** The MVP works with German cards only. */
+const CARD_LANG: CardLang = 'de'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -31,6 +45,11 @@ export interface BinderState {
   moveCard: (from: SlotPosition, to: SlotPosition) => void
   setOwned: (position: SlotPosition, owned: boolean) => void
   setOpeningSide: (pageId: string, openingSide: OpeningSide) => void
+  /** Drops a dragged card on a pocket. */
+  dropCard: (source: DragSource, target: DropTarget) => void
+  /** Sorts one page (or, without `pageId`, the whole binder) by set and number. */
+  sortCards: (scope: { pageId?: string }, setOrder: readonly string[]) => void
+  changeLayout: (layout: Layout) => void
   /** Resolves once every change made so far has been written (or failed). */
   whenSaved: () => Promise<void>
 }
@@ -99,6 +118,10 @@ export function createBinderStore(deps: BinderStoreDeps) {
       setOwned: (position, owned) => change((binder) => setOwned(binder, position, owned)),
       setOpeningSide: (pageId, openingSide) =>
         change((binder) => setOpeningSide(binder, pageId, openingSide)),
+      dropCard: (source, target) => change((binder) => applyDrop(binder, source, target, CARD_LANG)),
+      sortCards: (scope, setOrder) =>
+        change((binder) => sortCards(binder, scope, createCardComparator(setOrder))),
+      changeLayout: (layout) => change((binder) => changeLayout(binder, layout)),
       whenSaved: () => pending,
     }
   })
