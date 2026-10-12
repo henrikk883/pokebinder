@@ -363,3 +363,35 @@ test.describe('cards there are several of', () => {
     await expect(pocket(page, 1, 1).getByTestId('copies-badge')).toHaveAttribute('data-export-hide', /.*/)
   })
 })
+
+test.describe('the worth of the collection on the shelf', () => {
+  test('each binder says how much of it is there and what that is worth; above stands the sum', async ({ page }) => {
+    await createMasterSet(page)
+    await collection(page).click()
+    await pocket(page, 1, 1).click()
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'true')
+    // what the binder itself says its owned cards are worth
+    await page.getByRole('button', { name: 'Wert berechnen' }).click()
+    const inBinder = (await page.getByTestId('binder-value').textContent()) ?? ''
+    const owned = /Wert: ([0-9.,]+ €) vorhanden/.exec(inBinder)?.[1]
+    expect(owned).toBeDefined()
+
+    await page.getByRole('button', { name: 'Meine Binder' }).click()
+
+    const tile = page.getByTestId('binder-tile').getByTestId('binder-worth')
+    await expect(tile).toHaveText(`1 / 207 vorhanden · ${owned}`)
+    await expect(page.getByTestId('shelf-total')).toHaveText(`Sammlungswert: ${owned} · 1 von 207 Karten vorhanden`)
+    expect(euros(owned ?? '')).toBeGreaterThan(0)
+
+    // an empty binder beside it changes nothing about the sum and shows no worth
+    await page.getByRole('button', { name: 'Neuer Binder' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Neuer Binder' })
+    await dialog.getByLabel('Name').fill('Leer')
+    await dialog.getByRole('button', { name: 'Anlegen' }).click()
+    await expect(page.getByRole('heading', { name: 'Leer' })).toBeVisible()
+    await page.getByRole('button', { name: 'Meine Binder' }).click()
+    await expect(page.getByTestId('binder-tile')).toHaveCount(2)
+    await expect(page.getByTestId('binder-worth')).toHaveCount(1)
+    await expect(page.getByTestId('shelf-total')).toHaveText(`Sammlungswert: ${owned} · 1 von 207 Karten vorhanden`)
+  })
+})

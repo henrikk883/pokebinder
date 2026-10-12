@@ -291,6 +291,10 @@ export const de = {
     renameLabel: (name: string) => `${name} umbenennen`,
     summary: (layout: string, pageCount: number, cardCount: number) =>
       `${layout.replace('x', ' × ')} · ${pageCount} ${pageCount === 1 ? 'Seite' : 'Seiten'} · ${cardCount} ${cardCount === 1 ? 'Karte' : 'Karten'}`,
+    owned: (owned: number, total: number) => `${owned} / ${total} vorhanden`,
+    worth: (amount: number) => `Sammlungswert: ${formatEuro(amount)} €`,
+    ownedOfAll: (owned: number, total: number) => `${owned} von ${total} Karten vorhanden`,
+    worthPending: 'wird berechnet …',
     loadFailed: 'Die Binder konnten nicht geladen werden.',
     sort: 'Sortierung',
     sorts: {

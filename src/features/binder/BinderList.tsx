@@ -14,7 +14,7 @@ import type { Binder } from '../../types/binder'
 import { confirmDialog, promptDialog } from '../../store/dialogStore'
 import { noteBinderDeleted, requestSync } from '../sync/syncStore'
 import { BinderCover } from './BinderCover'
-import { countCards, renameBinder } from './binderModel'
+import { countCards, countProgress, renameBinder } from './binderModel'
 import {
   BINDER_SORTS,
   DEFAULT_SHELF_PREFS,
@@ -26,11 +26,14 @@ import {
   type ShelfPrefs,
 } from './binderOrder'
 import { useDragSensors } from './dragSensors'
+import { shelfTotal, useShelfValues, type StoredValue } from './shelfValue'
 import { NewBinderDialog } from './NewBinderDialog'
 
 type Listing = { status: 'loading' } | { status: 'ready'; binders: Binder[] } | { status: 'error' }
 
 const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' })
+// the same list every time, so that nothing is worked out anew while the shelf loads
+const NO_BINDERS: readonly Binder[] = []
 
 // How the shelf is ordered is a matter of this browser; it is not part of a backup.
 const SHELF_PREFS_KEY = 'pokebinder:shelf'
@@ -53,6 +56,8 @@ function storeShelfPrefs(prefs: ShelfPrefs): void {
 
 interface BinderTileProps {
   binder: Binder
+  /** What the binder was worth when last looked at; `undefined` while that is unknown. */
+  worth: StoredValue | undefined
   /** In the collector's own order the binder can be dragged to another place. */
   movable: boolean
   isFirst: boolean
@@ -66,7 +71,8 @@ interface BinderTileProps {
 const smallButtonClass =
   'h-8 rounded-control border border-line bg-raised text-xs hover:border-accent disabled:text-muted disabled:hover:border-line'
 
-function BinderTile({ binder, movable, isFirst, isLast, onOpen, onRename, onDelete, onShift }: BinderTileProps) {
+function BinderTile({ binder, worth, movable, isFirst, isLast, onOpen, onRename, onDelete, onShift }: BinderTileProps) {
+  const progress = countProgress(binder)
   const draggable = useDraggable({ id: binder.id, disabled: !movable })
   const droppable = useDroppable({ id: binder.id, disabled: !movable })
   const { transform, isDragging } = draggable
@@ -99,6 +105,12 @@ function BinderTile({ binder, movable, isFirst, isLast, onOpen, onRename, onDele
         <span className="block text-xs text-muted">
           {de.binderList.summary(binder.layout, binder.pages.length, countCards(binder))}
         </span>
+        {progress.total > 0 && (
+          <span data-testid="binder-worth" title={de.price.label} className="block text-xs text-muted">
+            {de.binderList.owned(progress.owned, progress.total)}
+            {worth && ` · ${de.price.amount(worth.value.owned)}`}
+          </span>
+        )}
         <span className="block text-xs text-muted">{dateFormat.format(new Date(binder.updatedAt))}</span>
       </button>
       <div className="shelf-actions mt-2 grid grid-cols-2 gap-2">
@@ -173,7 +185,10 @@ export function BinderList() {
     }
   }, [version, listVersion])
 
-  const binders = listing.status === 'ready' ? sortBinders(listing.binders, prefs.sort, prefs.order) : []
+  const stored = listing.status === 'ready' ? listing.binders : NO_BINDERS
+  const values = useShelfValues(stored)
+  const total = shelfTotal(stored, values)
+  const binders = sortBinders(stored, prefs.sort, prefs.order)
   const custom = prefs.sort === 'custom'
 
   function changePrefs(next: ShelfPrefs) {
@@ -260,6 +275,13 @@ export function BinderList() {
           <p className="text-sm text-muted">{de.binderList.empty}</p>
         </div>
       )}
+      {total.cards > 0 && (
+        <p data-testid="shelf-total" title={de.price.label} className="mt-3 text-sm text-muted">
+          <span className="font-medium text-text">{de.binderList.worth(total.worth)}</span>
+          {` · ${de.binderList.ownedOfAll(total.owned, total.cards)}`}
+          {total.pending > 0 && ` · ${de.binderList.worthPending}`}
+        </p>
+      )}
       {custom && binders.length > 1 && <p className="mt-3 text-sm text-muted">{de.binderList.customHint}</p>}
       {binders.length > 0 && (
         <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
@@ -269,6 +291,7 @@ export function BinderList() {
               <BinderTile
                 key={binder.id}
                 binder={binder}
+                worth={values[binder.id]}
                 movable={custom}
                 isFirst={index === 0}
                 isLast={index === binders.length - 1}

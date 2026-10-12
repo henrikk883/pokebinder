@@ -239,7 +239,7 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 Mit Henrik am 12.10.2026 vereinbart. Die Reihenfolge steht in der Roadmap darunter; hier steht, was jeder Punkt können soll.
 
 1. **Installierbar als App – erledigt.** PokéBinder lässt sich auf Handy, iPad und PC „zum Startbildschirm hinzufügen“: eigenes Symbol, eigener Name, Start ohne Browserleiste. Einmal gesehene Karten und die App selbst öffnen sich auch ohne Netz.
-2. **Sammlungswert im Regal.** Jeder Binder zeigt im Regal seinen Fortschritt (vorhanden / gesamt) und den Wert der vorhandenen Karten; über dem Regal steht die Summe über alle Binder. Preise wie überall: Cardmarket-Preistrend, Karten ohne Preis werden genannt.
+2. **Sammlungswert im Regal – erledigt.** Jeder Binder zeigt im Regal seinen Fortschritt (vorhanden / gesamt) und den Wert der vorhandenen Karten; über dem Regal steht die Summe über alle Binder. Preise wie überall: Cardmarket-Preistrend, Karten ohne Preis werden genannt.
 3. **Karte im Binder finden.** Ein Suchfeld im offenen Binder (Name oder Nummer) zeigt die Treffer und springt zur Seite, auf der die Karte liegt; das Pocket ist danach ausgewählt.
 4. **Preisverlauf.** Die App hält den Wert jedes Binders fest (höchstens einmal am Tag) und zeigt, wie er sich über Wochen und Monate entwickelt hat – je Binder und für die ganze Sammlung. Der Verlauf gleicht sich zwischen den Geräten ab.
 5. **Preisalarm auf der Merkliste.** Zu einer gemerkten Karte lässt sich ein Wunschpreis festlegen; liegt der Preistrend darunter, hebt die Merkliste die Karte hervor und nennt die Zahl solcher Karten am Reiter. Geprüft wird beim Öffnen der App, eine Benachrichtigung von außen gibt es nicht.
@@ -261,7 +261,7 @@ Sechs Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher 
 | Etappe | Punkt | Umfang | Baut auf | Vorher zu klären |
 |---|---|---|---|---|
 | **A – Alltag** | 1 Installierbar als App | klein | Service Worker (vorhanden) | erledigt (Symbol: das bestehende Logo) |
-| | 2 Sammlungswert im Regal | klein | Preise, Fortschritt (vorhanden) | – |
+| | 2 Sammlungswert im Regal | klein | Preise, Fortschritt (vorhanden) | erledigt |
 | | 3 Karte im Binder finden | klein | – | – |
 | **B – Preise** | 4 Preisverlauf | mittel | Punkt 2 | Wie lange zurück? Vorschlag: täglich für 90 Tage, danach wöchentlich |
 | | 5 Preisalarm auf der Merkliste | klein | Merklisten (vorhanden) | – |

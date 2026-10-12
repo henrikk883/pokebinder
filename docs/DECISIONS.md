@@ -463,3 +463,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Meine Annahmen zum Deck Builder (60 Karten, höchstens 4 gleichnamige, Gruppen Pokémon/Trainer/Energie, Abgleich mit den eigenen Bindern) stehen als Vorschlag in REQUIREMENTS.md und werden geklärt, wenn der Punkt dran ist.
 - Nachtrag, mit Henrik geklärt: Decks bekommen ein zweites Regal unter den Bindern; „Meine Binder“ wird dann zu „Meine Karten“. Die App prüft auch, ob die Karten im Format erlaubt sind – TCGdex liefert je Karte `legal.standard` und `legal.expanded`. Welche Formate zur Wahl stehen, ist noch offen.
 - Nachtrag: Das Format ist je Deck wählbar (Standard voreingestellt, Expanded, frei) und später änderbar.
+
+## 2026-10-12 – Sammlungswert im Regal
+- Jeder Binder zeigt im Regal „vorhanden / gesamt“ und den Wert der vorhandenen Karten (Cardmarket-Preistrend, Stückzahlen zählen mit); über dem Regal steht die Summe. Leere Binder zeigen nichts davon.
+- Der Wert wird je Binder im Browser gemerkt (`pokebinder:shelf-values`) und steht beim nächsten Öffnen sofort da. Neu berechnet wird, wenn der Binder sich geändert hat oder der Wert älter als ein Tag ist – ein Binder nach dem anderen, im Hintergrund. Das erste Mal am Tag kostet eine Abfrage je Karte, danach kommen die Preise aus dem Vorrat der App.
+- Kommt für keine einzige Karte ein Preis zurück (kein Netz), bleibt der gemerkte Wert stehen, statt auf 0 zu fallen.
+- Karten ohne Preis zählen im Wert nicht mit; wie viele das sind, sagt weiterhin „Wert berechnen“ im Binder. Im Regal steht es nicht, um die Zeile kurz zu halten.
+- Die gemerkten Werte sind die Grundlage für Punkt 4 (Preisverlauf).
