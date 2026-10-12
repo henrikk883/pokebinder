@@ -13,6 +13,7 @@ import { useCardSearchForm } from './useCardSearchForm'
 import { savedCardCount } from './watchlist'
 import { WatchlistPanel } from './WatchlistPanel'
 import { useWishAlarms } from './wishPrice'
+import { ThemeBrowser } from '../similar/ThemeBrowser'
 
 /** As many cards side by side as fit, each about as wide as a real card in the hand. */
 const WIDE_GRID =
@@ -92,7 +93,7 @@ export function WideSearch({ lang, dragIdPrefix = 'browse', onPick, countOf }: W
   )
 }
 
-type Tab = 'all' | 'saved'
+type Tab = 'all' | 'themes' | 'saved'
 const tabClass = 'border-b-2 px-4 pb-2 text-sm font-medium whitespace-nowrap'
 
 /**
@@ -101,6 +102,8 @@ const tabClass = 'border-b-2 px-4 pb-2 text-sm font-medium whitespace-nowrap'
  */
 export function CardBrowser() {
   const [tab, setTab] = useState<Tab>('all')
+  // the themes bring a file of their own along, which is only loaded once they are looked at
+  const [themesOpened, setThemesOpened] = useState(false)
   const searchLang = useEditorStore((state) => state.searchLang)
   const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
   const alarms = useWishAlarms(useWatchlistStore((state) => state.lists))
@@ -110,13 +113,16 @@ export function CardBrowser() {
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h2 className="text-2xl font-semibold">{de.browse.title}</h2>
         <div role="tablist" aria-label={de.browse.title} className="flex border-b border-line">
-          {(['all', 'saved'] as const).map((option) => (
+          {(['all', 'themes', 'saved'] as const).map((option) => (
             <button
               key={option}
               type="button"
               role="tab"
               aria-selected={tab === option}
-              onClick={() => setTab(option)}
+              onClick={() => {
+                setTab(option)
+                if (option === 'themes') setThemesOpened(true)
+              }}
               className={`${tabClass} ${
                 tab === option ? 'border-accent text-accent-hover' : 'border-transparent text-muted hover:text-text'
               }`}
@@ -137,6 +143,9 @@ export function CardBrowser() {
       {/* both stay mounted, so the search keeps its results while the list is shown */}
       <div className={tab === 'all' ? 'mt-5' : 'hidden'}>
         <WideSearch key={searchLang} lang={searchLang} />
+      </div>
+      <div className={tab === 'themes' ? 'mt-5' : 'hidden'}>
+        {themesOpened && <ThemeBrowser lang={searchLang} gridClass={WIDE_GRID} />}
       </div>
       <div className={tab === 'saved' ? 'mt-5' : 'hidden'}>
         <WatchlistPanel wide gridClass={WIDE_GRID} />

@@ -1,0 +1,9 @@
+{
+  "name": "pokebinder-looks",
+  "private": true,
+  "description": "The image model for scripts/looks/looks.mjs. Kept apart from the app: it is large and only needed on the computer that works out the cards.",
+  "type": "module",
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.1"
+  }
+}

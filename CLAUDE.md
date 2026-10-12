@@ -20,7 +20,7 @@ Private Web-App zum Planen von Pokémon-Karten-Bindern: Karten aus TCGdex suchen
 ## Stack (fest)
 
 React + TypeScript + Vite, Tailwind CSS, Zustand, Dexie (IndexedDB), dnd-kit, @tcgdex/sdk, pdf-lib (mit @pdf-lib/fontkit für die japanische Schrift), Vitest, Playwright; html-to-image erst ab v1.
-Keine weiteren Abhängigkeiten ohne Rückfrage. Kein Tracking, keine externen Dienste außer TCGdex und dessen Bild-URLs sowie den unten genannten Ausnahmen. Die App bleibt ohne Anmeldung und ohne Netz benutzbar; alles liegt zuerst lokal im Browser. Ausnahmen: Kartenbilder von `images.pokemontcg.io` als Ersatz für Karten, von denen TCGdex gar kein Bild hat (nur Bilddateien, keine Kartendaten); und das Hosting der fertigen App als statische Dateien bei Cloudflare (`wrangler.jsonc`), damit sie auch unterwegs erreichbar ist – und – seit dem 12.10.2026, von Henrik gewünscht – ein kleiner Server-Teil dort (`worker/`, Cloudflare Workers mit D1 und R2), über den sich Binder, Bilder und Merklisten zwischen den Geräten eines Sammlers abgleichen. Angemeldet wird per E-Mail-Code über Cloudflare Access, nur für freigeschaltete Adressen (Henrik und wenige Freunde); eigene Passwörter oder eine offene Registrierung gibt es nicht. Seit dem 12.10.2026, ebenfalls von Henrik gewünscht: Ein Sammler kann einen Binder per Link teilen; wer den Link hat, darf genau diesen Binder und dessen Bilder ohne Anmeldung ansehen (`/shared/`), sonst nichts, und nichts ändern. Der Sammler kann den Link jederzeit zurückziehen.
+Dazu, von Henrik am 12.10.2026 freigegeben, ein Bildmodell nur für das Auswertungsskript (`scripts/looks/` mit eigener `package.json`: @huggingface/transformers, lädt das Modell einmalig von Hugging Face); die App selbst bekommt davon nur die Ergebnisdateien. Keine weiteren Abhängigkeiten ohne Rückfrage. Kein Tracking, keine externen Dienste außer TCGdex und dessen Bild-URLs sowie den unten genannten Ausnahmen. Die App bleibt ohne Anmeldung und ohne Netz benutzbar; alles liegt zuerst lokal im Browser. Ausnahmen: Kartenbilder von `images.pokemontcg.io` als Ersatz für Karten, von denen TCGdex gar kein Bild hat (nur Bilddateien, keine Kartendaten); und das Hosting der fertigen App als statische Dateien bei Cloudflare (`wrangler.jsonc`), damit sie auch unterwegs erreichbar ist – und – seit dem 12.10.2026, von Henrik gewünscht – ein kleiner Server-Teil dort (`worker/`, Cloudflare Workers mit D1 und R2), über den sich Binder, Bilder und Merklisten zwischen den Geräten eines Sammlers abgleichen. Angemeldet wird per E-Mail-Code über Cloudflare Access, nur für freigeschaltete Adressen (Henrik und wenige Freunde); eigene Passwörter oder eine offene Registrierung gibt es nicht. Seit dem 12.10.2026, ebenfalls von Henrik gewünscht: Ein Sammler kann einen Binder per Link teilen; wer den Link hat, darf genau diesen Binder und dessen Bilder ohne Anmeldung ansehen (`/shared/`), sonst nichts, und nichts ändern. Der Sammler kann den Link jederzeit zurückziehen.
 
 ## Befehle
 
@@ -29,7 +29,7 @@ Keine weiteren Abhängigkeiten ohne Rückfrage. Kein Tracking, keine externen Di
 - `npm run lint` – ESLint + `tsc --noEmit`
 - `npm test` – Vitest
 - `npm run test:e2e` – Playwright
-- `npm run colours` – Farben neuer Kartenbilder auswerten (nach jedem neuen Set)
+- `npm run colours` – neue Kartenbilder auswerten: Farben, Bildmodell, Themen (nach jedem neuen Set)
 
 ## Struktur
 
@@ -46,7 +46,7 @@ src/
     share/      Binder per Link teilen und geteilte Binder ansehen
     import/     Kartenlisten einlesen (kopierte Cardmarket-Wunschliste)
     landing/    Startseite
-    similar/    Karten mit ähnlichen Farben finden (Farbdaten aus `npm run colours` in public/colours/)
+    similar/    Ähnliche Karten und Themen (Daten aus `npm run colours` in public/colours/)
     export/     JSON-Backup, PDF-Fehlliste, später PNG
   store/        Zustand-Stores
   db/           Dexie-Schema und Zugriff

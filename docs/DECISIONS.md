@@ -608,3 +608,12 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Bei diesen Karten zählt die ganze Karte ohne Rand statt nur des Bildfensters, weil das Bild die Karte füllt. Ausgehen kann man weiter von jeder Karte; bei gewöhnlichen zählt das Bildfenster.
 - `public/colours/cards.json` nennt dafür, wie viele Karten am Anfang zu den hohen Seltenheiten gehören.
 - Nebenbei behoben: Hat eine Karte in der eigenen Sprache kein Bild, wird der Treffer auf Englisch gezeigt.
+
+## 2026-10-12 – Bildmodell für ähnliche Karten, Themen unter „Karten stöbern“
+- Henrik hat eine Herbstseite als Ziel abgelegt (`docs/KartenSucheVorlage*.png`). Gemessen an neun ihrer Karten: Wie viele der acht anderen stehen unter den 24 Vorschlägen? Nur Farben 19 von 72, nur Bildmodell 15, beides zusammen 24–25. Andere Farbvergleiche (Nachbarfarbtöne, Lab-Farbraum, Lage der Farben) brachten nichts.
+- Viel besser passt die Suche nach einem Thema in Worten: „goldener Herbst“ findet zwei Karten der Vorlage auf Platz 1 und 2 und sechs von neun unter den ersten 60. Deshalb gibt es Themen.
+- Bildmodell: CLIP (Xenova/clip-vit-base-patch32) über @huggingface/transformers, von Henrik freigegeben. Es läuft nur im Auswertungsskript auf dem eigenen Rechner. Weil die Bibliothek über 1 GB groß ist, hat `scripts/looks/` eine eigene `package.json`; der Build der App bei Cloudflare installiert sie nicht.
+- `npm run colours` macht jetzt beides nacheinander. Ergebnis: `public/colours/looks.bin` (512 Zahlen je Karte als ganze Zahlen, 1,4 MB) und `looks.json` (Karten und je Thema die 60 passendsten). Die App lädt sie erst bei Bedarf.
+- „Ähnliche Karten“ (vorher „Ähnliche Farben“): drei Viertel Bildmodell, ein Viertel Farben. Geht man von einer gewöhnlichen Karte aus, die das Modell nicht angesehen hat, zählen die Farben allein.
+- Themen stehen als fester Satz im Skript (englische Beschreibung für das Modell) und mit deutschem Namen in `de.ts`. Von mir gewählt, da Henrik keine Liste genannt hat: 14 Themen. Ausprobiert und weggelassen, weil die Treffer nicht passten: Himmel, Höhle, Gewitter, Regen, Weltraum.
+- Themen nur unter „Karten stöbern“ als eigener Reiter (Entscheidung Henrik), gezeigt werden 48 Karten je Thema.

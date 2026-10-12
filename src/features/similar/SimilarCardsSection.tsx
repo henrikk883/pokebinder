@@ -11,7 +11,7 @@ interface SimilarCardsSectionProps {
   lang: CardLang
 }
 
-/** Below a card's info: the cards whose pictures have the most similar colours. */
+/** Below a card's info: the cards of the high rarities that look most like it. */
 export function SimilarCardsSection({ cardId, lang }: SimilarCardsSectionProps) {
   const similar = useSimilarCards(cardId, lang)
   const ownSets = useReadyCatalog(lang)?.setsById
