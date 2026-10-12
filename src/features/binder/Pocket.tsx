@@ -101,7 +101,11 @@ function PocketCard({ position, cardRef, owned }: PocketCardProps) {
           {holo && <span aria-hidden="true" data-export-hide className="holo-shine" />}
         </div>
       ) : (
-        <div className="flex aspect-[63/88] w-full items-center justify-center rounded-pocket bg-raised p-1 text-center text-[0.65rem] text-muted">
+        <div
+          // still being looked up: an export of this page waits for it
+          data-pending={card === undefined ? '' : undefined}
+          className="flex aspect-[63/88] w-full items-center justify-center rounded-pocket bg-raised p-1 text-center text-[0.65rem] text-muted"
+        >
           {card === null ? de.binder.unknownCard : ''}
         </div>
       )}

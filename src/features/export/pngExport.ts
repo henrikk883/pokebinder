@@ -1,11 +1,8 @@
-/** Width of an exported double page in pixels; a single page gets half of it. */
-export const SPREAD_EXPORT_WIDTH = 3000
+/** Width of an exported binder page in pixels, whatever the zoom on screen. */
+export const PAGE_EXPORT_WIDTH = 1500
 
-/** What to export: both open sides, or one page by its number. */
-export type PngTarget = { kind: 'spread'; pages: number[] } | { kind: 'page'; page: number }
-
-/** File name for an exported image, e.g. `kanto-collection-seiten-2-3.png`. */
-export function pngFileName(binderName: string, target: PngTarget): string {
+/** File name for an exported page, e.g. `kanto-collection-seite-4.png`. */
+export function pngFileName(binderName: string, page: number): string {
   const slug = binderName
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
@@ -13,10 +10,7 @@ export function pngFileName(binderName: string, target: PngTarget): string {
     .replace(/ß/g, 'ss')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-  const pages = target.kind === 'page' ? [target.page] : target.pages
-  const part =
-    pages.length === 0 ? 'cover' : `${pages.length === 1 ? 'seite' : 'seiten'}-${pages.join('-')}`
-  return `${slug || 'binder'}-${part}.png`
+  return `${slug || 'binder'}-seite-${page}.png`
 }
 
 /** How much larger than on screen the image must be drawn to reach the wanted width. */
@@ -24,33 +18,74 @@ export function exportScale(elementWidth: number, targetWidth: number): number {
   return elementWidth > 0 ? targetWidth / elementWidth : 1
 }
 
-/** CSS selector of the element that shows the target; see `data-export` in the binder components. */
-export function exportSelector(target: PngTarget): string {
-  return target.kind === 'spread' ? '[data-export="spread"]' : `[data-export="page-${target.page}"]`
+/** CSS selector of the element that shows a page; see `data-export` in the binder components. */
+export function exportSelector(page: number): string {
+  return `[data-export="page-${page}"]`
+}
+
+const FRAME_SELECTOR = '[data-export="spread"]'
+
+/** How long a page may take to show all its cards before it is exported as it is. */
+const SETTLE_TIMEOUT_MS = 10_000
+
+/**
+ * Waits until a page that was just turned to shows everything: its cards are looked up
+ * (`data-pending` gone) and their pictures have loaded or are known to be missing.
+ */
+export async function pageSettled(page: number, timeoutMs = SETTLE_TIMEOUT_MS): Promise<HTMLElement> {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const element = document.querySelector<HTMLElement>(exportSelector(page))
+    if (element) {
+      const pending = element.querySelector('[data-pending]') !== null
+      const loading = [...element.querySelectorAll('img')].some((image) => !image.complete)
+      if ((!pending && !loading) || Date.now() > deadline) return element
+    } else if (Date.now() > deadline) {
+      throw new Error(`Page ${page} is not shown`)
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
 }
 
 /**
- * Draws the open binder, or one page of it, into a PNG and offers it as a download.
- * The image has a fixed width, whatever the zoom on screen. Buttons are left out
- * (`data-export-hide`); cards marked as missing stay black and white.
+ * Draws one page of the binder, as it is shown right now, into a PNG and offers it as a
+ * download. Buttons are left out (`data-export-hide`); cards marked as missing stay black
+ * and white.
  */
-export async function downloadPng(binderName: string, target: PngTarget): Promise<void> {
-  const element = document.querySelector<HTMLElement>(exportSelector(target))
-  if (!element) throw new Error('Nothing to export')
-  const frame = document.querySelector<HTMLElement>(exportSelector({ kind: 'spread', pages: [] }))
-  const width = target.kind === 'spread' ? SPREAD_EXPORT_WIDTH : SPREAD_EXPORT_WIDTH / 2
+export async function downloadPagePng(binderName: string, page: number): Promise<void> {
+  const element = await pageSettled(page)
+  const frame = document.querySelector<HTMLElement>(FRAME_SELECTOR)
 
   // the library is large and only needed here, so it is loaded on demand
   const { toPng } = await import('html-to-image')
   const dataUrl = await toPng(element, {
-    pixelRatio: exportScale(element.offsetWidth, width),
-    // a single page has no background of its own; it takes the binder's
+    pixelRatio: exportScale(element.offsetWidth, PAGE_EXPORT_WIDTH),
+    // a page has no background of its own; it takes the binder's
     backgroundColor: getComputedStyle(frame ?? element).backgroundColor,
     filter: (node) => !(node instanceof HTMLElement && node.dataset.exportHide !== undefined),
   })
 
   const link = document.createElement('a')
   link.href = dataUrl
-  link.download = pngFileName(binderName, target)
+  link.download = pngFileName(binderName, page)
   link.click()
+}
+
+/**
+ * Exports several pages, one PNG each. Only the open pages exist on screen, so `showPage`
+ * is asked to turn to each page first.
+ */
+export async function downloadPagePngs(
+  binderName: string,
+  pages: readonly number[],
+  showPage: (page: number) => void,
+  onProgress?: (done: number, total: number) => void,
+): Promise<void> {
+  for (const [index, page] of pages.entries()) {
+    showPage(page)
+    // let the page turn before looking for it
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)))
+    await downloadPagePng(binderName, page)
+    onProgress?.(index + 1, pages.length)
+  }
 }

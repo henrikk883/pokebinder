@@ -144,7 +144,12 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
         />
       )}
       <MissingListMenu binder={binder} buttonClass={buttonClass} />
-      <PngMenu binderName={binder.name} pages={pageNumbersOf(spread)} buttonClass={buttonClass} />
+      <PngMenu
+        binderName={binder.name}
+        pageCount={binder.pages.length}
+        openPages={pageNumbersOf(spread)}
+        buttonClass={buttonClass}
+      />
       <div className="flex">
         <button
           type="button"

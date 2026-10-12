@@ -45,8 +45,23 @@ const tile = (page: Page, cardId: string) =>
 async function exportPng(page: Page, entry: string): Promise<Download> {
   await page.getByRole('button', { name: 'Als PNG' }).click()
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('menuitem', { name: entry }).click()
+  await page.getByRole('menuitem', { name: entry, exact: true }).click()
   return downloadPromise
+}
+
+/** Ticks pages in the window "Seiten als PNG" and returns all files that are then offered. */
+async function exportSeveral(page: Page, pages: number[]): Promise<Download[]> {
+  const downloads: Download[] = []
+  page.on('download', (download) => downloads.push(download))
+  await page.getByRole('button', { name: 'Als PNG' }).click()
+  await page.getByRole('menuitem', { name: 'Mehrere Seiten …' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Seiten als PNG' })
+  await dialog.getByRole('button', { name: 'Keine' }).click()
+  for (const number of pages) await dialog.getByLabel(`Seite ${number}`, { exact: true }).check()
+  await dialog.getByRole('button', { name: /exportieren$/ }).click()
+  await expect.poll(() => downloads.length, { timeout: 30_000 }).toBe(pages.length)
+  await expect(page.getByRole('button', { name: 'Als PNG' })).toBeEnabled()
+  return downloads
 }
 
 /** Width and height from the header of a PNG file. */
@@ -84,25 +99,115 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('PNG export', () => {
-  test('the double page is exported 3000 px wide, whatever the zoom', async ({ page }) => {
+  test('a page is exported 1500 px wide, whatever the zoom', async ({ page }) => {
     await createBinder(page, 'Kanto Collection', 3)
     await expect(page.getByTestId('spread-label')).toHaveText('Seiten 2 – 3')
     await show151(page)
     await drag(page, tile(page, 'sv03.5-001'), pocket(page, 2, 1))
     await expect(pocket(page, 2, 1)).toHaveAttribute('data-card-id', 'sv03.5-001')
 
-    const first = await exportPng(page, 'Doppelseite')
-    expect(first.suggestedFilename()).toBe('kanto-collection-seiten-2-3.png')
+    // the menu offers the pages that lie open, and the choice of several
+    await page.getByRole('button', { name: 'Als PNG' }).click()
+    await expect(page.getByRole('menuitem')).toHaveText(['Seite 2', 'Seite 3', 'Mehrere Seiten …'])
+    await page.keyboard.press('Escape')
+
+    const first = await exportPng(page, 'Seite 2')
+    expect(first.suggestedFilename()).toBe('kanto-collection-seite-2.png')
     const atDefaultZoom = await pngSize(first)
-    expect(atDefaultZoom.width).toBe(3000)
+    expect(atDefaultZoom.width).toBe(1500)
     expect(atDefaultZoom.height).toBeGreaterThan(1500)
-    expect(atDefaultZoom.bytes).toBeGreaterThan(10_000)
+    expect(atDefaultZoom.bytes).toBeGreaterThan(5_000)
 
     for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'Vergrößern' }).click()
     await expect(page.getByTestId('zoom-value')).toHaveText('110 %')
-    const zoomed = await pngSize(await exportPng(page, 'Doppelseite'))
-    expect(zoomed.width).toBe(3000)
+    const zoomed = await pngSize(await exportPng(page, 'Seite 2'))
+    expect(zoomed.width).toBe(1500)
     expect(Math.abs(zoomed.height - atDefaultZoom.height)).toBeLessThan(40)
+  })
+
+  test('several ticked pages become one image each, also pages that are not open', async ({ page }) => {
+    await createBinder(page, 'Seitenwahl', 9)
+    // an orange image behind the whole of page 8, a green one behind page 5
+    for (const [pageNumber, colour] of [[8, [230, 90, 30]], [5, [20, 160, 60]]] as const) {
+      await page
+        .getByRole('navigation', { name: 'Doppelseiten' })
+        .getByRole('button', { name: new RegExp(`Seiten? .*\\b${pageNumber}\\b`) })
+        .click()
+      await pocket(page, pageNumber, 1).click()
+      await page.getByLabel('Bild hinzufügen').setInputFiles(pngFile('bild.png', makePng(300, 300, [...colour])))
+      await page.getByRole('button', { name: 'Ganze Seite' }).click()
+      await expect(page.locator('[data-testid="pocket"][data-over-image="true"]')).toHaveCount(9)
+    }
+    await page.getByRole('navigation', { name: 'Doppelseiten' }).getByRole('button', { name: 'Seiten 2 – 3' }).click()
+    await expect(page.getByTestId('spread-label')).toHaveText('Seiten 2 – 3')
+
+    // the window lists every page of the binder and starts with the open ones ticked
+    await page.getByRole('button', { name: 'Als PNG' }).click()
+    await page.getByRole('menuitem', { name: 'Mehrere Seiten …' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Seiten als PNG' })
+    await expect(dialog.getByRole('checkbox')).toHaveCount(9)
+    await expect(dialog.getByLabel('Seite 2', { exact: true })).toBeChecked()
+    await expect(dialog.getByLabel('Seite 3', { exact: true })).toBeChecked()
+    await expect(dialog.getByLabel('Seite 4', { exact: true })).not.toBeChecked()
+    await expect(dialog.getByRole('button', { name: '2 Seiten exportieren' })).toBeVisible()
+    await dialog.getByRole('button', { name: 'Keine' }).click()
+    await expect(dialog.getByRole('button', { name: /exportieren$/ })).toBeDisabled()
+    await dialog.getByRole('button', { name: 'Alle' }).click()
+    await expect(dialog.getByRole('button', { name: '9 Seiten exportieren' })).toBeVisible()
+    await dialog.getByRole('button', { name: 'Abbrechen' }).click()
+
+    const downloads = await exportSeveral(page, [4, 5, 8, 9])
+
+    expect(downloads.map((download) => download.suggestedFilename())).toEqual([
+      'seitenwahl-seite-4.png',
+      'seitenwahl-seite-5.png',
+      'seitenwahl-seite-8.png',
+      'seitenwahl-seite-9.png',
+    ])
+    for (const download of downloads) expect((await pngSize(download)).width).toBe(1500)
+
+    // each file shows its own page: 5 is green, 8 is orange, 4 and 9 are empty and dark
+    const centre = (download: Download | undefined) => {
+      if (!download) throw new Error('Download missing')
+      return pixelOf(page, download, 0.5, 0.2)
+    }
+    const [four, five, eight, nine] = await Promise.all(downloads.map(centre))
+    expect(five?.[1]).toBeGreaterThan(120)
+    expect(five?.[0]).toBeLessThan(80)
+    expect(eight?.[0]).toBeGreaterThan(200)
+    expect(eight?.[2]).toBeLessThan(70)
+    expect(Math.max(...(four ?? [255]))).toBeLessThan(60)
+    expect(Math.max(...(nine ?? [255]))).toBeLessThan(60)
+
+    // afterwards the binder lies open where it was
+    await expect(page.getByTestId('spread-label')).toHaveText('Seiten 2 – 3')
+  })
+
+  test('exported pages of a master set show their cards', async ({ page }) => {
+    await page.getByRole('button', { name: 'Neuer Binder' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Neuer Binder' })
+    await dialog.getByText('Master Set', { exact: true }).click()
+    await dialog.getByRole('button', { name: 'Set', exact: true }).click()
+    await dialog.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+    await expect(dialog.getByTestId('master-set-summary')).toBeVisible()
+    await dialog.getByRole('button', { name: 'Anlegen' }).click()
+    await expect(page.getByRole('heading', { name: '151', exact: true })).toBeVisible()
+
+    // pages 20 and 23 have never been shown; their cards are looked up during the export
+    const downloads = await exportSeveral(page, [1, 20, 23])
+
+    expect(downloads.map((download) => download.suggestedFilename())).toEqual([
+      '151-seite-1.png',
+      '151-seite-20.png',
+      '151-seite-23.png',
+    ])
+    for (const download of downloads) {
+      const size = await pngSize(download)
+      expect(size.width).toBe(1500)
+      // nine card pictures make a far larger file than nine empty pockets
+      expect(size.bytes).toBeGreaterThan(20_000)
+    }
+    await expect(page.getByTestId('spread-label')).toHaveText('Seite 1')
   })
 
   test('a single page is exported with its own image and cards, without buttons or selection', async ({ page }) => {
@@ -115,7 +220,7 @@ test.describe('PNG export', () => {
     // the pocket stays selected: the export must not show the violet frame around it
     await expect(pocket(page, 2, 1)).toHaveAttribute('aria-pressed', 'true')
 
-    const download = await exportPng(page, 'Nur Seite 2')
+    const download = await exportPng(page, 'Seite 2')
     expect(download.suggestedFilename()).toBe('einzelseite-seite-2.png')
     const size = await pngSize(download)
     expect(size.width).toBe(1500)
@@ -133,18 +238,17 @@ test.describe('PNG export', () => {
     await expect(pocket(page, 2, 1)).toHaveAttribute('aria-pressed', 'false')
   })
 
-  test('page 1 is exported next to the cover', async ({ page }) => {
+  test('page 1 is exported without the cover next to it', async ({ page }) => {
     await createBinder(page, 'Deckblatt')
 
     await page.getByRole('button', { name: 'Als PNG' }).click()
-    // only what lies open is offered
-    await expect(page.getByRole('menuitem')).toHaveText(['Doppelseite', 'Nur Seite 1'])
+    await expect(page.getByRole('menuitem')).toHaveText(['Seite 1', 'Mehrere Seiten …'])
     const downloadPromise = page.waitForEvent('download')
-    await page.getByRole('menuitem', { name: 'Doppelseite' }).click()
+    await page.getByRole('menuitem', { name: 'Seite 1', exact: true }).click()
     const download = await downloadPromise
 
     expect(download.suggestedFilename()).toBe('deckblatt-seite-1.png')
-    expect((await pngSize(download)).width).toBe(3000)
+    expect((await pngSize(download)).width).toBe(1500)
   })
 })
 

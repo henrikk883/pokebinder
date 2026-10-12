@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const port = 5173
+// Not 5173: that is where the app itself runs ("PokeBinder starten.cmd", npm run dev).
+// The tests must never pick up a running app with an older build, nor touch its data.
+const port = 5174
 
 export default defineConfig({
   testDir: 'tests/e2e',

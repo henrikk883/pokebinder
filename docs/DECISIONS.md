@@ -205,6 +205,12 @@ Ein Pocket merkte sich, dass ein englisches Ersatzbild nicht ladbar war, und zei
 ## 2026-10-12 – PNG-Export: feste Breite, Doppelseite oder einzelne Seite
 „Als PNG“ exportiert die aufgeschlagene Doppelseite mit 3000 px Breite oder eine ihrer Seiten mit 1500 px, unabhängig vom Zoom. Das Bild zeigt Karten, eigene Bilder, Öffnungs-Markierungen und die Seitenbeschriftung; Auswahlrahmen und Knöpfe fehlen, fehlende Karten bleiben schwarz-weiß. Von Henrik freigegeben. Kartenbilder werden dafür mit CORS angefordert, was TCGdex erlaubt.
 
+## 2026-10-12 – PNG-Export nur noch seitenweise, mit Seitenauswahl
+Der Doppelseiten-Export ist entfernt; er zeigte laut Henrik nicht alles. „Als PNG“ bietet die aufgeschlagenen Seiten einzeln an und „Mehrere Seiten …“: ein Fenster mit einem Kästchen je Seite des Binders (dazu „Alle“ und „Keine“), aus dem jede angekreuzte Seite ein eigenes Bild mit 1500 px Breite wird, benannt nach Binder und Seitenzahl. Für den Export blättert die App nacheinander zu jeder Seite, wartet, bis Karten und Bilder geladen sind, und kehrt danach zur vorher offenen Stelle zurück. Kartenbilder im Binder werden deshalb sofort geladen statt erst beim Scrollen. Ersetzt die Regel „Doppelseite oder einzelne Seite“ weiter oben. Von Henrik gewünscht.
+
+## 2026-10-12 – Playwright-Tests auf eigenem Port
+Die Tests starten ihren Server auf Port 5174. Auf 5173 läuft die App selbst; ein dort laufender älterer Stand war von den Tests versehentlich mitbenutzt worden.
+
 ## 2026-10-12 – Undo/Redo: 100 Schritte, nicht gespeichert
 „Rückgängig“ und „Wiederholen“ (Strg+Z, Strg+Y oder Strg+Umschalt+Z) gelten für jede Änderung am geöffneten Binder. Der Verlauf beginnt neu, wenn ein Binder geöffnet, geschlossen oder die Seite neu geladen wird; der zurückgenommene Stand wird sofort gespeichert. Abgelehnte Aktionen und solche ohne Wirkung zählen nicht als Schritt. In Textfeldern gilt Strg+Z weiter für den Text. Von Henrik freigegeben.
 

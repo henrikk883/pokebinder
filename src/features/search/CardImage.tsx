@@ -28,6 +28,9 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
   // English scan of the next.
   const [failedSubstitute, setFailedSubstitute] = useState<string>()
   const tone = missing ? 'grayscale' : ''
+  // The long search lists load their small pictures as they scroll into view. Binder pages
+  // load theirs at once, so that a page is complete when it is exported.
+  const loading = size === 'small' ? 'lazy' : 'eager'
   const substitute = card.image || !set ? undefined : cardImageUrl(englishCardImage(card, set), size)
 
   if (card.image) {
@@ -38,7 +41,7 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
         crossOrigin="anonymous"
         src={cardImageUrl(card.image, size)}
         alt={card.name}
-        loading="lazy"
+        loading={loading}
         decoding="async"
         draggable={false}
         className={`${frameClass} bg-raised object-cover ${tone}`}
@@ -55,7 +58,7 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
         src={substitute}
         alt={de.search.substituteImage(card.name)}
         title={de.search.substituteHint}
-        loading="lazy"
+        loading={loading}
         decoding="async"
         draggable={false}
         onError={() => setFailedSubstitute(substitute)}
