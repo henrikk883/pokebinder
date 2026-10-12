@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { binderRepository } from '../../db/binderRepository'
 import { de } from '../../i18n/de'
 import { binderStore, useBinderStore } from '../../store/binderStore'
+import { useDeckStore } from '../../store/deckStore'
 import { useEditorStore } from '../../store/editorStore'
 import { BackupError, backupReminder, type BackupReminder } from './backup'
 import {
@@ -109,6 +110,8 @@ export function BackupMenu() {
           : undefined
       if (opened) binderStore.getState().openBinder(opened)
       else binderStore.getState().closeBinder()
+      // a deck that lies open may have been replaced by the one from the file
+      useDeckStore.getState().closeDeck()
       // what came in is to be seen, wherever the file was chosen
       useEditorStore.getState().showView('binders')
       useEditorStore.getState().refreshBinderList()
@@ -189,6 +192,7 @@ export function BackupMenu() {
         <ImportDialog
           entries={pending.entries}
           withWatchlists={pending.watchlists !== undefined}
+          withDecks={(pending.decks?.length ?? 0) > 0}
           onImport={(binderIds) => store(pending, binderIds)}
           onCancel={() => setPending(null)}
         />

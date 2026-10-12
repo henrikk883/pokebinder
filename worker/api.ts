@@ -10,6 +10,7 @@ import type { AssetRecord, SyncStore } from './store'
  *   GET    /api/binders/:id           one binder
  *   PUT    /api/binders/:id           { binder, base }  store a version
  *   DELETE /api/binders/:id           { deletedAt, base }  record its deletion
+ *   …      /api/decks, /api/decks/:id   the same for decks, with { deck, base }
  *   GET    /api/watchlists            the lists, or none
  *   PUT    /api/watchlists            { updatedAt, lists, base }
  *   GET    /api/assets                every image on record (without the pictures)
@@ -62,17 +63,22 @@ export async function handleApi(request: Request, user: string, store: SyncStore
     return method === 'GET' ? json({ email: user }) : refuse(405, 'method')
   }
 
-  if (resource === 'binders') {
+  if (resource === 'binders' || resource === 'decks') {
+    // decks are kept exactly like binders: same rules, another list, another word
+    const records =
+      resource === 'binders'
+        ? { one: 'binder', list: store.listBinders, get: store.getBinder, put: store.putBinder, remove: store.deleteBinder }
+        : { one: 'deck', list: store.listDecks, get: store.getDeck, put: store.putDeck, remove: store.deleteDeck }
     if (id === undefined) {
-      return method === 'GET' ? json({ binders: await store.listBinders(user) }) : refuse(405, 'method')
+      return method === 'GET' ? json({ [resource]: await records.list(user) }) : refuse(405, 'method')
     }
     if (!ID.test(id)) return refuse(400, 'id')
     if (method === 'GET') {
-      const data = await store.getBinder(user, id)
+      const data = await records.get(user, id)
       // stored as the text it came in; passed on as it is
       return data === undefined
         ? refuse(404, 'not found')
-        : new Response(`{"binder":${data}}`, {
+        : new Response(`{"${records.one}":${data}}`, {
             headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
           })
     }
@@ -80,13 +86,13 @@ export async function handleApi(request: Request, user: string, store: SyncStore
       const body = await readJson(request)
       if (body instanceof Response) return body
       const base = baseOf(body.base)
-      const { binder } = body
-      if (base === undefined || !isRecord(binder)) return refuse(400, 'body')
-      if (binder.id !== id || typeof binder.updatedAt !== 'string' || binder.updatedAt === '') {
-        return refuse(400, 'binder')
+      const record = body[records.one]
+      if (base === undefined || !isRecord(record)) return refuse(400, 'body')
+      if (record.id !== id || typeof record.updatedAt !== 'string' || record.updatedAt === '') {
+        return refuse(400, records.one)
       }
-      const result = await store.putBinder(user, id, binder.updatedAt, JSON.stringify(binder), base)
-      return result.ok ? json({ updatedAt: binder.updatedAt }) : json({ current: result.current }, 409)
+      const result = await records.put(user, id, record.updatedAt, JSON.stringify(record), base)
+      return result.ok ? json({ updatedAt: record.updatedAt }) : json({ current: result.current }, 409)
     }
     if (method === 'DELETE') {
       const body = await readJson(request)
@@ -95,7 +101,7 @@ export async function handleApi(request: Request, user: string, store: SyncStore
       if (base === undefined || typeof body.deletedAt !== 'string' || body.deletedAt === '') {
         return refuse(400, 'body')
       }
-      const result = await store.deleteBinder(user, id, body.deletedAt, base)
+      const result = await records.remove(user, id, body.deletedAt, base)
       return result.ok ? json({ updatedAt: body.deletedAt }) : json({ current: result.current }, 409)
     }
     return refuse(405, 'method')

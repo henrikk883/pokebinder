@@ -56,7 +56,9 @@ export function SyncConflictDialog({ conflicts, onApply, onCancel }: SyncConflic
           {conflicts.map((conflict) => (
             <li key={conflict.id}>
               <fieldset className="space-y-2 rounded-control border border-line bg-raised p-3 text-sm">
-                <legend className="max-w-full truncate px-1 font-medium text-text">{conflict.name}</legend>
+                <legend className="max-w-full truncate px-1 font-medium text-text">
+                  {conflict.name} <span className="font-normal text-muted">· {de.sync.kinds[conflict.kind]}</span>
+                </legend>
                 {(['local', 'remote'] as const).map((side) => (
                   <label key={side} className={optionClass}>
                     <input

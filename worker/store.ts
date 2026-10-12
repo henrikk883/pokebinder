@@ -38,6 +38,12 @@ export interface SyncStore {
   /** Records that a binder was deleted, under the same rule as `putBinder`. */
   deleteBinder(user: string, id: string, deletedAt: string, base: string | null): Promise<WriteResult>
 
+  /** Decks are kept exactly like binders, in a list of their own. */
+  listDecks(user: string): Promise<BinderRecord[]>
+  getDeck(user: string, id: string): Promise<string | undefined>
+  putDeck(user: string, id: string, updatedAt: string, data: string, base: string | null): Promise<WriteResult>
+  deleteDeck(user: string, id: string, deletedAt: string, base: string | null): Promise<WriteResult>
+
   getWatchlists(user: string): Promise<{ updatedAt: string; data: string } | undefined>
   /** Stores the lists if the server still has what the device last saw (`base`). */
   putWatchlists(

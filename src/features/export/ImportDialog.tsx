@@ -6,6 +6,8 @@ interface ImportDialogProps {
   entries: readonly ImportEntry[]
   /** The file also brings "Merklisten", which are merged with those of this device. */
   withWatchlists: boolean
+  /** The file also brings decks; those that are new or newer are taken. */
+  withDecks?: boolean
   onImport: (binderIds: string[]) => void
   onCancel: () => void
 }
@@ -19,7 +21,7 @@ const buttonClass = 'h-10 rounded-control border border-line bg-raised px-4 text
  * Asked before a backup replaces binders of this device: which side has the later version
  * of each, and which ones are to be read. What is new or newer is ticked to begin with.
  */
-export function ImportDialog({ entries, withWatchlists, onImport, onCancel }: ImportDialogProps) {
+export function ImportDialog({ entries, withWatchlists, withDecks = false, onImport, onCancel }: ImportDialogProps) {
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set(suggestedImport(entries)))
 
   function toggle(binderId: string, checked: boolean) {
@@ -86,6 +88,7 @@ export function ImportDialog({ entries, withWatchlists, onImport, onCancel }: Im
           })}
         </ul>
         {withWatchlists && <p className="text-sm text-muted">{de.importDialog.watchlists}</p>}
+        {withDecks && <p className="text-sm text-muted">{de.importDialog.decks}</p>}
 
         <div className="flex justify-end gap-3 pt-1">
           <button type="button" onClick={onCancel} className={buttonClass}>

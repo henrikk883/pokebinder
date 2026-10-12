@@ -1,8 +1,9 @@
 import type { Asset, Binder } from '../../types/binder'
+import type { Deck } from '../../types/deck'
 import { referencedAssetIds } from '../export/backup'
 import { mergeWatchlists, parseWatchlists, savedCardCount, type Watchlist } from '../search/watchlist'
 import type { SyncApi } from './syncApi'
-import { planSync } from './syncPlan'
+import { planSync, type RemoteEntry, type SyncBase } from './syncPlan'
 import { EMPTY_SYNC_STATE, type SyncStateStorage } from './syncState'
 
 /** What a sync works with; the app hands in its database and stores, tests their own. */
@@ -14,7 +15,13 @@ export interface SyncDeps {
     save(binder: Binder): Promise<void>
     remove(id: string): Promise<void>
   }
-  /** The collector's own images, which binders refer to by id. */
+  decks: {
+    list(): Promise<Deck[]>
+    load(id: string): Promise<Deck | undefined>
+    save(deck: Deck): Promise<void>
+    remove(id: string): Promise<void>
+  }
+  /** The collector's own images, which binders and deck boxes refer to by id. */
   assets: {
     ids(): Promise<string[]>
     load(ids: string[]): Promise<Asset[]>
@@ -22,6 +29,7 @@ export interface SyncDeps {
   }
   /** Checks a binder that came from the server; throws if it cannot be used. */
   readBinder: (value: unknown) => Binder
+  readDeck: (value: unknown) => Deck
   lists: {
     get(): Watchlist[]
     /** Puts other lists in place without that counting as a change made here. */
@@ -31,9 +39,10 @@ export interface SyncDeps {
   now: () => string
 }
 
-/** A binder changed on this device and on another one since they last agreed. */
+/** A binder or a deck changed on this device and on another one since they last agreed. */
 export interface SyncConflict {
   id: string
+  kind: 'binder' | 'deck'
   name: string
   localUpdatedAt: string
   remoteUpdatedAt: string
@@ -47,6 +56,8 @@ export interface SyncResult {
   conflicts: SyncConflict[]
   /** Binders of this device that were replaced, added or removed. */
   changed: string[]
+  /** The same for decks. */
+  changedDecks: string[]
   /** How many images this device was missing and now has. */
   imagesFetched: number
 }
@@ -101,12 +112,15 @@ async function syncLists({ api, lists, state: storage, now }: SyncDeps): Promise
 }
 
 /**
- * Images travel with the binders that use them: what a binder of this device shows is
- * sent if the server lacks it, and fetched if this device does. Images never change and
- * are never deleted by a sync; one that no binder uses stays where it is.
+ * Images travel with the binders and deck boxes that use them: what one of this device
+ * shows is sent if the server lacks it, and fetched if this device does. Images never
+ * change and are never deleted by a sync; one that nothing uses stays where it is.
  */
-async function syncImages({ api, binders, assets }: SyncDeps): Promise<number> {
-  const needed = new Set((await binders.list()).flatMap(referencedAssetIds))
+async function syncImages({ api, binders, decks, assets }: SyncDeps): Promise<number> {
+  const needed = new Set([
+    ...(await binders.list()).flatMap(referencedAssetIds),
+    ...(await decks.list()).flatMap((deck) => deck.coverAssetId ?? []),
+  ])
   if (needed.size === 0) return 0
   const here = new Set(await assets.ids())
   const there = new Map((await api.listAssets()).map((record) => [record.id, record]))
@@ -129,78 +143,106 @@ async function syncImages({ api, binders, assets }: SyncDeps): Promise<number> {
   return fetched
 }
 
-/**
- * Brings the binders and lists of this device in line with the server's, for the
- * collector who is signed in. What can be settled without asking is settled; binders
- * changed on both sides are reported and left alone until `decisions` says which to keep.
- * Throws if the server cannot be reached; what was done until then stays done.
- */
-export async function runSync(deps: SyncDeps, email: string, decisions: SyncDecisions = {}): Promise<SyncResult> {
-  const { api, binders, state: storage } = deps
-  let state = storage.read()
-  if (state.user !== email) {
-    state = { ...EMPTY_SYNC_STATE, user: email }
-    storage.write(state)
-  }
+/** What is synced one by one: binders and decks. Each has an id, a name and a time of its last change. */
+interface Syncable {
+  id: string
+  name: string
+  updatedAt: string
+}
 
-  const local = await binders.list()
-  const remote = await api.listBinders()
-  const localById = new Map(local.map((binder) => [binder.id, binder]))
+/** One kind of thing to sync, with where it lives on this device and on the server. */
+interface Records<T extends Syncable> {
+  kind: SyncConflict['kind']
+  local: {
+    list(): Promise<T[]>
+    load(id: string): Promise<T | undefined>
+    save(item: T): Promise<void>
+    remove(id: string): Promise<void>
+  }
+  remote: {
+    list(): Promise<RemoteEntry[]>
+    get(id: string): Promise<unknown>
+    put(item: T, base: string | null): Promise<boolean>
+    remove(id: string, deletedAt: string, base: string | null): Promise<boolean>
+  }
+  /** Checks what came from the server; throws if it cannot be used. */
+  read: (value: unknown) => T
+  base: SyncBase
+  deleted: readonly string[]
+  /** Called with the state of things whenever the function ends, also when it is cut short. */
+  remember: (base: SyncBase, settled: ReadonlySet<string>) => void
+}
+
+/**
+ * Brings one kind of thing in line with the server. What can be settled without asking is
+ * settled; what was changed on both sides is reported and left alone until `decisions`
+ * says which version to keep. Returns the ids this device now has differently.
+ */
+async function syncRecords<T extends Syncable>(
+  records: Records<T>,
+  decisions: SyncDecisions,
+  now: () => string,
+  conflicts: SyncConflict[],
+): Promise<string[]> {
+  const { local: here, remote: there } = records
+  const local = await here.list()
+  const remote = await there.list()
+  const localById = new Map(local.map((item) => [item.id, item]))
   const remoteById = new Map(remote.map((entry) => [entry.id, entry]))
-  const base = new Map(Object.entries(state.base))
+  const base = new Map(Object.entries(records.base))
   /** Deletions made here that need no more remembering. */
   const settled = new Set<string>()
-  const result: SyncResult = { conflicts: [], changed: [], imagesFetched: 0 }
+  const changed: string[] = []
 
   // what is the same on both sides is agreed on from now
-  for (const binder of local) {
-    const there = remoteById.get(binder.id)
-    if (there && !there.deleted && there.updatedAt === binder.updatedAt) base.set(binder.id, binder.updatedAt)
+  for (const item of local) {
+    const entry = remoteById.get(item.id)
+    if (entry && !entry.deleted && entry.updatedAt === item.updatedAt) base.set(item.id, item.updatedAt)
   }
 
-  /** Whether the binder is still as it was when the plan was made. */
-  const untouched = async (id: string) => (await binders.load(id))?.updatedAt === localById.get(id)?.updatedAt
+  /** Whether the thing is still as it was when the plan was made. */
+  const untouched = async (id: string) => (await here.load(id))?.updatedAt === localById.get(id)?.updatedAt
 
   async function push(id: string): Promise<void> {
-    const binder = localById.get(id)
-    if (!binder) return
+    const item = localById.get(id)
+    if (!item) return
     // turned away means another device was quicker: the next sync sees that
-    if (await api.putBinder(binder, remoteById.get(id)?.updatedAt ?? null)) base.set(id, binder.updatedAt)
+    if (await there.put(item, remoteById.get(id)?.updatedAt ?? null)) base.set(id, item.updatedAt)
   }
 
   async function pull(id: string): Promise<void> {
-    const raw = await api.getBinder(id)
+    const raw = await there.get(id)
     if (raw === undefined) return
-    let binder: Binder
+    let item: T
     try {
-      binder = deps.readBinder(raw)
+      item = records.read(raw)
     } catch {
       // not something this version of the app can show: better left where it is
       return
     }
-    if (binder.id !== id || !(await untouched(id))) return
-    await binders.save(binder)
-    base.set(id, binder.updatedAt)
-    result.changed.push(id)
+    if (item.id !== id || !(await untouched(id))) return
+    await here.save(item)
+    base.set(id, item.updatedAt)
+    changed.push(id)
   }
 
   try {
-    for (const action of planSync({ local, remote, base: state.base, deletedLocally: state.deleted })) {
+    for (const action of planSync({ local, remote, base: records.base, deletedLocally: records.deleted })) {
       const { id } = action
       if (action.kind === 'push') {
         await push(id)
       } else if (action.kind === 'pull') {
         await pull(id)
       } else if (action.kind === 'deleteRemote') {
-        if (await api.deleteBinder(id, deps.now(), remoteById.get(id)?.updatedAt ?? null)) {
+        if (await there.remove(id, now(), remoteById.get(id)?.updatedAt ?? null)) {
           base.delete(id)
           settled.add(id)
         }
       } else if (action.kind === 'deleteLocal') {
         if (await untouched(id)) {
-          await binders.remove(id)
+          await here.remove(id)
           base.delete(id)
-          result.changed.push(id)
+          changed.push(id)
         }
       } else if (action.kind === 'forget') {
         base.delete(id)
@@ -210,8 +252,9 @@ export async function runSync(deps: SyncDeps, email: string, decisions: SyncDeci
       } else if (decisions[id] === 'remote') {
         await pull(id)
       } else {
-        result.conflicts.push({
+        conflicts.push({
           id,
+          kind: records.kind,
           name: localById.get(id)?.name ?? '',
           localUpdatedAt: action.localUpdatedAt,
           remoteUpdatedAt: action.remoteUpdatedAt,
@@ -219,10 +262,67 @@ export async function runSync(deps: SyncDeps, email: string, decisions: SyncDeci
       }
     }
   } finally {
-    // binders deleted here in the meantime are remembered in storage, not in `state`
-    const latest = storage.read()
-    storage.write({ ...latest, user: email, base: Object.fromEntries(base), deleted: latest.deleted.filter((id) => !settled.has(id)) })
+    records.remember(Object.fromEntries(base), settled)
   }
+  return changed
+}
+
+/**
+ * Brings the binders, decks and lists of this device in line with the server's, for the
+ * collector who is signed in. What can be settled without asking is settled; binders and
+ * decks changed on both sides are reported and left alone until `decisions` says which to
+ * keep. Throws if the server cannot be reached; what was done until then stays done.
+ */
+export async function runSync(deps: SyncDeps, email: string, decisions: SyncDecisions = {}): Promise<SyncResult> {
+  const { api, state: storage } = deps
+  let state = storage.read()
+  if (state.user !== email) {
+    state = { ...EMPTY_SYNC_STATE, user: email }
+    storage.write(state)
+  }
+  const result: SyncResult = { conflicts: [], changed: [], changedDecks: [], imagesFetched: 0 }
+
+  result.changed = await syncRecords(
+    {
+      kind: 'binder',
+      local: deps.binders,
+      remote: { list: api.listBinders, get: api.getBinder, put: api.putBinder, remove: api.deleteBinder },
+      read: deps.readBinder,
+      base: state.base,
+      deleted: state.deleted,
+      // what was deleted here in the meantime is remembered in storage, not in `state`
+      remember: (base, settled) => {
+        const latest = storage.read()
+        storage.write({ ...latest, user: email, base, deleted: latest.deleted.filter((id) => !settled.has(id)) })
+      },
+    },
+    decisions,
+    deps.now,
+    result.conflicts,
+  )
+
+  result.changedDecks = await syncRecords(
+    {
+      kind: 'deck',
+      local: deps.decks,
+      remote: { list: api.listDecks, get: api.getDeck, put: api.putDeck, remove: api.deleteDeck },
+      read: deps.readDeck,
+      base: state.deckBase,
+      deleted: state.deletedDecks,
+      remember: (deckBase, settled) => {
+        const latest = storage.read()
+        storage.write({
+          ...latest,
+          user: email,
+          deckBase,
+          deletedDecks: latest.deletedDecks.filter((id) => !settled.has(id)),
+        })
+      },
+    },
+    decisions,
+    deps.now,
+    result.conflicts,
+  )
 
   await syncLists(deps)
   result.imagesFetched = await syncImages(deps)

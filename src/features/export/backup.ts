@@ -13,6 +13,7 @@ import {
   type PlacedImage,
   type Slot,
 } from '../../types/binder'
+import { DECK_FORMATS, type Deck } from '../../types/deck'
 import { slotsPerPage } from '../binder/binderModel'
 import { parseWatchlists, type Watchlist } from '../search/watchlist'
 
@@ -257,6 +258,28 @@ export function readBinder(value: unknown): Binder {
   return binder
 }
 
+/** Checks what claims to be a deck, from a file or from the server. Throws `BackupError`. */
+export function readDeck(value: unknown): Deck {
+  const raw = readRecord(value, 'deck')
+  const deck: Deck = {
+    id: readString(raw.id, 'deck.id'),
+    name: readString(raw.name, 'deck.name'),
+    format: readOneOf(raw.format, DECK_FORMATS, 'deck.format'),
+    cards: readArray(raw.cards, 'deck.cards').map((entry, i) => {
+      const card = readRecord(entry, `deck.cards[${i}]`)
+      return {
+        cardId: readString(card.cardId, `deck.cards[${i}].cardId`),
+        lang: readOneOf(card.lang, CARD_LANGS, `deck.cards[${i}].lang`),
+        count: readInt(card.count, `deck.cards[${i}].count`, 1),
+      }
+    }),
+    createdAt: readString(raw.createdAt, 'deck.createdAt'),
+    updatedAt: readString(raw.updatedAt, 'deck.updatedAt'),
+  }
+  if (raw.coverAssetId !== undefined) deck.coverAssetId = readString(raw.coverAssetId, 'deck.coverAssetId')
+  return deck
+}
+
 function readAsset(value: unknown, path: string): Asset {
   const raw = readRecord(value, path)
   const mimeType = readString(raw.mimeType, `${path}.mimeType`)
@@ -306,7 +329,7 @@ export function parseBackup(json: string): BackupContent {
 export const FULL_BACKUP_FORMAT = 'pokebinder-full-backup'
 export const FULL_BACKUP_VERSION = 1
 
-/** Everything the app stores: all binders, the whole image library and the "Merklisten". */
+/** Everything the app stores: all binders and decks, the whole image library and the "Merklisten". */
 export interface FullBackupFile {
   format: typeof FULL_BACKUP_FORMAT
   version: typeof FULL_BACKUP_VERSION
@@ -315,11 +338,15 @@ export interface FullBackupFile {
   assets: BackupAsset[]
   /** Missing in files written before the lists were part of the backup. */
   watchlists?: Watchlist[]
+  /** Missing in files written before there were decks. */
+  decks?: Deck[]
 }
 
 export interface FullBackupContent {
   binders: Binder[]
   assets: Asset[]
+  /** Only there when the file holds decks. */
+  decks?: Deck[]
   /** Only there when the file holds lists; a single binder's backup never does. */
   watchlists?: Watchlist[]
 }
@@ -329,6 +356,7 @@ export async function createFullBackup(
   assets: Asset[],
   exportedAt: string = new Date().toISOString(),
   watchlists?: Watchlist[],
+  decks?: Deck[],
 ): Promise<FullBackupFile> {
   return {
     format: FULL_BACKUP_FORMAT,
@@ -337,6 +365,7 @@ export async function createFullBackup(
     binders,
     assets: await encodeAssets(assets),
     ...(watchlists ? { watchlists } : {}),
+    ...(decks ? { decks } : {}),
   }
 }
 
@@ -361,6 +390,7 @@ export function parseAnyBackup(json: string): FullBackupContent {
     assets: readAssets(raw.assets),
     // read leniently, like the lists kept in the browser: what cannot be read is left out
     ...(Array.isArray(raw.watchlists) ? { watchlists: parseWatchlists(JSON.stringify(raw.watchlists)) } : {}),
+    ...(raw.decks === undefined ? {} : { decks: readArray(raw.decks, 'decks').map(readDeck) }),
   }
 }
 

@@ -1,13 +1,21 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
-import { readBinder } from '../src/features/export/backup'
+import { readBinder, readDeck } from '../src/features/export/backup'
 import { createBinder, renameBinder } from '../src/features/binder/binderModel'
 import { QUICK_LIST_ID, type Watchlist } from '../src/features/search/watchlist'
 import { createSyncApi, SignedOutError, type Send } from '../src/features/sync/syncApi'
 import { runSync, type SyncDeps } from '../src/features/sync/syncRun'
-import { EMPTY_SYNC_STATE, withDeleted, withListsChanged, type SyncState } from '../src/features/sync/syncState'
+import {
+  EMPTY_SYNC_STATE,
+  withDeleted,
+  withDeletedDeck,
+  withListsChanged,
+  type SyncState,
+} from '../src/features/sync/syncState'
+import { addCard, createDeck, renameDeck, setDeckCover } from '../src/features/decks/deckModel'
 import { placeImage, setCover } from '../src/features/images/imageModel'
 import type { Asset, Binder } from '../src/types/binder'
+import type { Deck } from '../src/types/deck'
 import { handleApi } from './api'
 import { createD1Store } from './d1Store'
 import type { SyncStore } from './store'
@@ -25,6 +33,7 @@ const tick = () => new Date(Date.UTC(2026, 9, 12, 10, 0, clock++)).toISOString()
 
 interface Device {
   binders: Map<string, Binder>
+  decks: Map<string, Deck>
   assets: Map<string, Asset>
   lists: Watchlist[]
   state: SyncState
@@ -41,6 +50,7 @@ interface Device {
 function device(user = ASH, send?: Send): Device {
   const self: Device = {
     binders: new Map(),
+    decks: new Map(),
     assets: new Map(),
     lists: [{ id: QUICK_LIST_ID, name: '', cards: [] }],
     state: EMPTY_SYNC_STATE,
@@ -54,6 +64,13 @@ function device(user = ASH, send?: Send): Device {
         save: (binder) => Promise.resolve(void self.binders.set(binder.id, binder)),
         remove: (id) => Promise.resolve(void self.binders.delete(id)),
       },
+      decks: {
+        list: () => Promise.resolve([...self.decks.values()]),
+        load: (id) => Promise.resolve(self.decks.get(id)),
+        save: (deck) => Promise.resolve(void self.decks.set(deck.id, deck)),
+        remove: (id) => Promise.resolve(void self.decks.delete(id)),
+      },
+      readDeck,
       assets: {
         ids: () => Promise.resolve([...self.assets.keys()]),
         load: (ids) => Promise.resolve(ids.flatMap((id) => self.assets.get(id) ?? [])),
@@ -137,11 +154,11 @@ describe('binders between two devices', () => {
     await pc.sync()
     const result = await phone.sync()
 
-    expect(result).toEqual({ conflicts: [], changed: [kanto.id], imagesFetched: 0 })
+    expect(result).toEqual({ conflicts: [], changed: [kanto.id], changedDecks: [], imagesFetched: 0 })
     expect(phone.binders.get(kanto.id)).toEqual(kanto)
     // and then there is nothing left to do on either side
-    expect(await pc.sync()).toEqual({ conflicts: [], changed: [], imagesFetched: 0 })
-    expect(await phone.sync()).toEqual({ conflicts: [], changed: [], imagesFetched: 0 })
+    expect(await pc.sync()).toEqual({ conflicts: [], changed: [], changedDecks: [], imagesFetched: 0 })
+    expect(await phone.sync()).toEqual({ conflicts: [], changed: [], changedDecks: [], imagesFetched: 0 })
   })
 
   it('carries a change from the device it was made on to the other', async () => {
@@ -227,7 +244,7 @@ describe('binders between two devices', () => {
     await pc.sync()
     expect(pc.names()).toEqual(['Vom PC'])
 
-    expect(await phone.sync({ [kanto.id]: 'local' })).toEqual({ conflicts: [], changed: [], imagesFetched: 0 })
+    expect(await phone.sync({ [kanto.id]: 'local' })).toEqual({ conflicts: [], changed: [], changedDecks: [], imagesFetched: 0 })
     await pc.sync()
     expect(pc.names()).toEqual(['Vom Handy'])
   })
@@ -244,9 +261,9 @@ describe('binders between two devices', () => {
 
     const result = await phone.sync({ [kanto.id]: 'remote' })
 
-    expect(result).toEqual({ conflicts: [], changed: [kanto.id], imagesFetched: 0 })
+    expect(result).toEqual({ conflicts: [], changed: [kanto.id], changedDecks: [], imagesFetched: 0 })
     expect(phone.names()).toEqual(['Vom PC'])
-    expect(await phone.sync()).toEqual({ conflicts: [], changed: [], imagesFetched: 0 })
+    expect(await phone.sync()).toEqual({ conflicts: [], changed: [], changedDecks: [], imagesFetched: 0 })
   })
 
   it('asks about a binder both devices already had before they ever synced', async () => {
@@ -295,6 +312,99 @@ describe('binders between two devices', () => {
     expect(shared.state.user).toBe('misty@example.com')
     // nothing is deleted for that: the binder on the device now belongs to both
     expect(shared.names()).toEqual(['Kanto'])
+  })
+})
+
+describe('decks between two devices', () => {
+  /** A deck built on a device, with a few cards in it. */
+  function build(target: Device, name: string): Deck {
+    const deck = { ...addCard(addCard(createDeck(name), 'sv03.5-025', 'de', 4), 'sv03.5-026', 'de', 2), updatedAt: tick() }
+    target.decks.set(deck.id, deck)
+    return deck
+  }
+  const change = (target: Device, id: string, name: string) => {
+    const deck = target.decks.get(id)
+    if (deck) target.decks.set(id, { ...renameDeck(deck, name), updatedAt: tick() })
+  }
+  const deckNames = (target: Device) => [...target.decks.values()].map((deck) => deck.name).sort()
+
+  it('brings a deck built on one device to the other, whole', async () => {
+    const pc = device()
+    const phone = device()
+    const donner = build(pc, 'Donner')
+
+    await pc.sync()
+    const result = await phone.sync()
+
+    expect(result).toEqual({ conflicts: [], changed: [], changedDecks: [donner.id], imagesFetched: 0 })
+    expect(phone.decks.get(donner.id)).toEqual(donner)
+    expect(await phone.sync()).toEqual({ conflicts: [], changed: [], changedDecks: [], imagesFetched: 0 })
+  })
+
+  it('carries changes and deletions across, apart from the binders', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    const donner = build(pc, 'Donner')
+    await pc.sync()
+    await phone.sync()
+
+    change(phone, donner.id, 'Blitz')
+    await phone.sync()
+    await pc.sync()
+    expect(deckNames(pc)).toEqual(['Blitz'])
+
+    pc.decks.delete(donner.id)
+    pc.state = withDeletedDeck(pc.state, donner.id)
+    await pc.sync()
+    const result = await phone.sync()
+
+    expect(result.changedDecks).toEqual([donner.id])
+    expect(deckNames(phone)).toEqual([])
+    expect(pc.state.deletedDecks).toEqual([])
+    // the binder is untouched by all that
+    expect(phone.binders.get(kanto.id)).toEqual(kanto)
+  })
+
+  it('asks when a deck was changed on both devices, saying that it is a deck', async () => {
+    const pc = device()
+    const phone = device()
+    const donner = build(pc, 'Donner')
+    await pc.sync()
+    await phone.sync()
+
+    change(pc, donner.id, 'Vom PC')
+    change(phone, donner.id, 'Vom Handy')
+    await pc.sync()
+    const asked = await phone.sync()
+
+    expect(asked.conflicts).toMatchObject([{ id: donner.id, kind: 'deck', name: 'Vom Handy' }])
+    expect(deckNames(phone)).toEqual(['Vom Handy'])
+
+    await phone.sync({ [donner.id]: 'remote' })
+    expect(deckNames(phone)).toEqual(['Vom PC'])
+  })
+
+  it('brings the picture of the deck box along', async () => {
+    const pc = device()
+    const phone = device()
+    const donner = build(pc, 'Donner')
+    pc.assets.set('box', picture('box', [7, 7, 7]))
+    pc.decks.set(donner.id, { ...setDeckCover(donner, 'box'), updatedAt: tick() })
+
+    await pc.sync()
+    const result = await phone.sync()
+
+    expect(result.imagesFetched).toBe(1)
+    expect(await bytesOf(phone.assets.get('box'))).toEqual([7, 7, 7])
+  })
+
+  it('leaves alone what the server has that is no deck', async () => {
+    const phone = device()
+    await server.putDeck(ASH, 'odd', tick(), JSON.stringify({ id: 'odd', updatedAt: 'x', cards: 'none' }), null)
+
+    expect((await phone.sync()).changedDecks).toEqual([])
+    expect(deckNames(phone)).toEqual([])
   })
 })
 

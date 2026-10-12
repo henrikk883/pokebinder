@@ -11,13 +11,33 @@ export interface SyncState {
   base: SyncBase
   /** Binders deleted on this device that the server has not been told about yet. */
   deleted: readonly string[]
+  /** The same two for decks. */
+  deckBase: SyncBase
+  deletedDecks: readonly string[]
   /** `updatedAt` of the lists on the server when this device last had the same ones. */
   listsBase: string | null
   /** When the lists were last changed on this device since then; `null` if they were not. */
   listsChangedAt: string | null
 }
 
-export const EMPTY_SYNC_STATE: SyncState = { user: null, base: {}, deleted: [], listsBase: null, listsChangedAt: null }
+export const EMPTY_SYNC_STATE: SyncState = {
+  user: null,
+  base: {},
+  deleted: [],
+  deckBase: {},
+  deletedDecks: [],
+  listsBase: null,
+  listsChangedAt: null,
+}
+
+function readBase(value: unknown): SyncBase {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string'))
+    : {}
+}
+
+const readIds = (value: unknown): string[] =>
+  Array.isArray(value) ? (value as unknown[]).filter((id) => typeof id === 'string') : []
 
 const stringOrNull = (value: unknown): string | null => (typeof value === 'string' && value !== '' ? value : null)
 
@@ -30,16 +50,14 @@ export function parseSyncState(text: string | null): SyncState {
     raw = undefined
   }
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return EMPTY_SYNC_STATE
-  const { user, base, deleted, listsBase, listsChangedAt } = raw as Record<string, unknown>
+  const { user, base, deleted, deckBase, deletedDecks, listsBase, listsChangedAt } = raw as Record<string, unknown>
   return {
     user: stringOrNull(user),
-    base:
-      typeof base === 'object' && base !== null && !Array.isArray(base)
-        ? Object.fromEntries(
-            Object.entries(base).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
-          )
-        : {},
-    deleted: Array.isArray(deleted) ? (deleted as unknown[]).filter((id) => typeof id === 'string') : [],
+    base: readBase(base),
+    deleted: readIds(deleted),
+    // missing in what was stored before there were decks
+    deckBase: readBase(deckBase),
+    deletedDecks: readIds(deletedDecks),
     listsBase: stringOrNull(listsBase),
     listsChangedAt: stringOrNull(listsChangedAt),
   }
@@ -49,6 +67,12 @@ export function parseSyncState(text: string | null): SyncState {
 export function withDeleted(state: SyncState, binderId: string): SyncState {
   if (state.base[binderId] === undefined || state.deleted.includes(binderId)) return state
   return { ...state, deleted: [...state.deleted, binderId] }
+}
+
+/** The same for a deck. */
+export function withDeletedDeck(state: SyncState, deckId: string): SyncState {
+  if (state.deckBase[deckId] === undefined || state.deletedDecks.includes(deckId)) return state
+  return { ...state, deletedDecks: [...state.deletedDecks, deckId] }
 }
 
 export function withListsChanged(state: SyncState, now: string): SyncState {

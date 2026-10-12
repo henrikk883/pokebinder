@@ -13,6 +13,7 @@ import {
   fullBackupFileName,
   parseAnyBackup,
   parseBackup,
+  readDeck,
   referencedAssetIds,
   serializeBackup,
   type BackupErrorCode,
@@ -374,5 +375,43 @@ describe('backupFileName', () => {
     expect(backupFileName('  ', '2026-01-02T00:00:00.000Z')).toBe(
       'pokebinder-binder-2026-01-02.json',
     )
+  })
+})
+
+describe('decks in the full backup', () => {
+  const deck = {
+    id: 'deck-1',
+    name: 'Donner',
+    format: 'expanded',
+    cards: [
+      { cardId: 'sv03.5-025', lang: 'de', count: 4 },
+      { cardId: 'sv03.5-026', lang: 'en', count: 1 },
+    ],
+    coverAssetId: 'asset-1',
+    createdAt: '2026-10-12T10:00:00.000Z',
+    updatedAt: '2026-10-12T11:00:00.000Z',
+  } as const
+
+  it('come back from the file as they went in', async () => {
+    const file = await createFullBackup([], [], '2026-10-12T12:00:00.000Z', undefined, [{ ...deck, cards: [...deck.cards] }])
+
+    expect(parseAnyBackup(JSON.stringify(file)).decks).toEqual([deck])
+  })
+
+  it('are simply not there in a file from before there were decks', async () => {
+    const file = await createFullBackup([], [], '2026-10-12T12:00:00.000Z')
+
+    expect('decks' in parseAnyBackup(JSON.stringify(file))).toBe(false)
+  })
+
+  it('turns away what is no deck', () => {
+    const broken = (change: Record<string, unknown>) => () => readDeck({ ...deck, ...change })
+
+    expect(readDeck(deck)).toEqual(deck)
+    expect(broken({ format: 'turbo' })).toThrow(BackupError)
+    expect(broken({ cards: 'none' })).toThrow(BackupError)
+    expect(broken({ cards: [{ cardId: 'x', lang: 'de', count: 0 }] })).toThrow(BackupError)
+    expect(broken({ cards: [{ cardId: 'x', lang: 'xx', count: 1 }] })).toThrow(BackupError)
+    expect(broken({ name: 5 })).toThrow(BackupError)
   })
 })

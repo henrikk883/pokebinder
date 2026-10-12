@@ -9,11 +9,12 @@ import { makePng, pngFile } from './png'
 interface FakeServer {
   email: string | null
   binders: Map<string, { updatedAt: string; deleted: boolean; data: unknown }>
+  decks: Map<string, { updatedAt: string; deleted: boolean; data: unknown }>
   lists: { updatedAt: string; lists: unknown } | null
   images: Map<string, { record: Record<string, unknown>; body: Buffer }>
 }
 
-const newServer = (): FakeServer => ({ email: 'ash@example.com', binders: new Map(), lists: null, images: new Map() })
+const newServer = (): FakeServer => ({ email: 'ash@example.com', binders: new Map(), decks: new Map(), lists: null, images: new Map() })
 
 /** A device with its own connection, which can be cut. */
 interface Connection {
@@ -48,6 +49,7 @@ async function connect(page: Page, server: FakeServer): Promise<Connection> {
     }
     const body = (method === 'PUT' || method === 'DELETE' ? request.postDataJSON() : null) as {
       binder?: { updatedAt: string }
+      deck?: { updatedAt: string }
       base?: string | null
       deletedAt?: string
       updatedAt?: string
@@ -56,26 +58,27 @@ async function connect(page: Page, server: FakeServer): Promise<Connection> {
     if (server.email === null) return route.fulfill({ status: 401, json: { error: 'not signed in' } })
 
     if (resource === 'me') return route.fulfill({ json: { email: server.email } })
-    if (resource === 'binders' && id === undefined) {
-      const binders = [...server.binders].map(([key, entry]) => ({
+    if ((resource === 'binders' || resource === 'decks') && id === undefined) {
+      const entries = [...server[resource]].map(([key, entry]) => ({
         id: key,
         updatedAt: entry.updatedAt,
         deleted: entry.deleted,
       }))
-      return route.fulfill({ json: { binders } })
+      return route.fulfill({ json: { [resource]: entries } })
     }
-    if (resource === 'binders' && id !== undefined) {
-      const current = server.binders.get(id)
+    if ((resource === 'binders' || resource === 'decks') && id !== undefined) {
+      const one = resource === 'binders' ? 'binder' : 'deck'
+      const current = server[resource].get(id)
       if (method === 'GET') {
         return current && !current.deleted
-          ? route.fulfill({ json: { binder: current.data } })
+          ? route.fulfill({ json: { [one]: current.data } })
           : route.fulfill({ status: 404, json: { error: 'not found' } })
       }
-      const updatedAt = method === 'PUT' ? body?.binder?.updatedAt : body?.deletedAt
+      const updatedAt = method === 'PUT' ? body?.[one]?.updatedAt : body?.deletedAt
       if (updatedAt === undefined) return route.fulfill({ status: 400, json: { error: 'body' } })
       const allowed = current ? current.updatedAt === updatedAt || current.updatedAt === body?.base : body?.base === null
       if (!allowed) return route.fulfill({ status: 409, json: { current: null } })
-      server.binders.set(id, { updatedAt, deleted: method === 'DELETE', data: body?.binder })
+      server[resource].set(id, { updatedAt, deleted: method === 'DELETE', data: body?.[one] })
       return route.fulfill({ json: { updatedAt } })
     }
     if (resource === 'watchlists') {
@@ -210,14 +213,14 @@ test('changes made without a connection are sent later; a binder changed on both
   phone.connection.online = true
   await syncNow(phone.page)
   await expect(status(phone.page)).toHaveAttribute('data-status', 'conflict')
-  await expect(status(phone.page)).toHaveText('1 Binder klären')
+  await expect(status(phone.page)).toHaveText('1 Konflikt klären')
   // nothing was overwritten on either side
   await expect.poll(() => shelf(phone.page)).toEqual(['Vom Handy'])
 
   await status(phone.page).click()
-  await phone.page.getByRole('menuitem', { name: '1 Binder klären' }).click()
+  await phone.page.getByRole('menuitem', { name: '1 Konflikt klären' }).click()
   const dialog = phone.page.getByRole('dialog', { name: 'Auf zwei Geräten geändert' })
-  await expect(dialog.getByRole('group', { name: 'Vom Handy' })).toBeVisible()
+  await expect(dialog.getByRole('group', { name: /^Vom Handy/ })).toBeVisible()
   await dialog.getByRole('radio', { name: /^Dieses Gerät/ }).check()
   await dialog.getByRole('button', { name: 'Übernehmen' }).click()
   await expect(status(phone.page)).toHaveAttribute('data-status', 'synced')
@@ -266,5 +269,39 @@ test('an own image lying in a binder is shown on the other device too', async ({
   await phone.page.getByRole('button', { name: 'Kanto öffnen' }).click()
   const image = phone.page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('placed-image').locator('img').first()
   await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
+  await phone.close()
+})
+
+test('a deck built on one device stands on the shelf of the other, with its cards', async ({ page, browser }) => {
+  const server = newServer()
+  await connect(page, server)
+  await page.goto('/')
+  await expect(status(page)).toHaveAttribute('data-status', 'synced')
+
+  await page.getByTestId('deck-shelf').getByRole('button', { name: 'Neues Deck' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Neues Deck' })
+  await dialog.getByLabel('Name').fill('Donner')
+  await dialog.getByRole('button', { name: 'Anlegen' }).click()
+  const main = page.getByRole('main')
+  await main.getByRole('button', { name: 'Set', exact: true }).click()
+  await main.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const bisasam = page.getByTestId('pick-results').locator('[data-card-id="sv03.5-001"]').getByRole('button', { name: /ins Deck legen$/ })
+  await bisasam.click()
+  await bisasam.click()
+  await expect.poll(() => (server.decks.values().next().value?.data as { cards?: { count: number }[] } | undefined)?.cards?.[0]?.count).toBe(2)
+
+  const phone = await secondDevice(browser, server)
+  const tile = phone.page.getByTestId('deck-tile')
+  await expect(tile).toHaveAttribute('data-deck-name', 'Donner')
+  await expect(tile.getByTestId('deck-box')).toContainText('2 / 60 Karten')
+
+  // deleted on the phone, it goes from the first device too
+  await phone.page.getByRole('button', { name: 'Deck Donner löschen' }).click()
+  await phone.page.getByRole('alertdialog').getByRole('button', { name: 'Löschen', exact: true }).click()
+  await expect.poll(() => [...server.decks.values()].map((entry) => entry.deleted)).toEqual([true])
+  await syncNow(page)
+  // the deck lay open there: it is put away
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
+  await expect(page.getByTestId('deck-tile')).toHaveCount(0)
   await phone.close()
 })

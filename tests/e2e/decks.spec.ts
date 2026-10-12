@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 import { makePng, pngFile } from './png'
@@ -172,4 +173,29 @@ test('the format says which cards are allowed; the deck says what it costs and w
   // the format is part of the deck: the shelf names it
   await toShelf(page)
   await expect(page.getByTestId('deck-tile')).toContainText('Expanded · 2 verschiedene Karten')
+})
+
+test('"Alles sichern" holds the decks; from the file they come back', async ({ page }) => {
+  await createDeck(page, 'Sicher')
+  await showSet151(page)
+  await pick(page, 'sv03.5-001').click()
+  await pick(page, 'sv03.5-001').click()
+  await toShelf(page)
+  await expect(page.getByTestId('deck-box')).toContainText('2 / 60 Karten')
+
+  await page.getByRole('button', { name: 'Backup', exact: true }).click()
+  const downloading = page.waitForEvent('download')
+  await page.getByRole('menuitem', { name: /^Alles sichern/ }).click()
+  const file = await (await downloading).path()
+  const backup = JSON.parse(await readFile(file, 'utf8')) as { decks?: { name: string; cards: { cardId: string; count: number }[] }[] }
+  expect(backup.decks).toMatchObject([{ name: 'Sicher', cards: [{ cardId: 'sv03.5-001', count: 2 }] }])
+
+  // gone from the device, and back from the file
+  await page.getByRole('button', { name: 'Deck Sicher löschen' }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Löschen', exact: true }).click()
+  await expect(page.getByTestId('deck-tile')).toHaveCount(0)
+
+  await page.getByLabel('Backup-Datei auswählen').setInputFiles(file)
+  await expect(page.getByTestId('deck-tile')).toHaveAttribute('data-deck-name', 'Sicher')
+  await expect(page.getByTestId('deck-box')).toContainText('2 / 60 Karten')
 })

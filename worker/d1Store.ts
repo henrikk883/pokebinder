@@ -10,6 +10,14 @@ const SCHEMA = [
      data TEXT,
      PRIMARY KEY (user, id)
    )`,
+  `CREATE TABLE IF NOT EXISTS decks (
+     user TEXT NOT NULL,
+     id TEXT NOT NULL,
+     updated_at TEXT NOT NULL,
+     deleted INTEGER NOT NULL DEFAULT 0,
+     data TEXT,
+     PRIMARY KEY (user, id)
+   )`,
   `CREATE TABLE IF NOT EXISTS watchlists (
      user TEXT PRIMARY KEY,
      updated_at TEXT NOT NULL,
@@ -59,56 +67,73 @@ export function createD1Store(db: D1Database, images: R2Bucket): SyncStore {
   let ready: Promise<unknown> | undefined
   const prepared = () => (ready ??= db.batch(SCHEMA.map((sql) => db.prepare(sql))))
 
-  async function currentBinder(user: string, id: string): Promise<BinderRecord | undefined> {
-    const row = await db
-      .prepare('SELECT id, updated_at, deleted FROM binders WHERE user = ? AND id = ?')
-      .bind(user, id)
-      .first<BinderRow>()
-    return row ? toRecord(row) : undefined
+  /** Binders and decks are kept the same way, each in a table of its own. */
+  function records(table: 'binders' | 'decks') {
+    async function current(user: string, id: string): Promise<BinderRecord | undefined> {
+      const row = await db
+        .prepare(`SELECT id, updated_at, deleted FROM ${table} WHERE user = ? AND id = ?`)
+        .bind(user, id)
+        .first<BinderRow>()
+      return row ? toRecord(row) : undefined
+    }
+
+    async function write(
+      user: string,
+      id: string,
+      updatedAt: string,
+      data: string | null,
+      base: string | null,
+    ): Promise<WriteResult> {
+      await prepared()
+      const known = await current(user, id)
+      if (!mayWrite(known, base, updatedAt)) return { ok: false, current: known ?? null }
+      await db
+        .prepare(
+          `INSERT INTO ${table} (user, id, updated_at, deleted, data) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT (user, id) DO UPDATE SET
+             updated_at = excluded.updated_at, deleted = excluded.deleted, data = excluded.data`,
+        )
+        .bind(user, id, updatedAt, data === null ? 1 : 0, data)
+        .run()
+      return { ok: true }
+    }
+
+    return {
+      async list(user: string): Promise<BinderRecord[]> {
+        await prepared()
+        const { results } = await db
+          .prepare(`SELECT id, updated_at, deleted FROM ${table} WHERE user = ? ORDER BY id`)
+          .bind(user)
+          .all<BinderRow>()
+        return results.map(toRecord)
+      },
+
+      async get(user: string, id: string): Promise<string | undefined> {
+        await prepared()
+        const row = await db
+          .prepare(`SELECT data FROM ${table} WHERE user = ? AND id = ? AND deleted = 0`)
+          .bind(user, id)
+          .first<{ data: string | null }>()
+        return row?.data ?? undefined
+      },
+
+      write,
+    }
   }
 
-  async function write(
-    user: string,
-    id: string,
-    updatedAt: string,
-    data: string | null,
-    base: string | null,
-  ): Promise<WriteResult> {
-    await prepared()
-    const current = await currentBinder(user, id)
-    if (!mayWrite(current, base, updatedAt)) return { ok: false, current: current ?? null }
-    await db
-      .prepare(
-        `INSERT INTO binders (user, id, updated_at, deleted, data) VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT (user, id) DO UPDATE SET
-           updated_at = excluded.updated_at, deleted = excluded.deleted, data = excluded.data`,
-      )
-      .bind(user, id, updatedAt, data === null ? 1 : 0, data)
-      .run()
-    return { ok: true }
-  }
+  const binders = records('binders')
+  const decks = records('decks')
 
   return {
-    async listBinders(user) {
-      await prepared()
-      const { results } = await db
-        .prepare('SELECT id, updated_at, deleted FROM binders WHERE user = ? ORDER BY id')
-        .bind(user)
-        .all<BinderRow>()
-      return results.map(toRecord)
-    },
+    listBinders: binders.list,
+    getBinder: binders.get,
+    putBinder: (user, id, updatedAt, data, base) => binders.write(user, id, updatedAt, data, base),
+    deleteBinder: (user, id, deletedAt, base) => binders.write(user, id, deletedAt, null, base),
 
-    async getBinder(user, id) {
-      await prepared()
-      const row = await db
-        .prepare('SELECT data FROM binders WHERE user = ? AND id = ? AND deleted = 0')
-        .bind(user, id)
-        .first<{ data: string | null }>()
-      return row?.data ?? undefined
-    },
-
-    putBinder: (user, id, updatedAt, data, base) => write(user, id, updatedAt, data, base),
-    deleteBinder: (user, id, deletedAt, base) => write(user, id, deletedAt, null, base),
+    listDecks: decks.list,
+    getDeck: decks.get,
+    putDeck: (user, id, updatedAt, data, base) => decks.write(user, id, updatedAt, data, base),
+    deleteDeck: (user, id, deletedAt, base) => decks.write(user, id, deletedAt, null, base),
 
     async getWatchlists(user) {
       await prepared()

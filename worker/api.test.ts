@@ -144,6 +144,43 @@ describe('binders', () => {
   })
 })
 
+describe('decks', () => {
+  const deck = (id: string, updatedAt: string, name = 'Donner') => ({ id, name, updatedAt, cards: [] })
+
+  it('are kept like binders, in a list of their own', async () => {
+    await call('ash', 'PUT', '/api/binders/same', { binder: binder('same', monday), base: null })
+    const stored = await call('ash', 'PUT', '/api/decks/same', { deck: deck('same', tuesday), base: null })
+    expect(stored.status).toBe(200)
+
+    expect(await (await call('ash', 'GET', '/api/decks')).json()).toEqual({
+      decks: [{ id: 'same', updatedAt: tuesday, deleted: false }],
+    })
+    expect(await (await call('ash', 'GET', '/api/decks/same')).json()).toEqual({ deck: deck('same', tuesday) })
+    // the binder with the same id is another thing
+    expect(await (await call('ash', 'GET', '/api/binders/same')).json()).toEqual({ binder: binder('same', monday) })
+    expect(await (await call('misty', 'GET', '/api/decks')).json()).toEqual({ decks: [] })
+  })
+
+  it('follow the same rule: a device may only write over what it saw', async () => {
+    await call('ash', 'PUT', '/api/decks/donner', { deck: deck('donner', monday), base: null })
+    await call('ash', 'PUT', '/api/decks/donner', { deck: deck('donner', tuesday, 'Vom Handy'), base: monday })
+
+    const late = await call('ash', 'PUT', '/api/decks/donner', { deck: deck('donner', wednesday, 'Vom PC'), base: monday })
+    expect(late.status).toBe(409)
+    expect(await late.json()).toEqual({ current: { id: 'donner', updatedAt: tuesday, deleted: false } })
+
+    const gone = await call('ash', 'DELETE', '/api/decks/donner', { deletedAt: wednesday, base: tuesday })
+    expect(gone.status).toBe(200)
+    expect((await call('ash', 'GET', '/api/decks/donner')).status).toBe(404)
+    expect(await (await call('ash', 'GET', '/api/decks')).json()).toEqual({
+      decks: [{ id: 'donner', updatedAt: wednesday, deleted: true }],
+    })
+    // what is sent must be a deck for that address, under its own word
+    expect((await call('ash', 'PUT', '/api/decks/donner', { binder: deck('donner', wednesday), base: null })).status).toBe(400)
+    expect((await call('ash', 'PUT', '/api/decks/donner', { deck: deck('other', wednesday), base: null })).status).toBe(400)
+  })
+})
+
 describe('watchlists', () => {
   const lists = [{ id: 'quick', name: '', cards: [{ cardId: 'sv03.5-025', lang: 'de', savedAt: monday }] }]
 

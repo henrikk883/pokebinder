@@ -1,9 +1,12 @@
 import { binderRepository } from '../../db/binderRepository'
+import { deckRepository } from '../../db/deckRepository'
 import { assetStore } from '../../store/assetStore'
 import { binderStore } from '../../store/binderStore'
+import { useDeckStore } from '../../store/deckStore'
 import type { Binder } from '../../types/binder'
 import { useWatchlistStore } from '../../store/watchlistStore'
 import type { Asset } from '../../types/binder'
+import type { Deck } from '../../types/deck'
 import { normalizeImages } from '../images/imageModel'
 import type { Watchlist } from '../search/watchlist'
 import { requestSync } from '../sync/syncStore'
@@ -49,8 +52,13 @@ export function lastFullBackup(): string | null {
 export async function downloadFullBackup(): Promise<void> {
   // a change made a moment ago must be in the file too
   await binderStore.getState().whenSaved()
-  const [binders, assets] = await Promise.all([binderRepository.listBinders(), binderRepository.listAssets()])
-  const backup = await createFullBackup(binders, assets, undefined, useWatchlistStore.getState().lists)
+  await useDeckStore.getState().whenSaved()
+  const [binders, assets, decks] = await Promise.all([
+    binderRepository.listBinders(),
+    binderRepository.listAssets(),
+    deckRepository.listDecks(),
+  ])
+  const backup = await createFullBackup(binders, assets, undefined, useWatchlistStore.getState().lists, decks)
   download(JSON.stringify(backup), fullBackupFileName(backup.exportedAt))
   try {
     localStorage.setItem(LAST_FULL_BACKUP_KEY, backup.exportedAt)
@@ -59,12 +67,22 @@ export async function downloadFullBackup(): Promise<void> {
   }
 }
 
+/** The decks of a file that are new to this device, or newer than the deck it has. */
+export function decksToTake(incoming: readonly Deck[], existing: readonly Deck[]): Deck[] {
+  const known = new Map(existing.map((deck) => [deck.id, deck.updatedAt]))
+  return incoming.filter((deck) => {
+    const here = known.get(deck.id)
+    return here === undefined || deck.updatedAt > here
+  })
+}
+
 /** A backup file that was read but not stored yet. */
 export interface PendingImport {
   /** Every binder of the file, compared with what is on this device. */
   entries: ImportEntry[]
   assets: Asset[]
   watchlists?: Watchlist[]
+  decks?: Deck[]
 }
 
 /**
@@ -72,19 +90,20 @@ export interface PendingImport {
  * changing anything yet. Throws `BackupError` when the file cannot be used.
  */
 export async function readBackupFile(file: File): Promise<PendingImport> {
-  const { binders: parsed, assets, watchlists } = parseAnyBackup(await file.text())
+  const { binders: parsed, assets, watchlists, decks } = parseAnyBackup(await file.text())
   // a backup edited by hand may place images where they cannot be
   const binders = parsed.map((binder) => normalizeImages(binder))
   // a change made a moment ago must be part of the comparison
   await binderStore.getState().whenSaved()
   const entries = planImport(binders, await binderRepository.listBinders())
-  return { entries, assets, ...(watchlists ? { watchlists } : {}) }
+  return { entries, assets, ...(watchlists ? { watchlists } : {}), ...(decks ? { decks } : {}) }
 }
 
 /**
  * Stores the chosen binders of a file that was read; each replaces the binder with the
  * same id, all others stay as they are. Images and lists of the file are taken in either
- * way: they only add. Returns the binders that were stored.
+ * way: they only add. A deck of the file is taken where this device has none of that id
+ * or an older one. Returns the binders that were stored.
  */
 export async function applyImport(pending: PendingImport, binderIds: readonly string[]): Promise<Binder[]> {
   const binders = pending.entries
@@ -95,6 +114,10 @@ export async function applyImport(pending: PendingImport, binderIds: readonly st
   for (const binder of binders) await binderRepository.saveBinder(binder)
   await assetStore.getState().load()
   if (pending.watchlists) useWatchlistStore.getState().merge(pending.watchlists)
+  if (pending.decks) {
+    await useDeckStore.getState().whenSaved()
+    for (const deck of decksToTake(pending.decks, await deckRepository.listDecks())) await deckRepository.saveDeck(deck)
+  }
   requestSync()
   return binders
 }

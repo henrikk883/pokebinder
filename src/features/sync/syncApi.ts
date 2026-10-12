@@ -1,4 +1,5 @@
 import type { Asset, Binder } from '../../types/binder'
+import type { Deck } from '../../types/deck'
 import type { RemoteEntry } from './syncPlan'
 
 /** How a request reaches the server; replaced in tests. */
@@ -38,6 +39,11 @@ export interface SyncApi {
   /** `false` if the server has another version than `base` says. */
   putBinder(binder: Binder, base: string | null): Promise<boolean>
   deleteBinder(id: string, deletedAt: string, base: string | null): Promise<boolean>
+  /** Decks are synced exactly like binders. */
+  listDecks(): Promise<RemoteEntry[]>
+  getDeck(id: string): Promise<unknown>
+  putDeck(deck: Deck, base: string | null): Promise<boolean>
+  deleteDeck(id: string, deletedAt: string, base: string | null): Promise<boolean>
   getWatchlists(): Promise<{ updatedAt: string | null; lists: unknown }>
   putWatchlists(updatedAt: string, lists: unknown, base: string | null): Promise<boolean>
   listAssets(): Promise<RemoteAsset[]>
@@ -89,6 +95,26 @@ export function createSyncApi(send: Send = sendFromBrowser): SyncApi {
     return true
   }
 
+  /** What the server has of binders or decks: which, when changed, whether deleted. */
+  async function list(resource: 'binders' | 'decks'): Promise<RemoteEntry[]> {
+    const body = await read(`/api/${resource}`)
+    const entries = body[resource]
+    if (!Array.isArray(entries)) throw new Error(`sync: no list of ${resource}`)
+    return (entries as unknown[]).flatMap((entry): RemoteEntry[] =>
+      isRecord(entry) && typeof entry.id === 'string' && typeof entry.updatedAt === 'string'
+        ? [{ id: entry.id, updatedAt: entry.updatedAt, deleted: entry.deleted === true }]
+        : [],
+    )
+  }
+
+  async function get(resource: 'binders' | 'decks', one: 'binder' | 'deck', id: string): Promise<unknown> {
+    const response = await call(`/api/${resource}/${encodeURIComponent(id)}`)
+    if (response.status === 404) return undefined
+    const body: unknown = response.ok && isJson(response) ? await response.json() : undefined
+    if (!isRecord(body)) throw new Error(`sync: ${one} answered ${response.status}`)
+    return body[one]
+  }
+
   return {
     async session() {
       let response: Response
@@ -106,23 +132,12 @@ export function createSyncApi(send: Send = sendFromBrowser): SyncApi {
         : { kind: 'unavailable' }
     },
 
-    async listBinders() {
-      const { binders } = await read('/api/binders')
-      if (!Array.isArray(binders)) throw new Error('sync: no list of binders')
-      return (binders as unknown[]).flatMap((entry): RemoteEntry[] =>
-        isRecord(entry) && typeof entry.id === 'string' && typeof entry.updatedAt === 'string'
-          ? [{ id: entry.id, updatedAt: entry.updatedAt, deleted: entry.deleted === true }]
-          : [],
-      )
-    },
-
-    async getBinder(id) {
-      const response = await call(`/api/binders/${encodeURIComponent(id)}`)
-      if (response.status === 404) return undefined
-      const body: unknown = response.ok && isJson(response) ? await response.json() : undefined
-      if (!isRecord(body)) throw new Error(`sync: binder answered ${response.status}`)
-      return body.binder
-    },
+    listBinders: () => list('binders'),
+    getBinder: (id) => get('binders', 'binder', id),
+    listDecks: () => list('decks'),
+    getDeck: (id) => get('decks', 'deck', id),
+    putDeck: (deck, base) => write(`/api/decks/${encodeURIComponent(deck.id)}`, 'PUT', { deck, base }),
+    deleteDeck: (id, deletedAt, base) => write(`/api/decks/${encodeURIComponent(id)}`, 'DELETE', { deletedAt, base }),
 
     putBinder: (binder, base) => write(`/api/binders/${encodeURIComponent(binder.id)}`, 'PUT', { binder, base }),
 

@@ -1,14 +1,17 @@
 import { create } from 'zustand'
 import { binderRepository } from '../../db/binderRepository'
+import { deckRepository } from '../../db/deckRepository'
 import { assetStore } from '../../store/assetStore'
 import { binderStore } from '../../store/binderStore'
+import { useDeckStore } from '../../store/deckStore'
 import { useEditorStore } from '../../store/editorStore'
 import { useWatchlistStore } from '../../store/watchlistStore'
 import type { Binder } from '../../types/binder'
-import { readBinder } from '../export/backup'
+import type { Deck } from '../../types/deck'
+import { readBinder, readDeck } from '../export/backup'
 import { createSyncApi, SignedOutError, type Session } from './syncApi'
 import { runSync, type SyncConflict, type SyncDecisions, type SyncDeps } from './syncRun'
-import { browserSyncState, withDeleted, withListsChanged } from './syncState'
+import { browserSyncState, withDeleted, withDeletedDeck, withListsChanged } from './syncState'
 
 export type SyncStatus =
   /** Not asked yet. */
@@ -48,12 +51,19 @@ const deps: SyncDeps = {
     save: (binder) => binderRepository.saveBinder(binder),
     remove: (id) => binderRepository.deleteBinder(id),
   },
+  decks: {
+    list: () => deckRepository.listDecks(),
+    load: (id) => deckRepository.loadDeck(id),
+    save: (deck) => deckRepository.saveDeck(deck),
+    remove: (id) => deckRepository.deleteDeck(id),
+  },
   assets: {
     ids: () => binderRepository.listAssetIds(),
     load: (ids) => binderRepository.loadAssets(ids),
     save: (assets) => binderRepository.saveAssets(assets),
   },
   readBinder,
+  readDeck,
   lists: {
     get: () => useWatchlistStore.getState().lists,
     replace: (lists) => {
@@ -80,16 +90,29 @@ async function showChanges(changed: readonly string[], openBefore: Binder | null
   useEditorStore.getState().refreshBinderList()
 }
 
+/** The same for the deck that lies open. */
+async function showDeckChanges(changed: readonly string[], openBefore: Deck | null): Promise<void> {
+  if (openBefore && useDeckStore.getState().deck === openBefore && changed.includes(openBefore.id)) {
+    const stored = await deckRepository.loadDeck(openBefore.id)
+    if (stored) useDeckStore.getState().openDeck(stored)
+    else useDeckStore.getState().closeDeck()
+  }
+  useEditorStore.getState().refreshBinderList()
+}
+
 async function syncOnce(decisions: SyncDecisions): Promise<void> {
   const { email } = useSyncStore.getState()
   if (!email) return
   useSyncStore.setState({ status: 'syncing' })
   // a change made a moment ago must be part of it
   await binderStore.getState().whenSaved()
+  await useDeckStore.getState().whenSaved()
   const openBefore = binderStore.getState().binder
+  const openDeckBefore = useDeckStore.getState().deck
   try {
     const result = await runSync(deps, email, decisions)
     if (result.changed.length > 0) await showChanges(result.changed, openBefore)
+    if (result.changedDecks.length > 0) await showDeckChanges(result.changedDecks, openDeckBefore)
     if (result.imagesFetched > 0) await assetStore.getState().load()
     useSyncStore.setState({ status: 'synced', conflicts: result.conflicts })
   } catch (error) {
@@ -147,6 +170,12 @@ export function noteBinderDeleted(binderId: string): void {
   requestSync()
 }
 
+/** The same for a deck. */
+export function noteDeckDeleted(deckId: string): void {
+  browserSyncState.write(withDeletedDeck(browserSyncState.read(), deckId))
+  requestSync()
+}
+
 function applySession(session: Session): void {
   if (session.kind === 'signedIn') {
     useSyncStore.setState({ email: session.email })
@@ -177,6 +206,10 @@ export function startSync(): () => void {
   const stopBinders = binderStore.subscribe((state, before) => {
     if (state.saveStatus === 'saved' && before.saveStatus === 'saving') requestSync(AFTER_CHANGE_MS)
   })
+  const stopDecks = useDeckStore.subscribe((state, before) => {
+    // a deck is stored with every change made to it
+    if (state.deck && before.deck && state.deck !== before.deck) requestSync(AFTER_CHANGE_MS)
+  })
   const stopLists = useWatchlistStore.subscribe((state, before) => {
     if (state.lists === before.lists || applyingLists) return
     browserSyncState.write(withListsChanged(browserSyncState.read(), new Date().toISOString()))
@@ -194,6 +227,7 @@ export function startSync(): () => void {
     stopped = true
     clearTimeout(timer)
     stopBinders()
+    stopDecks()
     stopLists()
     window.removeEventListener('online', lookAgain)
     document.removeEventListener('visibilitychange', lookAgain)

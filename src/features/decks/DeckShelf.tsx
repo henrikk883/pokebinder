@@ -5,6 +5,7 @@ import { confirmDialog, promptDialog } from '../../store/dialogStore'
 import { useDeckStore } from '../../store/deckStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Deck } from '../../types/deck'
+import { noteDeckDeleted, requestSync } from '../sync/syncStore'
 import { DeckBox } from './DeckBox'
 import { createDeck, renameDeck } from './deckModel'
 
@@ -43,7 +44,9 @@ export function DeckShelf() {
       value: '',
       confirmLabel: de.decks.createConfirm,
     })
-    if (name !== null) adoptDeck(createDeck(name))
+    if (name === null) return
+    adoptDeck(createDeck(name))
+    requestSync()
   }
 
   async function handleRename(deck: Deck) {
@@ -56,6 +59,7 @@ export function DeckShelf() {
     if (name === null) return
     await deckRepository.saveDeck(renameDeck(deck, name))
     setVersion((current) => current + 1)
+    requestSync()
   }
 
   async function handleDelete(deck: Deck) {
@@ -67,6 +71,7 @@ export function DeckShelf() {
     })
     if (!agreed) return
     await deckRepository.deleteDeck(deck.id)
+    noteDeckDeleted(deck.id)
     setVersion((current) => current + 1)
   }
 

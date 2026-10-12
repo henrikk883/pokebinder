@@ -489,3 +489,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Wert: Cardmarket-Preistrend der üblichen Ausführung jeder Karte (ein Deck kennt keine Varianten) mal Stückzahl. Er steht ohne Knopfdruck da: Der Preis kommt aus derselben Einzelkarten-Antwort wie die Kartenart.
 - „Im Binder“: gezählt wird, was in irgendeinem Binder als vorhanden markiert ist, mit Stückzahl und unabhängig von der Variante – aber genau diese Karte in dieser Sprache. Ein anderer Druck desselben Pokémon zählt nicht, obwohl er im Spiel gleichwertig wäre; das wäre eine eigene Erweiterung.
 - Nicht erlaubte Karten tragen ein neutrales Schildchen, kein rotes: Rot bleibt dem Löschen vorbehalten.
+
+## 2026-10-12 – Deck Builder, Schritt 3: Backup und Abgleich
+- Backup: „Alles sichern“ enthält die Decks (`decks` in der Gesamtsicherung, fehlt in älteren Dateien). Beim Einspielen wird ein Deck übernommen, wenn es das Gerät nicht kennt oder die Fassung der Datei neuer ist – ohne Ankreuzen wie bei Bindern, weil ein Deck klein und schnell wieder geändert ist. Die Einzelsicherung eines Binders enthält keine Decks.
+- Abgleich: Decks gehen denselben Weg wie Binder, in einer eigenen Liste auf dem Server (`/api/decks`, Tabelle `decks`, entsteht beim ersten Zugriff). Die Abgleich-Logik ist dafür verallgemeinert (`syncRecords` in `syncRun.ts`) statt kopiert; das Gerät merkt sich für Decks einen eigenen Stand und eigene Löschvermerke.
+- Konflikte: Der Dialog nennt jetzt, ob es um einen Binder oder ein Deck geht; die Kopfzeile sagt „1 Konflikt klären“.
+- Das Bild einer Deckbox wandert beim Abgleich mit, und die Bilder-Bibliothek weigert sich, ein Bild zu löschen, das noch auf einer Deckbox liegt.
+- Heruntergeladene Decks laufen durch `readDeck` (Format, Karten, Stückzahlen); was die Prüfung nicht besteht, wird nicht übernommen.
