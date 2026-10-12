@@ -1,10 +1,36 @@
-// Hosting at Cloudflare: the built app (dist/) is served as plain files, there is no
-// server code. Cloudflare builds from the private GitHub repository on every push to main
+// Hosting at Cloudflare. The built app (dist/) is served as plain files; requests under
+// /api/ go to the small server part in worker/, which syncs binders between devices.
+// Cloudflare builds from the private GitHub repository on every push to main
 // ("npm run build", then "npx wrangler deploy", which reads this file).
 {
   "name": "pokebinder",
   "compatibility_date": "2025-09-01",
+  // what has no file in dist/ is answered by the Worker: that is the API
+  "main": "worker/index.ts",
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  // binders and lists of each collector
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pokebinder",
+      "database_id": "9ff03a7f-1349-4822-bb30-00641c3e9cae"
+    }
+  ],
+  // their uploaded images
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "pokebinder-images"
+    }
+  ],
+  "vars": {
+    // where collectors sign in (Cloudflare Access, e-mail code)
+    "ACCESS_TEAM_DOMAIN": "pokebinder.cloudflareaccess.com",
+    // The tag of the Access application that guards /api/. Empty until that application
+    // exists: until then the API turns every request away.
+    "ACCESS_AUD": ""
   }
 }

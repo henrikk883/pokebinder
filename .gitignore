@@ -9,3 +9,6 @@ playwright-report/
 .DS_Store
 Thumbs.db
 *.log
+
+# local state of Cloudflare's tool (wrangler dev)
+.wrangler/

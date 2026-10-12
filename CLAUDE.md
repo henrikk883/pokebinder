@@ -19,7 +19,7 @@ Private Web-App zum Planen von Pokémon-Karten-Bindern: Karten aus TCGdex suchen
 ## Stack (fest)
 
 React + TypeScript + Vite, Tailwind CSS, Zustand, Dexie (IndexedDB), dnd-kit, @tcgdex/sdk, pdf-lib (mit @pdf-lib/fontkit für die japanische Schrift), Vitest, Playwright; html-to-image erst ab v1.
-Keine weiteren Abhängigkeiten ohne Rückfrage. Kein Backend, keine Accounts, kein Tracking, keine externen Dienste außer TCGdex und dessen Bild-URLs. Ausnahmen: Kartenbilder von `images.pokemontcg.io` als Ersatz für Karten, von denen TCGdex gar kein Bild hat (nur Bilddateien, keine Kartendaten); und das Hosting der fertigen App als statische Dateien bei Cloudflare (`wrangler.jsonc`), damit sie auch unterwegs erreichbar ist – weiterhin ohne Server-Code, die Daten bleiben im Browser des Geräts.
+Keine weiteren Abhängigkeiten ohne Rückfrage. Kein Tracking, keine externen Dienste außer TCGdex und dessen Bild-URLs sowie den unten genannten Ausnahmen. Die App bleibt ohne Anmeldung und ohne Netz benutzbar; alles liegt zuerst lokal im Browser. Ausnahmen: Kartenbilder von `images.pokemontcg.io` als Ersatz für Karten, von denen TCGdex gar kein Bild hat (nur Bilddateien, keine Kartendaten); und das Hosting der fertigen App als statische Dateien bei Cloudflare (`wrangler.jsonc`), damit sie auch unterwegs erreichbar ist – und – seit dem 12.10.2026, von Henrik gewünscht – ein kleiner Server-Teil dort (`worker/`, Cloudflare Workers mit D1 und R2), über den sich Binder, Bilder und Merklisten zwischen den Geräten eines Sammlers abgleichen. Angemeldet wird per E-Mail-Code über Cloudflare Access, nur für freigeschaltete Adressen (Henrik und wenige Freunde); eigene Passwörter oder eine offene Registrierung gibt es nicht.
 
 ## Befehle
 
@@ -45,6 +45,7 @@ src/
   lib/tcgdex/   einziger Zugriffspunkt auf TCGdex inkl. Cache
   types/        Typen laut Datenmodell
   i18n/de.ts    alle UI-Texte
+worker/         Server-Teil bei Cloudflare: API unter /api/ für den Abgleich zwischen Geräten
 tests/e2e/      Playwright-Tests
 ```
 
