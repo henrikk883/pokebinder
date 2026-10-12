@@ -113,6 +113,8 @@ export interface BinderState {
   /** Puts a library image behind the pockets; returns why if that is not possible. */
   placeImage: (pageId: string, assetId: string, placement: Placement) => PlacementError | null
   changePlacement: (pageId: string, imageId: string, placement: Placement) => PlacementError | null
+  /** Moves the image behind `grabbed` so that this part of it lies behind `target`. */
+  moveImage: (grabbed: SlotPosition, target: SlotPosition) => PlacementError | null
   setImageCrop: (pageId: string, imageId: string, crop: ImageCrop) => void
   removeImage: (pageId: string, imageId: string) => void
   setCover: (cover: BinderCover) => void
@@ -286,6 +288,7 @@ export function createBinderStore(deps: BinderStoreDeps) {
         attempt((binder) => placeImage(binder, pageId, assetId, placement)),
       changePlacement: (pageId, imageId, placement) =>
         attempt((binder) => changePlacement(binder, pageId, imageId, placement)),
+      moveImage: (grabbed, target) => attempt((binder) => moveImage(binder, grabbed, target)),
       setImageCrop: (pageId, imageId, crop) =>
         change((binder) => setImageCrop(binder, pageId, imageId, crop)),
       removeImage: (pageId, imageId) => change((binder) => removeImage(binder, pageId, imageId)),

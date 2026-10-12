@@ -5,13 +5,23 @@ import { useEditorStore } from '../../store/editorStore'
 import type { Binder, Page, Slot } from '../../types/binder'
 import { layoutDimensions } from '../binder/binderModel'
 import { CropDialog } from './CropDialog'
-import { imageAt, maxSpan, type Placement, type PlacementError } from './imageModel'
+import {
+  DIRECTIONS,
+  imageAt,
+  maxSpan,
+  neighbourPocket,
+  type Direction,
+  type Placement,
+  type PlacementError,
+} from './imageModel'
 import { ACCEPTED_IMAGE_TYPES } from './upload'
 import { uploadErrorText, uploadImages } from './uploadActions'
 
 const outlineButtonClass =
   'flex h-10 w-full items-center justify-center rounded-control border border-line bg-raised text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
 const selectClass = 'h-10 w-full rounded-control border border-line bg-raised px-3 text-sm'
+
+const ARROWS: Record<Direction, string> = { left: '←', up: '↑', down: '↓', right: '→' }
 
 function range(max: number): number[] {
   return Array.from({ length: max }, (_, index) => index + 1)
@@ -30,6 +40,8 @@ export function ImageControls({ binder, page, slot }: ImageControlsProps) {
   const changePlacement = useBinderStore((state) => state.changePlacement)
   const setImageCrop = useBinderStore((state) => state.setImageCrop)
   const removeImage = useBinderStore((state) => state.removeImage)
+  const moveImage = useBinderStore((state) => state.moveImage)
+  const select = useEditorStore((state) => state.select)
   const setNotice = useEditorStore((state) => state.setNotice)
   const [cropping, setCropping] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -77,6 +89,20 @@ export function ImageControls({ binder, page, slot }: ImageControlsProps) {
   const max = maxSpan(binder, owner.index, image.fromSlot)
   const { rows, cols } = layoutDimensions(binder.layout)
   const resize = (placement: Placement) => report(changePlacement(owner.id, image.id, placement))
+  const here = { pageId: page.id, slotIndex: slot.index }
+
+  /** One pocket on in a direction; the selection goes along, so that the next step follows on. */
+  function move(direction: Direction) {
+    const target = neighbourPocket(binder, here, direction)
+    if (!target) return
+    const error = moveImage(here, target)
+    if (error) {
+      report(error)
+      return
+    }
+    // neighbours lie on the same spread, so the pocket stays in view
+    select(target)
+  }
 
   return (
     <>
@@ -120,6 +146,21 @@ export function ImageControls({ binder, page, slot }: ImageControlsProps) {
       <button type="button" onClick={() => setCropping(true)} className={outlineButtonClass}>
         {de.selection.cropImage}
       </button>
+      <div role="group" aria-label={de.images.move} className="grid grid-cols-4 gap-2">
+        {DIRECTIONS.map((direction) => (
+          <button
+            key={direction}
+            type="button"
+            aria-label={de.images.moveTo[direction]}
+            title={de.images.moveTo[direction]}
+            disabled={!neighbourPocket(binder, here, direction)}
+            onClick={() => move(direction)}
+            className={`${outlineButtonClass} disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line`}
+          >
+            <span aria-hidden="true">{ARROWS[direction]}</span>
+          </button>
+        ))}
+      </div>
       <button
         type="button"
         onClick={() => removeImage(owner.id, image.id)}

@@ -272,6 +272,38 @@ export function moveImage(
   }
 }
 
+export type Direction = 'left' | 'right' | 'up' | 'down'
+export const DIRECTIONS: readonly Direction[] = ['left', 'up', 'down', 'right']
+
+/**
+ * The pocket next to another one on the open spread: beside it, above or below, and
+ * across the rings from the edge of one page to the edge of the facing one. `undefined`
+ * where the binder ends.
+ */
+export function neighbourPocket(
+  binder: Binder,
+  position: SlotPosition,
+  direction: Direction,
+): SlotPosition | undefined {
+  const page = findPage(binder, position.pageId)
+  const { rows, cols } = layoutDimensions(binder.layout)
+  const column = position.slotIndex % cols
+  const row = Math.floor(position.slotIndex / cols)
+  const at = (target: Page | undefined, targetColumn: number, targetRow: number) =>
+    target ? { pageId: target.id, slotIndex: targetRow * cols + targetColumn } : undefined
+
+  if (direction === 'up') return row > 0 ? at(page, column, row - 1) : undefined
+  if (direction === 'down') return row < rows - 1 ? at(page, column, row + 1) : undefined
+  // page 1 and every odd page lie on the right, with their even neighbour to the left
+  const onTheRight = page.index % 2 === 0
+  if (direction === 'left') {
+    if (column > 0) return at(page, column - 1, row)
+    return onTheRight && page.index > 0 ? at(binder.pages[page.index - 1], cols - 1, row) : undefined
+  }
+  if (column < cols - 1) return at(page, column + 1, row)
+  return onTheRight ? undefined : at(binder.pages[page.index + 1], 0, row)
+}
+
 export function setImageCrop(
   binder: Binder,
   pageId: string,

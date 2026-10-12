@@ -483,3 +483,53 @@ test('large photos are scaled down to 2000 px, other files are refused', async (
   )
   await expect(page.getByTestId('library-image')).toHaveCount(1)
 })
+
+test('an image is also moved pocket by pocket with arrows, cards on it or not', async ({ page }) => {
+  await createBinder(page, 'Pfeile')
+  const covered = () =>
+    page
+      .getByTestId('pocket')
+      .evaluateAll((pockets) =>
+        pockets.flatMap((entry, index) => (entry.getAttribute('data-over-image') === 'true' ? [index + 1] : [])),
+      )
+  const arrow = (direction: string) => page.getByRole('button', { name: `Bild nach ${direction}`, exact: true })
+
+  // an image behind the first pocket, with a card on it: it cannot be grabbed there
+  await addImage(page, 1, 1)
+  await page.getByRole('tab', { name: 'Karten' }).click()
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  const card = page.locator('[data-testid="card-tile"][data-card-id="sv03.5-006"] > div')
+  await drag(page, card, pocket(page, 1, 1))
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+  await expect.poll(covered).toEqual([1])
+
+  // at the top left corner beside the cover there is no way left or up
+  await pocket(page, 1, 1).click()
+  await expect(arrow('links')).toBeDisabled()
+  await expect(arrow('oben')).toBeDisabled()
+
+  // one pocket to the right: the image goes, the card stays, the selection follows the image
+  await arrow('rechts').click()
+  await expect.poll(covered).toEqual([2])
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+  await expect(pocket(page, 1, 2)).toHaveAttribute('aria-pressed', 'true')
+  // and on: down, then back to the left
+  await arrow('unten').click()
+  await expect.poll(covered).toEqual([5])
+  await arrow('links').click()
+  await expect.poll(covered).toEqual([4])
+  await expect(pocket(page, 1, 4)).toHaveAttribute('aria-pressed', 'true')
+
+  // two pockets wide it does not fit one further to the right: it stays, with a word why
+  await page.getByLabel('Breite').selectOption('2')
+  await expect.poll(covered).toEqual([4, 5])
+  await arrow('rechts').click()
+  await expect.poll(covered).toEqual([5, 6])
+  await arrow('rechts').click()
+  await expect(page.getByRole('alert')).toHaveText('So groß passt das Bild dort nicht hin.')
+  await expect.poll(covered).toEqual([5, 6])
+
+  // every step can be taken back
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect.poll(covered).toEqual([4, 5])
+})

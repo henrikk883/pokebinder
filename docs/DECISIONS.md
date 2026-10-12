@@ -376,3 +376,6 @@ Knopf „Nach Set“ in der Fortschrittsleiste unter dem Binder öffnet ein Fens
 
 ## 2026-10-12 – Varianten prüfen
 Menü „Mehr“ → „Varianten prüfen“ sucht im offenen Binder Karten, die in einer Variante liegen, die es von ihnen nicht gibt (typisch: „Normal“ bei einer Karte, die nur als Holo existiert, aus der Zeit vor der automatischen Erkennung). Nach einer Rückfrage mit der Anzahl werden sie auf ihre Grundvariante gestellt (Normal, sonst Holo); Besitz-Markierung und Stückzahl bleiben. Ein Schritt „Rückgängig“ nimmt alles zurück. Karten, deren Varianten TCGdex nicht kennt, und Varianten, die es gibt (auch bewusst gewählte wie Reverse), bleiben unberührt. Ohne Fund sagt ein Hinweis, dass alles stimmt.
+
+## 2026-10-12 – Bild mit Pfeilen verschieben
+Im Abschnitt „Bild“ der rechten Spalte stehen vier Pfeile, die das Bild hinter dem gewählten Pocket um ein Pocket nach links, oben, unten oder rechts rücken, auch über die Ringe auf die gegenüberliegende Seite. Das geht auch dann, wenn auf jedem Pocket des Bildes eine Karte liegt und es sich deshalb nicht greifen lässt. Die Auswahl wandert mit, sodass mehrere Schritte hintereinander gehen. Passt das Bild am Ziel nicht (Rand, anderes Bild), bleibt es liegen und der bekannte Hinweis erscheint; am Rand des Binders ist der Pfeil ausgegraut. Karten bleiben, wo sie sind.

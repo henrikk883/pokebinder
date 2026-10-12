@@ -75,7 +75,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
 9. **Eigene Bilder.** Bild hochladen (JPG, PNG, WebP; höchstens 2000 px Kantenlänge) und in einen oder mehrere zusammenhängende Pockets legen.
    - Größe frei in Pockets (Breite × Höhe) oder ganze Seite; auf einer Doppelseite auch über die Ringe hinweg. Bilder überlappen sich nicht.
    - Bildausschnitt per Verschieben und Zoom anpassbar.
-   - Ein eingesetztes Bild lässt sich an einem seiner Pockets greifen und an einen anderen Platz ziehen, auch auf die gegenüberliegende Seite.
+   - Ein eingesetztes Bild lässt sich an einem seiner Pockets greifen und an einen anderen Platz ziehen, auch auf die gegenüberliegende Seite. Vier Pfeile in der rechten Spalte rücken es alternativ um je ein Pocket, auch wenn überall Karten darauf liegen.
    - Karten dürfen über einem Hintergrundbild liegen.
    - Die Bild-Bibliothek gilt für alle Binder.
 10. **Undo/Redo** für alle Änderungen am Binder (100 Schritte, per Knopf und Strg+Z / Strg+Y).
@@ -227,5 +227,4 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-2. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
