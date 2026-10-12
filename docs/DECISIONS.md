@@ -575,3 +575,7 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Nicht übernommen wird: ein Eintrag ohne Erweiterung („egal welche“), eine unbekannte Erweiterung, eine Nummer, die es im Set nicht gibt, und ein Eintrag, dessen Version höher ist, als das Set Drucke dieses Namens hat – das ist ein Sonderprodukt wie die Metallkarte.
 - Ergebnis ist ein neuer Binder (3 × 3, umstellbar), eine Karte je Pocket in der Reihenfolge der Liste, als fehlend; die gewünschte Anzahl spielt keine Rolle, ein Binder hat einen Platz je Karte. Vor dem Anlegen zeigt die App, was sie erkannt hat.
 - Der Einstieg liegt im Regal neben „Neuer Binder“. Das Format hängt an Cardmarkets Seite: Ändert Cardmarket seine Tabelle, muss der Leser nachziehen; die Beispieldatei ist dafür als Test eingebunden.
+
+## 2026-10-12 – Zwei weitere Punkte in der Roadmap
+- Von Henrik gewünscht, nur aufgenommen: Punkt 19 „Nach Illustrator sortieren“ (klein, passt zu Punkt 16) und Punkt 20 „Ähnliche Karten finden“ nach Farben oder Komposition, aus der Karten-Info heraus.
+- Punkt 20 steht als Idee mit vorgeschalteter Machbarkeitsprüfung: Die Ähnlichkeit lässt sich nur aus den Bildern errechnen, vorab und außerhalb der App.
