@@ -23,12 +23,17 @@ const frameClass = 'aspect-[63/88] w-full rounded-pocket'
  * without that, a grey placeholder with the card's name.
  */
 export function CardImage({ card, set, size, missing = false }: CardImageProps) {
-  const [substituteFailed, setSubstituteFailed] = useState(false)
+  // Remembered per image address, not as a plain flag: the same pocket shows other cards
+  // after a page turn or a drop, and one card without an English scan must not hide the
+  // English scan of the next.
+  const [failedSubstitute, setFailedSubstitute] = useState<string>()
   const tone = missing ? 'grayscale' : ''
+  const substitute = card.image || !set ? undefined : cardImageUrl(englishCardImage(card, set), size)
 
   if (card.image) {
     return (
       <img
+        key={card.image}
         src={cardImageUrl(card.image, size)}
         alt={card.name}
         loading="lazy"
@@ -39,16 +44,18 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
     )
   }
 
-  if (set && !substituteFailed) {
+  if (substitute !== undefined && substitute !== failedSubstitute) {
     return (
       <img
-        src={cardImageUrl(englishCardImage(card, set), size)}
+        // a fresh element per address, so a failed load never sticks to the next card
+        key={substitute}
+        src={substitute}
         alt={de.search.substituteImage(card.name)}
         title={de.search.substituteHint}
         loading="lazy"
         decoding="async"
         draggable={false}
-        onError={() => setSubstituteFailed(true)}
+        onError={() => setFailedSubstitute(substitute)}
         className={`${frameClass} bg-raised object-cover ${tone}`}
       />
     )

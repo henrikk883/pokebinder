@@ -16,6 +16,8 @@ const requests = [
   'de/sets/sv03.5',
   'de/sets/sv08.5',
   'de/sets/svp',
+  // a set with many cards that have no German scan, some of them no English one either
+  'de/sets/smp',
   'de/cards?name=Glurak&pagination:page=1&pagination:itemsPerPage=60',
   'de/cards?name=Glurak&pagination:page=2&pagination:itemsPerPage=60',
   'de/cards?name=Glurak&set.id=eq:sv03.5&pagination:page=1&pagination:itemsPerPage=1000',

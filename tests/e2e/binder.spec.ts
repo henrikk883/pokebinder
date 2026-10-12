@@ -70,6 +70,35 @@ test('a card dragged from the search into a pocket is still there after a reload
   await expect(page.getByTestId('pocket').and(page.locator('[data-card-id=""]'))).toHaveCount(8)
 })
 
+test('a card without a German scan shows the English one, whatever lay in the pocket before', async ({ page }) => {
+  await createBinder(page, 'Ersatzbilder')
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  await page.getByRole('button', { name: 'Mehr laden' }).click()
+  await expect(page.getByRole('button', { name: 'Mehr laden' })).toBeHidden()
+  const searchTile = (cardId: string) => page.locator(`[data-testid="card-tile"][data-card-id="${cardId}"] > div`)
+
+  // TCGdex has no scan at all of this promo, neither German nor English
+  await drag(page, searchTile('smp-SM195'), pocket(page, 1, 1))
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'smp-SM195')
+  await expect(pocket(page, 1, 1).getByRole('img', { name: 'Glurak GX (kein Bild vorhanden)' })).toBeVisible()
+
+  // of this one there is an English scan; it appears although the pocket just failed to load one
+  await drag(page, searchTile('smp-SM158'), pocket(page, 1, 1))
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'smp-SM158')
+  const substitute = pocket(page, 1, 1).getByRole('img', { name: 'Glurak (englisches Bild)' })
+  await expect(substitute).toHaveAttribute('src', /assets\.tcgdex\.net\/en\/sm\/smp\/SM158\/high\.webp$/)
+  await expect.poll(() => substitute.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-lang', 'de')
+
+  // the same after turning pages: page 2 reuses the pockets that showed page 1
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).click()
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).click()
+  await drag(page, searchTile('smp-SM195'), pocket(page, 3, 1))
+  await expect(pocket(page, 3, 1).getByRole('img', { name: 'Glurak GX (kein Bild vorhanden)' })).toBeVisible()
+  await page.getByRole('button', { name: 'Zurückblättern' }).click()
+  await expect(pocket(page, 1, 1).getByRole('img', { name: 'Glurak (englisches Bild)' })).toBeVisible()
+})
+
 test('a new binder opens on page 1 next to the cover, with the chosen layout', async ({ page }) => {
   await createBinder(page, 'Mein 4er', '4 × 4')
 
