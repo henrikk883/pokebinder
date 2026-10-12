@@ -50,6 +50,8 @@ interface MasterSetOptionsProps {
   catalog: Catalog | undefined
   catalogUnavailableText: string | undefined
   layout: Layout
+  /** For an existing master set: its set, which cannot be changed, and its current options. */
+  existing?: { setId: string; options: Options }
   onChange: (choice: MasterSetChoice | undefined) => void
 }
 
@@ -57,11 +59,17 @@ const switchRowClass = 'flex cursor-pointer items-start gap-3 text-sm'
 const checkboxClass = 'mt-0.5 size-4 shrink-0 accent-accent'
 
 /** Second step of the assistant: which set, and what belongs into its master set. */
-export function MasterSetOptions({ catalog, catalogUnavailableText, layout, onChange }: MasterSetOptionsProps) {
-  const [setId, setSetId] = useState<string>()
-  const [withVariants, setWithVariants] = useState(false)
-  const [withPromos, setWithPromos] = useState(false)
-  const [excluded, setExcluded] = useState<string[]>([])
+export function MasterSetOptions({
+  catalog,
+  catalogUnavailableText,
+  layout,
+  existing,
+  onChange,
+}: MasterSetOptionsProps) {
+  const [setId, setSetId] = useState(existing?.setId)
+  const [withVariants, setWithVariants] = useState(existing?.options.withVariants ?? false)
+  const [withPromos, setWithPromos] = useState(existing?.options.withPromos ?? false)
+  const [excluded, setExcluded] = useState<string[]>([...(existing?.options.excludedSecretRarities ?? [])])
 
   const set = setId ? catalog?.setsById.get(setId) : undefined
   const promoSetId = catalog && setId ? promoSetIdOf(catalog, setId) : undefined
@@ -74,6 +82,8 @@ export function MasterSetOptions({ catalog, catalogUnavailableText, layout, onCh
   const source: MasterSetSource | undefined =
     set && details?.status === 'ready' && promosReady
       ? {
+          setId: set.id,
+          ...(promoSetId === undefined ? {} : { promoSetId }),
           cards: details.cards,
           officialCount: set.cardCount.official,
           promos: promoDetails?.status === 'ready' ? promoDetails.cards : [],
@@ -100,16 +110,23 @@ export function MasterSetOptions({ catalog, catalogUnavailableText, layout, onCh
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2 text-sm">
-        <p>{de.masterSet.set}</p>
-        <SetPicker
-          catalog={catalog}
-          unavailableText={catalogUnavailableText}
-          value={setId}
-          onChange={chooseSet}
-        />
-        {!set && <p className="text-xs text-muted">{de.masterSet.chooseSet}</p>}
-      </div>
+      {!existing && (
+        <div className="space-y-2 text-sm">
+          <p>{de.masterSet.set}</p>
+          <SetPicker
+            catalog={catalog}
+            unavailableText={catalogUnavailableText}
+            value={setId}
+            onChange={chooseSet}
+          />
+          {!set && <p className="text-xs text-muted">{de.masterSet.chooseSet}</p>}
+        </div>
+      )}
+      {existing && !set && (
+        <p role={catalog ? 'alert' : 'status'} className="text-sm text-muted">
+          {catalog ? de.masterSet.loadFailed : (catalogUnavailableText ?? de.masterSet.loading)}
+        </p>
+      )}
 
       {set && (
         <>
@@ -186,7 +203,9 @@ export function MasterSetOptions({ catalog, catalogUnavailableText, layout, onCh
           )}
           {cardCount !== undefined && (
             <p role="status" data-testid="master-set-summary" className="rounded-control border border-line bg-raised px-3 py-2 text-sm">
-              {de.masterSet.summary(cardCount, pagesNeeded(cardCount, layout))}
+              {existing
+                ? de.masterSet.changeSummary(cardCount, pagesNeeded(cardCount, layout))
+                : de.masterSet.summary(cardCount, pagesNeeded(cardCount, layout))}
             </p>
           )}
         </>

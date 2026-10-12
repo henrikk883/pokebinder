@@ -55,6 +55,8 @@ export interface BinderState {
   createBinder: (input: NewBinderInput) => void
   /** Opens a binder that was built elsewhere (e.g. a master set) and stores it. */
   adoptBinder: (binder: Binder) => void
+  /** Takes over a reworked version of the open binder, e.g. a rebuilt master set. */
+  replaceContent: (binder: Binder) => void
   setVariant: (position: SlotPosition, variant: CardVariant) => void
   addPage: () => void
   removePage: (pageId: string) => void
@@ -148,6 +150,8 @@ export function createBinderStore(deps: BinderStoreDeps) {
         set({ binder })
         scheduleSave()
       },
+      replaceContent: (next) =>
+        change((binder) => (next.id === binder.id ? normalizeImages(next) : binder)),
       setVariant: (position, variant) => change((binder) => setVariant(binder, position, variant)),
       addPage: () => change((binder) => addPage(binder)),
       // pages behind the removed one change sides, which may cut off images spanning two pages

@@ -61,7 +61,14 @@ export const de = {
     noPromos: 'Für diese Serie gibt es bei TCGdex kein Promo-Set.',
     summary: (cards: number, pages: number) =>
       `Ergibt ${cards} ${cards === 1 ? 'Karte' : 'Karten'} auf ${pages} ${pages === 1 ? 'Seite' : 'Seiten'}. Alle Karten starten als „fehlt“.`,
-    creating: 'Binder wird erzeugt …',
+    changeSummary: (cards: number, pages: number) =>
+      `Das Master Set hat danach ${cards} ${cards === 1 ? 'Karte' : 'Karten'} auf ${pages} ${pages === 1 ? 'Seite' : 'Seiten'}.`,
+    adjust: 'Master Set anpassen',
+    adjustHint:
+      'Karten, die nicht mehr dazugehören, werden entfernt, neue kommen als „fehlt“ dazu. Danach liegt alles wieder in Set-Reihenfolge. Was du als vorhanden markiert hast, bleibt vorhanden.',
+    adjustExtras: 'Karten, die nicht zum Set gehören, wandern ans Ende.',
+    apply: 'Übernehmen',
+    cancel: 'Abbrechen',
   },
   app: {
     name: 'PokéBinder',

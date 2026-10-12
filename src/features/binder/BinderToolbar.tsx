@@ -4,6 +4,7 @@ import { chronologicalSetIds, tcgdex } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { LAYOUTS, type Binder, type Layout } from '../../types/binder'
+import { MasterSetSettingsDialog } from '../masterset/MasterSetSettingsDialog'
 import { countCards } from './binderModel'
 import { buildSpreads, pageNumbersOf, type Spread } from './spreads'
 
@@ -76,6 +77,8 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
   const changeLayout = useBinderStore((state) => state.changeLayout)
   const showSpread = useEditorStore((state) => state.showSpread)
 
+  const replaceContent = useBinderStore((state) => state.replaceContent)
+  const [adjusting, setAdjusting] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportFailed, setExportFailed] = useState(false)
 
@@ -119,6 +122,22 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
         ))}
       </select>
       <SortMenu binder={binder} spread={spread} />
+      {binder.mode === 'masterSet' && binder.setId !== undefined && (
+        <button type="button" onClick={() => setAdjusting(true)} className={buttonClass}>
+          {de.masterSet.adjust}
+        </button>
+      )}
+      {adjusting && binder.setId !== undefined && (
+        <MasterSetSettingsDialog
+          binder={binder}
+          setId={binder.setId}
+          onCancel={() => setAdjusting(false)}
+          onApply={(next) => {
+            replaceContent(next)
+            setAdjusting(false)
+          }}
+        />
+      )}
       <div className="relative">
         <button type="button" disabled={exporting} onClick={handleMissingList} className={buttonClass}>
           {de.binder.missingListPdf}

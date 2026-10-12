@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { CardDetail, Catalog, SetSummary } from '../../lib/tcgdex'
 import { createTestContext } from '../../test/modelContext'
-import { countProgress } from '../binder/binderModel'
+import type { Binder } from '../../types/binder'
+import { countProgress, setCard, setOwned } from '../binder/binderModel'
 import {
   buildMasterSet,
   createMasterSetBinder,
+  currentOptions,
+  rebuildMasterSet,
   isSecretRare,
   pagesNeeded,
   promoSetIdOf,
@@ -37,7 +40,14 @@ const promos: CardDetail[] = [
   card('001', 'Promo', ['holo'], 'svp'),
   card('002', 'Promo', ['normal', 'holo'], 'svp'),
 ]
-const source: MasterSetSource = { cards, officialCount: 5, promos, lang: 'de' }
+const source: MasterSetSource = {
+  setId: 'sv08.5',
+  promoSetId: 'svp',
+  cards,
+  officialCount: 5,
+  promos,
+  lang: 'de',
+}
 
 const plain: MasterSetOptions = { withVariants: false, excludedSecretRarities: [], withPromos: false }
 
@@ -203,6 +213,139 @@ describe('createMasterSetBinder', () => {
 
     expect(binder.withSecretRares).toBe(false)
     expect(binder.pages).toHaveLength(1)
+  })
+})
+
+describe('rebuildMasterSet', () => {
+  const input = {
+    name: 'Prismatische Entwicklungen',
+    layout: '2x2' as const,
+    defaultOpeningSide: 'right' as const,
+    setId: 'sv08.5',
+    options: plain,
+  }
+  const allCards = (binder: Binder) =>
+    binder.pages.flatMap((page) =>
+      page.slots.flatMap((slot) =>
+        slot.cardRef ? [`${slot.cardRef.cardId.replace('sv08.5-', '')}:${slot.cardRef.variant}${slot.owned ? '*' : ''}`] : [],
+      ),
+    )
+
+  function masterSet(options: MasterSetOptions = plain) {
+    const ctx = createTestContext()
+    return { ctx, binder: createMasterSetBinder({ ...input, options }, buildMasterSet(source, options), ctx) }
+  }
+
+  it('adds the promos at the end and removes them again', () => {
+    const { ctx, binder } = masterSet()
+
+    const withPromos = rebuildMasterSet(binder, source, { ...plain, withPromos: true }, ctx)
+
+    expect(allCards(withPromos).slice(-3)).toEqual(['009:holo', 'svp-001:holo', 'svp-002:normal'])
+    expect(withPromos.withPromos).toBe(true)
+    expect(withPromos.pages).toHaveLength(3) // 11 cards in pockets of four
+
+    // the promos are loaded only when wanted; they are removed all the same
+    const without = rebuildMasterSet(withPromos, { ...source, promos: [] }, plain, ctx)
+
+    expect(allCards(without)).toEqual(allCards(binder))
+    expect(without.withPromos).toBe(false)
+    expect(without.pages).toHaveLength(3) // 9 cards
+  })
+
+  it('keeps what is owned, and lets new cards start as missing', () => {
+    const { ctx, binder: fresh } = masterSet()
+    const first = fresh.pages[0]
+    if (!first) throw new Error('Expected a page')
+    let binder = setOwned(fresh, { pageId: first.id, slotIndex: 0 }, true, ctx) // 001 normal
+    binder = setOwned(binder, { pageId: first.id, slotIndex: 3 }, true, ctx) // 004 holo
+
+    const next = rebuildMasterSet(binder, source, { ...plain, withVariants: true }, ctx)
+
+    expect(allCards(next).slice(0, 11)).toEqual([
+      '001:normal*',
+      '001:reverse',
+      '001:masterball',
+      '001:pokeball',
+      '002:normal',
+      '002:reverse',
+      '002:pokeball',
+      '003:normal',
+      '003:holo',
+      '003:reverse',
+      '004:holo*',
+    ])
+    expect(countProgress(next)).toEqual({ total: 16, owned: 2, missing: 14 })
+    expect(next.withReverseHolo).toBe(true)
+  })
+
+  it('removes the holo variants again and sorts what remains', () => {
+    const { ctx, binder } = masterSet({ ...plain, withVariants: true })
+    const first = binder.pages[0]
+    if (!first) throw new Error('Expected a page')
+    const marked = setOwned(binder, { pageId: first.id, slotIndex: 1 }, true, ctx) // 001 reverse
+
+    const next = rebuildMasterSet(marked, source, plain, ctx)
+
+    expect(allCards(next)).toEqual(ids(buildMasterSet(source, plain)).map((id) => id))
+    expect(countProgress(next).owned).toBe(0) // the owned reverse holo is gone with the others
+    expect(next.pages).toHaveLength(3)
+  })
+
+  it('removes and restores secret rares by rarity', () => {
+    const { ctx, binder } = masterSet()
+
+    const next = rebuildMasterSet(binder, source, { ...plain, excludedSecretRarities: ['Hyperselten', 'Ultra Selten'] }, ctx)
+
+    expect(allCards(next)).toEqual(['001:normal', '002:normal', '003:normal', '004:holo', '005:normal', '007:holo', '008:holo'])
+    expect(next.withSecretRares).toBe(false)
+    expect(allCards(rebuildMasterSet(next, source, plain, ctx))).toEqual(allCards(binder))
+  })
+
+  it('moves cards placed by hand to the end instead of deleting them', () => {
+    const { ctx, binder } = masterSet()
+    const last = binder.pages.at(-1)
+    if (!last) throw new Error('Expected a page')
+    // 9 cards fill two pages and one pocket; a Pikachu from another set goes into the next one
+    const withExtra = setCard(binder, { pageId: last.id, slotIndex: 3 }, { cardId: 'sv03.5-025', lang: 'de', variant: 'normal' }, true, ctx)
+
+    const next = rebuildMasterSet(withExtra, source, { ...plain, withPromos: true }, ctx)
+
+    expect(allCards(next).slice(-3)).toEqual(['svp-001:holo', 'svp-002:normal', 'sv03.5-025:normal*'])
+  })
+
+  it('keeps pages, their settings and their images', () => {
+    const { ctx, binder } = masterSet({ ...plain, withVariants: true }) // 16 cards on 4 pages
+    const pages = binder.pages.map((page, index) =>
+      index === 3
+        ? { ...page, openingSide: 'left' as const, images: [{ id: 'i', assetId: 'a', fromSlot: 0, spanCols: 1, spanRows: 1, crop: { x: 0.5, y: 0.5, zoom: 1 } }] }
+        : page,
+    )
+
+    const next = rebuildMasterSet({ ...binder, pages }, source, plain, ctx) // 9 cards need 3 pages
+
+    // the fourth page stays because an image lies on it
+    expect(next.pages.map((page) => page.id)).toEqual(binder.pages.map((page) => page.id))
+    expect(next.pages[3]).toMatchObject({ openingSide: 'left', images: [{ id: 'i' }] })
+    expect(next.pages[3]?.slots.every((slot) => slot.cardRef === undefined)).toBe(true)
+  })
+})
+
+describe('currentOptions', () => {
+  it('reads the options back from a master set', () => {
+    for (const options of [
+      plain,
+      { ...plain, withVariants: true, withPromos: true },
+      { ...plain, excludedSecretRarities: ['Selten, besondere Illustration', 'Hyperselten'] },
+    ]) {
+      const binder = createMasterSetBinder(
+        { name: 'x', layout: '3x3', defaultOpeningSide: 'right', setId: 'sv08.5', options },
+        buildMasterSet(source, options),
+        createTestContext(),
+      )
+
+      expect(currentOptions(binder, source)).toEqual(options)
+    }
   })
 })
 

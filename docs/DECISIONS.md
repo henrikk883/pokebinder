@@ -169,6 +169,9 @@ Als Secret Rare zählt jede Karte mit einer Nummer über der offiziellen Setgrö
 ## 2026-10-12 – Assistent in einem Dialog
 „Leerer Binder“ oder „Master Set“ oben, darunter die jeweiligen Angaben. Ein Master Set heißt wie sein Set, wenn kein Name eingegeben wird. Alle Karten eines Master Sets starten als „fehlt“.
 
+## 2026-10-12 – Master Sets lassen sich nachträglich anpassen
+„Master Set anpassen“ (nur bei Master-Set-Bindern) stellt Holo-Varianten, Secret Rares und Promos neu ein. Karten, die nicht mehr dazugehören, werden gelöscht, neue kommen als „fehlt“ dazu, danach liegt alles wieder in Set-Reihenfolge. Vorhanden-Markierungen bleiben an ihrer Karte. Von Hand eingefügte Karten aus anderen Sets wandern ans Ende statt gelöscht zu werden; Seiten behalten Öffnung und Bilder, leere Seiten am Ende entfallen. Welche Secret-Rare-Gruppen abgewählt sind, liest die App aus dem Inhalt des Binders. Von Henrik gewünscht.
+
 ## 2026-10-12 – Modus „Sammlung“ sperrt das Umordnen
 Im Modus „Sammlung“ schaltet ein Klick auf eine Karte Vorhanden/Fehlt; Ziehen, Rechtsklick-Leeren und das Hineinziehen aus der Suche sind dort abgeschaltet. Beim Öffnen eines Binders gilt „Bearbeiten“.
 

@@ -44,9 +44,12 @@ export interface MasterSetOptions {
 }
 
 export interface MasterSetSource {
+  setId: string
+  /** Promo set of the series, if it has one. */
+  promoSetId?: string
   cards: readonly CardDetail[]
   officialCount: number
-  /** Cards of the series' promo set; used when promos are wanted. */
+  /** Cards of the promo set; only needed when promos are wanted. */
   promos: readonly CardDetail[]
   lang: CardLang
 }
@@ -125,6 +128,83 @@ export function createMasterSetBinder(
     }
   })
   return { ...binder, pages }
+}
+
+const refKey = (ref: CardRef) => `${ref.cardId}/${ref.variant}`
+
+/**
+ * The options an existing master set was last built with, read from what is in it:
+ * a group of secret rares counts as left out when the binder holds none of its cards.
+ */
+export function currentOptions(binder: Binder, source: MasterSetSource): MasterSetOptions {
+  const present = new Set(
+    binder.pages.flatMap((page) => page.slots.flatMap((slot) => (slot.cardRef ? [slot.cardRef.cardId] : []))),
+  )
+  const excluded = secretRareGroups(source.cards, source.officialCount)
+    .map((group) => group.rarity)
+    .filter(
+      (rarity) =>
+        !source.cards.some(
+          (card) =>
+            isSecretRare(card, source.officialCount) && (card.rarity ?? '') === rarity && present.has(card.id),
+        ),
+    )
+  return {
+    withVariants: binder.withReverseHolo,
+    excludedSecretRarities: excluded,
+    withPromos: binder.withPromos,
+  }
+}
+
+/**
+ * Rebuilds an existing master set for other options. Cards that no longer belong are
+ * removed, new ones arrive as missing, and everything lies in set order again; cards
+ * that stay keep their owned state. Cards that never belonged to the set (placed by
+ * hand) follow at the end. Pages keep their settings and images; pages left empty at
+ * the end are dropped unless an image lies on them.
+ */
+export function rebuildMasterSet(
+  binder: Binder,
+  source: MasterSetSource,
+  options: MasterSetOptions,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const wanted = buildMasterSet(source, options)
+  // cards of the set and of its promo set are the master set's business; all others were placed by hand
+  const ownSets = [source.setId, ...(source.promoSetId === undefined ? [] : [source.promoSetId])]
+  const belongsToSet = (cardId: string) => ownSets.some((setId) => cardId.startsWith(`${setId}-`))
+
+  const existing = binder.pages.flatMap((page) =>
+    page.slots.flatMap((slot) => (slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned }] : [])),
+  )
+  const owned = new Set(existing.filter((card) => card.owned).map((card) => refKey(card.cardRef)))
+  const extras = existing.filter((card) => !belongsToSet(card.cardRef.cardId))
+
+  const cards = [...wanted.map((cardRef) => ({ cardRef, owned: owned.has(refKey(cardRef)) })), ...extras]
+  const perPage = slotsPerPage(binder.layout)
+  const lastImagePage = binder.pages.reduce((last, page) => (page.images.length > 0 ? page.index : last), -1)
+  const pageCount = Math.max(pagesNeeded(cards.length, binder.layout), lastImagePage + 1)
+
+  const pages = Array.from({ length: pageCount }, (_, pageIndex) => {
+    const previous = binder.pages[pageIndex]
+    const page = previous ?? createPage(binder.layout, pageIndex, binder.defaultOpeningSide, ctx)
+    return {
+      ...page,
+      slots: page.slots.map((slot): Slot => {
+        const card = cards[pageIndex * perPage + slot.index]
+        return card ? { index: slot.index, cardRef: card.cardRef, owned: card.owned } : { index: slot.index, owned: false }
+      }),
+    }
+  })
+
+  return {
+    ...binder,
+    pages,
+    withReverseHolo: options.withVariants,
+    withSecretRares: options.excludedSecretRarities.length === 0,
+    withPromos: options.withPromos,
+    updatedAt: ctx.now(),
+  }
 }
 
 /**

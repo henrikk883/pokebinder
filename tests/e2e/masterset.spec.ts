@@ -165,6 +165,89 @@ test('promos of the series are appended at the end', async ({ page }) => {
   await expect(page.getByTestId('selected-rarity')).toHaveText('Promo')
 })
 
+test('an existing master set can be changed afterwards: promos, holo variants, secret rares', async ({ page }) => {
+  const dialog = await startMasterSet(page, /^151/)
+  await dialog.getByRole('group', { name: 'Secret Rares' }).getByLabel('Hyperselten (3)').uncheck()
+  await create(page, dialog, '151')
+  await expect(page.getByTestId('progress')).toContainText('0 / 204 Karten gesammelt')
+
+  // own Bisasam and Glurak-ex before changing anything
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  await pocket(page, 1, 1).click()
+  await pocket(page, 1, 6).click()
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Bearbeiten' }).click()
+  await expect(page.getByTestId('progress')).toContainText('2 / 204 Karten gesammelt')
+
+  // the dialog opens with what the binder was built with
+  await page.getByRole('button', { name: 'Master Set anpassen' }).click()
+  const settings = page.getByRole('dialog', { name: 'Master Set anpassen' })
+  await expect(settings.getByTestId('master-set-summary')).toHaveText(
+    'Das Master Set hat danach 204 Karten auf 23 Seiten.',
+  )
+  await expect(settings.getByRole('switch', { name: /Mit Holo-Varianten/ })).not.toBeChecked()
+  await expect(settings.getByRole('switch', { name: /Promos/ })).not.toBeChecked()
+  await expect(settings.getByLabel('Hyperselten (3)')).not.toBeChecked()
+  await expect(settings.getByLabel('Ultra Selten (16)')).toBeChecked()
+  // the set itself is fixed
+  await expect(settings.getByRole('button', { name: 'Set', exact: true })).toHaveCount(0)
+
+  // add the promos and the holo variants, bring the hyper rares back
+  await settings.getByRole('switch', { name: /Promos/ }).check()
+  await settings.getByRole('switch', { name: /Mit Holo-Varianten/ }).check()
+  await settings.getByLabel('Hyperselten (3)').check()
+  await expect(settings.getByTestId('master-set-summary')).toHaveText(
+    'Das Master Set hat danach 558 Karten auf 62 Seiten.',
+  )
+  await settings.getByRole('button', { name: 'Übernehmen' }).click()
+  await expect(settings).toBeHidden()
+
+  // sorted again, with the reverse holos in between; what was owned is still owned
+  await expect(page.getByTestId('progress')).toContainText('2 / 558 Karten gesammelt')
+  expect((await cardsOn(page, 1)).slice(0, 3)).toEqual(['sv03.5-001/normal', 'sv03.5-001/reverse', 'sv03.5-002/normal'])
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'true')
+  await expect(pocket(page, 1, 2)).toHaveAttribute('data-owned', 'false')
+  await page.getByRole('navigation', { name: 'Doppelseiten' }).getByRole('button').last().click()
+  await expect(page.getByTestId('spread-label')).toHaveText('Seite 62')
+  await saved(page)
+
+  // and back: the promos and reverse holos are deleted, the rest moves up
+  await page.reload()
+  await page.getByRole('button', { name: 'Master Set anpassen' }).click()
+  await expect(settings.getByRole('switch', { name: /Promos/ })).toBeChecked()
+  await expect(settings.getByRole('switch', { name: /Mit Holo-Varianten/ })).toBeChecked()
+  await settings.getByRole('switch', { name: /Promos/ }).uncheck()
+  await settings.getByRole('switch', { name: /Mit Holo-Varianten/ }).uncheck()
+  await expect(settings.getByTestId('master-set-summary')).toHaveText(
+    'Das Master Set hat danach 207 Karten auf 23 Seiten.',
+  )
+  await settings.getByRole('button', { name: 'Übernehmen' }).click()
+
+  await expect(page.getByTestId('progress')).toContainText('2 / 207 Karten gesammelt')
+  await expect(page.getByRole('navigation', { name: 'Doppelseiten' }).getByRole('button')).toHaveCount(12)
+  expect(await cardsOn(page, 1)).toEqual(
+    Array.from({ length: 9 }, (_, i) => `sv03.5-00${i + 1}/${[3, 6, 9].includes(i + 1) ? 'holo' : 'normal'}`),
+  )
+  await expect(pocket(page, 1, 6)).toHaveAttribute('data-owned', 'true')
+})
+
+test('cancelling the change leaves the master set as it is, and empty binders have no such button', async ({ page }) => {
+  const dialog = await startMasterSet(page, /^151/)
+  await create(page, dialog, '151')
+
+  await page.getByRole('button', { name: 'Master Set anpassen' }).click()
+  const settings = page.getByRole('dialog', { name: 'Master Set anpassen' })
+  await settings.getByRole('switch', { name: /Promos/ }).check()
+  await settings.getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(page.getByTestId('progress')).toContainText('0 / 207 Karten gesammelt')
+
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  await page.getByRole('dialog').getByLabel('Name').fill('Leer')
+  await page.getByRole('dialog').getByRole('button', { name: 'Anlegen' }).click()
+  await expect(page.getByRole('heading', { name: 'Leer', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Master Set anpassen' })).toHaveCount(0)
+})
+
 test('the assistant waits for a set and can be switched back to an empty binder', async ({ page }) => {
   await page.getByRole('button', { name: 'Neuer Binder' }).click()
   const dialog = page.getByRole('dialog', { name: 'Neuer Binder' })
