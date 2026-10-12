@@ -268,5 +268,5 @@ Die Übersicht zeigt die Binder als Kacheln nebeneinander, jede mit ihrem Cover-
 ## 2026-10-12 – Sortierung im Regal „Meine Binder“
 Drei Sortierungen: „Zuletzt geändert“ (Standard), „Alphabetisch“ (deutsche Sortierung, „Binder 2“ vor „Binder 10“) und „Eigene Reihenfolge“. Nur in der eigenen Reihenfolge lassen sich Binder ziehen (auf einen anderen Binder fallen lassen = dessen Platz einnehmen) oder mit zwei Pfeilknöpfen um einen Platz verschieben; neue Binder stehen dort vorn. Sortierung und Reihenfolge liegen im `localStorage` dieses Browsers (`pokebinder:shelf`) und sind nicht Teil des Backups – so von Henrik entschieden.
 
-## 2026-10-12 – PNG-Export: keine Öffnungsmarke auf Bild-Pockets
-Liegt in einem Pocket ein eigenes Bild (und keine Karte), wird der Strich für die Pocket-Öffnung im PNG weggelassen, damit sich das Bild ausdrucken, ausschneiden und einstecken lässt. Am Bildschirm bleibt die Marke sichtbar, weil sie beim Planen zeigt, wo die Karten eingeschoben werden. Von Henrik gewünscht.
+## 2026-10-12 – PNG-Export: Bild-Pockets ohne Öffnungsmarke und Pocket-Rand
+Liegt in einem Pocket ein eigenes Bild (und keine Karte), werden im PNG der Strich für die Pocket-Öffnung und die Umrandung des Pockets weggelassen: Das Bild erscheint als durchgehende Fläche und lässt sich ausdrucken, ausschneiden und einstecken. Am Bildschirm bleiben beide sichtbar, weil sie beim Planen zeigen, wo die Pockets liegen und wo die Karten eingeschoben werden. Pockets mit Karte oder ohne Bild bleiben im Export unverändert. Von Henrik gewünscht.

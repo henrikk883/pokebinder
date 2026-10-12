@@ -145,6 +145,11 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketP
   const target: DropTarget = { kind: 'pocket', position }
   const { setNodeRef, isOver } = useDroppable({ id: pocketId(position), data: target })
 
+  const frameClass = selected ? 'ring-2 ring-accent' : isOver ? 'ring-2 ring-accent/60' : 'ring-1 ring-line'
+  // Only an own image shows here: it is printed, cut out and put in, so its export carries
+  // neither the outline of the pocket nor the mark of its opening.
+  const bareImage = overImage && !slot.cardRef
+
   const label = card
     ? de.binder.pocketWithCard(pageNumber, slot.index + 1, card.name)
     : de.binder.pocket(pageNumber, slot.index + 1)
@@ -175,8 +180,16 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketP
       data-over-image={overImage}
       className={`relative flex aspect-[63/88] items-center justify-center rounded-pocket outline-offset-2 ${
         overImage ? '' : 'bg-bg/60'
-      } ${selected ? 'ring-2 ring-accent' : isOver ? 'ring-2 ring-accent/60' : 'ring-1 ring-line'}`}
+      } ${bareImage ? '' : frameClass}`}
     >
+      {/* drawn as a part of its own, so that an export can leave it off the picture */}
+      {bareImage && (
+        <span
+          aria-hidden="true"
+          data-export-hide
+          className={`pointer-events-none absolute inset-0 rounded-pocket ${frameClass}`}
+        />
+      )}
       {slot.cardRef ? (
         <PocketCard
           position={position}
@@ -191,8 +204,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketP
         aria-hidden="true"
         data-testid="pocket-opening"
         data-side={opening}
-        // a picture is printed, cut out and put in: on its export no mark should lie on it
-        data-export-hide={overImage && !slot.cardRef ? '' : undefined}
+        data-export-hide={bareImage ? '' : undefined}
         className={`pointer-events-none absolute inset-y-[12%] w-0.5 rounded-full bg-text/50 ${
           opening === 'left' ? 'left-0' : 'right-0'
         }`}

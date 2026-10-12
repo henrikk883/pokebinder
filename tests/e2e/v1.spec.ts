@@ -246,6 +246,19 @@ test.describe('PNG export', () => {
     expect(markGreen).toBeLessThan(120)
     expect(markBlue).toBeLessThan(70)
 
+    // nor is the pocket outlined on the image: just left of the middle pocket it is still orange
+    const middle = await pocket(page, 2, 5).boundingBox()
+    if (!middle) throw new Error('Pocket is not visible')
+    const [edgeRed, edgeGreen, edgeBlue] = await pixelOf(
+      page,
+      download,
+      (middle.x - 0.5 - sheet.x) / sheet.width,
+      (middle.y + middle.height / 2 - sheet.y) / sheet.height,
+    )
+    expect(edgeRed).toBeGreaterThan(200)
+    expect(edgeGreen).toBeLessThan(120)
+    expect(edgeBlue).toBeLessThan(70)
+
     // the caption stays, the delete button next to it does not: the bottom right is plain background
     const corner = await pixelOf(page, download, 0.97, 0.985)
     expect(Math.max(...corner)).toBeLessThan(60)
