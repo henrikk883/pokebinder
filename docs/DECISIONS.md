@@ -526,3 +526,6 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Ansehen: eine eigene Ansicht (`SharedBinderPage`) statt des Editors mit abgeschalteten Knöpfen – so kann nichts versehentlich änderbar sein, und der geteilte Binder landet nicht in der Datenbank des Besuchers. Seine Bilder werden nur für die Dauer der Ansicht gehalten.
 - Beim Bauen gefunden und behoben: Beim Start setzte die App die Ansicht aufs Regal zurück; ein geteilter Link hätte so das eigene Regal gezeigt.
 - Decks lassen sich noch nicht teilen.
+
+## 2026-10-12 – Kartenlisten importieren in der Roadmap
+- Von Henrik gewünscht, als Punkt 15 vor dem Tauschabgleich einsortiert. Nur aufgenommen; welche Dateiformate und wohin die Karten zuerst sollen, ist vor dem Bauen zu klären.
