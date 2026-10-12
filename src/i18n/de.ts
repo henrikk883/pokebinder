@@ -37,7 +37,7 @@ export const de = {
     ko: 'KO',
   },
   missingList: {
-    title: (binderName: string) => `Fehlliste – ${binderName}`,
+    title: (binderName: string) => `Fehlende Karten – ${binderName}`,
     subtitle: (count: number, date: string) =>
       `${count} ${count === 1 ? 'fehlende Karte' : 'fehlende Karten'} · Stand ${date}`,
     empty: 'Es fehlt keine Karte. Der Binder ist vollständig.',
@@ -66,9 +66,9 @@ export const de = {
       (unpriced > 0 ? ` · ${unpriced} ${unpriced === 1 ? 'Karte' : 'Karten'} ohne Preis` : ''),
     page: (page: number, pageCount: number) => `Seite ${page} von ${pageCount}`,
     failed: 'Die Datei konnte nicht erstellt werden. Besteht eine Internetverbindung?',
-    menu: 'Fehlliste',
-    asPdf: 'Fehlliste als PDF',
-    asCsv: 'Fehlliste als CSV (Excel)',
+    menu: 'Was fehlt?',
+    asPdf: 'Als PDF',
+    asCsv: 'Als CSV (Excel)',
     proxies: 'Platzhalter drucken (PDF)',
     working: (done: number, total: number) => (total > 0 ? `Lädt … ${done} / ${total}` : 'Lädt …'),
   },
@@ -190,7 +190,7 @@ export const de = {
       },
       missing: {
         title: 'Sieh, was noch fehlt',
-        text: 'Karten abhaken, den Fortschritt verfolgen und die Fehlliste als PDF oder Einkaufsliste mitnehmen.',
+        text: 'Karten abhaken, den Fortschritt verfolgen und die fehlenden Karten als PDF oder Kaufliste mitnehmen.',
       },
       sync: {
         title: 'Auf all deinen Geräten',
@@ -441,8 +441,8 @@ export const de = {
   },
   shopping: {
     pieces: (count: number, price: string) => `${count} × ${price}`,
-    menu: 'Einkaufsliste',
-    title: (name: string) => `Einkaufsliste – ${name}`,
+    menu: 'Kaufliste',
+    title: (name: string) => `Kaufliste – ${name}`,
     hint: 'Was noch fehlt und was es bei Cardmarket kostet (Preistrend). Der Link öffnet die Karte dort in einem neuen Tab.',
     empty: 'Es fehlt keine Karte.',
     emptyList: 'Auf dieser Liste steht keine Karte.',

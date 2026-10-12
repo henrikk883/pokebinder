@@ -180,7 +180,7 @@ export function missingListFileName(
   isoDate: string,
   kind: 'pdf' | 'csv' = 'pdf',
 ): string {
-  return `fehlliste-${slugOf(binderName)}-${isoDate.slice(0, 10)}.${kind}`
+  return `fehlende-karten-${slugOf(binderName)}-${isoDate.slice(0, 10)}.${kind}`
 }
 
 export function proxyFileName(binderName: string, isoDate: string): string {

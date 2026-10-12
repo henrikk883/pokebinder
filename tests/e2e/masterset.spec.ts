@@ -354,13 +354,13 @@ test('the PDF checklist has a tickable box for exactly the missing cards', async
   await expect(page.getByTestId('progress')).toContainText('3 / 360 Karten gesammelt')
 
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'Fehlliste als PDF' }).click()
+  await page.getByRole('button', { name: 'Was fehlt?', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Als PDF' }).click()
   const download = await downloadPromise
-  expect(download.suggestedFilename()).toMatch(/^fehlliste-kanto-collection-\d{4}-\d{2}-\d{2}\.pdf$/)
+  expect(download.suggestedFilename()).toMatch(/^fehlende-karten-kanto-collection-\d{4}-\d{2}-\d{2}\.pdf$/)
 
   const pdf = await PDFDocument.load(await readFile(await download.path()))
-  expect(pdf.getTitle()).toBe('Fehlliste – Kanto Collection')
+  expect(pdf.getTitle()).toBe('Fehlende Karten – Kanto Collection')
   const boxes = pdf.getForm().getFields().map((field) => field.getName())
   expect(boxes).toHaveLength(357)
   expect(boxes.slice(0, 7)).toEqual([
@@ -388,8 +388,8 @@ test('a complete binder gets a checklist that says nothing is missing', async ({
   await page.getByRole('dialog').getByRole('button', { name: 'Anlegen' }).click()
 
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'Fehlliste als PDF' }).click()
+  await page.getByRole('button', { name: 'Was fehlt?', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Als PDF' }).click()
   const pdf = await PDFDocument.load(await readFile(await (await downloadPromise).path()))
 
   expect(pdf.getPageCount()).toBe(1)

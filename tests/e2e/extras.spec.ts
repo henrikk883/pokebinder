@@ -24,7 +24,7 @@ function pocket(page: Page, pageNumber: number, position: number): Locator {
 }
 
 async function exportFromMenu(page: Page, entry: string): Promise<Download> {
-  await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+  await page.getByRole('button', { name: 'Was fehlt?', exact: true }).click()
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('menuitem', { name: entry }).click()
   return downloadPromise
@@ -98,8 +98,8 @@ test.describe('list of missing cards', () => {
     await collection(page).click()
     await pocket(page, 1, 2).click() // own Bisaknosp
 
-    const download = await exportFromMenu(page, 'Fehlliste als CSV (Excel)')
-    expect(download.suggestedFilename()).toMatch(/^fehlliste-151-\d{4}-\d{2}-\d{2}\.csv$/)
+    const download = await exportFromMenu(page, 'Als CSV (Excel)')
+    expect(download.suggestedFilename()).toMatch(/^fehlende-karten-151-\d{4}-\d{2}-\d{2}\.csv$/)
     const file = await readFile(await download.path())
     // UTF-8 with byte order mark
     expect([...file.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
@@ -123,7 +123,7 @@ test.describe('list of missing cards', () => {
   test('the PDF checklist still has one box per missing card, now with prices', async ({ page }) => {
     await createMasterSet(page)
 
-    const download = await exportFromMenu(page, 'Fehlliste als PDF')
+    const download = await exportFromMenu(page, 'Als PDF')
     const pdf = await PDFDocument.load(await readFile(await download.path()))
 
     expect(pdf.getForm().getFields()).toHaveLength(207)
@@ -197,9 +197,8 @@ test.describe('shopping list', () => {
 
   test('the missing cards of a binder with prices, cheapest first, a budget and links to Cardmarket', async ({ page }) => {
     await createMasterSet(page)
-    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
-    await page.getByRole('menuitem', { name: 'Einkaufsliste' }).click()
-    const dialog = page.getByRole('dialog', { name: 'Einkaufsliste – 151' })
+    await page.getByRole('button', { name: 'Kaufliste', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: 'Kaufliste – 151' })
     const rows = dialog.getByTestId('shopping-row')
     const priced = dialog.locator('[data-testid="shopping-row"]:has([data-testid="shopping-price"].font-medium)')
 
@@ -253,9 +252,8 @@ test.describe('shopping list', () => {
     await pocket(page, 1, 1).click()
     await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'true')
 
-    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
-    await page.getByRole('menuitem', { name: 'Einkaufsliste' }).click()
-    const dialog = page.getByRole('dialog', { name: 'Einkaufsliste – 151' })
+    await page.getByRole('button', { name: 'Kaufliste', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: 'Kaufliste – 151' })
     await expect(dialog.getByTestId('shopping-row')).toHaveCount(206)
     await expect(dialog.locator('[data-card-id="sv03.5-001"]')).toHaveCount(0)
   })
@@ -271,9 +269,9 @@ test.describe('shopping list', () => {
       await found.getByRole('button', { name: /merken$/ }).click()
     }
     await page.getByTestId('page').getByRole('tab', { name: /^Merkliste/ }).click()
-    await page.getByTestId('browse-watchlist').getByRole('button', { name: 'Einkaufsliste' }).click()
+    await page.getByTestId('browse-watchlist').getByRole('button', { name: 'Kaufliste' }).click()
 
-    const dialog = page.getByRole('dialog', { name: 'Einkaufsliste – Schnellmerken' })
+    const dialog = page.getByRole('dialog', { name: 'Kaufliste – Schnellmerken' })
     await expect(dialog.getByTestId('shopping-row')).toHaveCount(2)
     await expect(dialog.getByTestId('shopping-total')).toContainText(/^2 Karten · Summe: [0-9.]+,[0-9]{2} €/)
     await expect(dialog.locator('[data-card-id="sv03.5-001"]')).toContainText('Bisasam')
@@ -313,7 +311,7 @@ test.describe('cards there are several of', () => {
     await expect(pocket(page, 1, 2).getByTestId('copies-badge')).toHaveText('×2')
 
     // the trade list: what is there beyond the one copy in the binder
-    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+    await page.getByRole('button', { name: 'Mehr', exact: true }).click()
     await page.getByRole('menuitem', { name: /^Tauschliste/ }).click()
     const dialog = page.getByRole('dialog', { name: 'Tauschliste – 151' })
     const rows = dialog.getByTestId('shopping-row')
@@ -349,7 +347,7 @@ test.describe('cards there are several of', () => {
 
   test('without spare cards the trade list says how to count them', async ({ page }) => {
     await createMasterSet(page)
-    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+    await page.getByRole('button', { name: 'Mehr', exact: true }).click()
     await page.getByRole('menuitem', { name: /^Tauschliste/ }).click()
 
     await expect(page.getByRole('dialog', { name: 'Tauschliste – 151' })).toContainText('Du hast keine Karte doppelt.')

@@ -376,7 +376,7 @@ describe('missingListCsv', () => {
 describe('file names', () => {
   it('names the table and the placeholders after binder and date too', () => {
     expect(missingListFileName('Kanto Collection', '2026-10-12T10:00:00.000Z', 'csv')).toBe(
-      'fehlliste-kanto-collection-2026-10-12.csv',
+      'fehlende-karten-kanto-collection-2026-10-12.csv',
     )
     expect(proxyFileName('Kanto Collection', '2026-10-12T10:00:00.000Z')).toBe(
       'platzhalter-kanto-collection-2026-10-12.pdf',
@@ -387,8 +387,8 @@ describe('file names', () => {
 describe('missingListFileName', () => {
   it('builds a file name from binder name and date', () => {
     expect(missingListFileName('Kanto Collection', '2026-10-12T10:00:00.000Z')).toBe(
-      'fehlliste-kanto-collection-2026-10-12.pdf',
+      'fehlende-karten-kanto-collection-2026-10-12.pdf',
     )
-    expect(missingListFileName('!!', '2026-01-02T00:00:00.000Z')).toBe('fehlliste-binder-2026-01-02.pdf')
+    expect(missingListFileName('!!', '2026-01-02T00:00:00.000Z')).toBe('fehlende-karten-binder-2026-01-02.pdf')
   })
 })

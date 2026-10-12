@@ -441,3 +441,8 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Kartenbilder werden jetzt schlicht angezeigt (ohne `crossOrigin`); dafür gilt die Kopfzeile nicht. Was ein Bild lesen muss – PNG-Export, Proxy-PDF –, holt es selbst über `readPicture` (`src/lib/tcgdex/`): bis zu sechs Versuche, ab dem zweiten am Browser-Cache vorbei. Der PNG-Export hält die Bilder der Seite für die Dauer des Zeichnens als Daten in der Seite.
 - Service Worker: Ein Bild, das nur angezeigt wird, wartet auf höchstens einen Versuch einer aufbewahrbaren Antwort und wird sonst so gezeigt, wie der Browser es ohnehin zeigen würde; die aufbewahrbare Fassung (für den Betrieb ohne Netz) wird im Hintergrund nachgeholt. Das Aufbewahren hält die Antwort nicht mehr auf.
 - Dazu: Die Bilder der Doppelseite davor und danach werden 150 ms nach dem Blättern vorab geholt (`preloadSpreads.ts`), damit die nächste Seite sofort vollständig da ist.
+
+## 2026-10-12 – Werkzeugleiste: „Was fehlt?“ und „Kaufliste“
+- Mit Henrik abgestimmt: „Fehlliste“ heißt „Was fehlt?“ und enthält nur noch, was fehlende Karten ausgibt (Als PDF, Als CSV, Platzhalter drucken). Die Einkaufsliste heißt „Kaufliste“ und ist ein eigener Knopf daneben; am Handy steht dafür ein Preisschild. Die Tauschliste (doppelte Karten) liegt jetzt unter „Mehr“.
+- In den Dateien steht „Fehlende Karten – <Binder>“ als Titel, der Dateiname beginnt mit `fehlende-karten-`: Als Überschrift eines Dokuments liest sich das besser als die Frage.
+- „Kaufliste“ heißt die Liste überall, auch bei den Merklisten.

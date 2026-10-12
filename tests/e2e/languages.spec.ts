@@ -206,8 +206,8 @@ test('the checklist prints Japanese names; the font for them is only loaded for 
   })
   const checklist = async () => {
     const download = page.waitForEvent('download')
-    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
-    await page.getByRole('menuitem', { name: 'Fehlliste als PDF' }).click()
+    await page.getByRole('button', { name: 'Was fehlt?', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Als PDF' }).click()
     return readFile(await (await download).path())
   }
   const placeFirstAsMissing = async (search: string) => {

@@ -8,6 +8,8 @@ import { useEditorStore } from '../../store/editorStore'
 import { LAYOUTS, type Binder, type CardRef, type Layout } from '../../types/binder'
 import { MissingListMenu } from '../export/MissingListMenu'
 import { PngMenu } from '../export/PngMenu'
+import { ShoppingButton } from '../export/ShoppingButton'
+import { ShoppingDialog } from '../export/ShoppingDialog'
 import { MasterSetSettingsDialog } from '../masterset/MasterSetSettingsDialog'
 import { cardLangs, countCards } from './binderModel'
 import { createCardComparator, createDexComparator, type CardComparator } from './sorting'
@@ -123,7 +125,7 @@ function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
   )
 }
 
-/** "Mehr": what is needed now and then – name, layout, contents of a master set. */
+/** "Mehr": what is needed now and then – name, layout, contents of a master set, spare cards. */
 function MoreMenu({ binder }: { binder: Binder }) {
   const renameBinder = useBinderStore((state) => state.renameBinder)
   const changeLayout = useBinderStore((state) => state.changeLayout)
@@ -132,6 +134,8 @@ function MoreMenu({ binder }: { binder: Binder }) {
   const menu = useDismiss<HTMLDivElement>(open, () => setOpen(false))
   const [adjusting, setAdjusting] = useState(false)
   const [checking, setChecking] = useState(false)
+  // the list is of the binder as it was when asked for; later changes do not move it
+  const [trading, setTrading] = useState<Binder | null>(null)
 
   /** Looks for cards in a finish they do not exist in and, after a question, puts them right. */
   async function handleVariants() {
@@ -221,6 +225,17 @@ function MoreMenu({ binder }: { binder: Binder }) {
           <button type="button" role="menuitem" disabled={checking} onClick={handleVariants} className={menuItemClass}>
             {checking ? de.variantFix.checking : de.variantFix.menu}
           </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              setTrading(binder)
+            }}
+            className={menuItemClass}
+          >
+            {de.trade.menu}
+          </button>
           <p className={menuHeadingClass}>{de.binder.layout}</p>
           {LAYOUTS.map((layout) => (
             <button
@@ -238,6 +253,18 @@ function MoreMenu({ binder }: { binder: Binder }) {
             </button>
           ))}
         </div>
+      )}
+      {trading && (
+        <ShoppingDialog
+          title={de.trade.title(trading.name)}
+          hint={de.trade.hint}
+          emptyText={de.trade.empty}
+          withBudget={false}
+          load={async (onProgress) =>
+            (await import('../export/missingListTransfer')).loadTradeRows(trading, onProgress)
+          }
+          onClose={() => setTrading(null)}
+        />
       )}
       {adjusting && binder.setId !== undefined && (
         <MasterSetSettingsDialog
@@ -284,14 +311,16 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
   return (
     <div className="flex flex-wrap items-center gap-3">
       <h2
-        // on a phone the name has a row of its own, the buttons wrap below it
-        className="mr-auto max-w-64 min-w-0 truncate text-2xl font-semibold max-md:w-full max-md:max-w-none max-md:text-xl"
+        // The name takes the room the buttons leave and is cut short before they wrap. On a
+        // phone it has a row of its own, the buttons wrap below it.
+        className="min-w-24 flex-1 basis-0 truncate text-2xl font-semibold max-md:basis-full max-md:text-xl"
         title={binder.name}
       >
         {binder.name}
       </h2>
       <SortMenu binder={binder} spread={spread} />
       <MissingListMenu binder={binder} buttonClass={buttonClass} />
+      <ShoppingButton binder={binder} buttonClass={buttonClass} />
       <PngMenu
         binder={binder}
         binderName={binder.name}

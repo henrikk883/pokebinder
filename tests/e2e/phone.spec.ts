@@ -119,7 +119,7 @@ test('on a phone a pocket is picked in the binder and looked at under "Auswahl"'
 
 test('on a phone the menus come up from the bottom and close at a tap beside them', async ({ page }) => {
   await createBinder(page, 'Menüs')
-  for (const name of ['Sortieren', 'Fehlliste', 'Als PNG', 'Mehr', 'Backup']) {
+  for (const name of ['Sortieren', 'Was fehlt?', 'Als PNG', 'Mehr', 'Backup']) {
     await page.getByRole('button', { name, exact: true }).tap()
     const menu = page.getByRole('menu')
     await expect(menu).toBeVisible()

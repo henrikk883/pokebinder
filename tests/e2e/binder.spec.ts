@@ -591,7 +591,7 @@ test('the toolbar fits in one row; rarely used actions sit under "Mehr"', async 
   expect(Math.abs((await top(heading)) - (await top(addPage)))).toBeLessThan(12)
 
   await page.getByRole('button', { name: 'Mehr', exact: true }).click()
-  await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen', 'Varianten prüfen'])
+  await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen', 'Varianten prüfen', 'Tauschliste (doppelte Karten)'])
   await expect(page.getByRole('menuitemradio')).toHaveText(['2 × 2', '✓3 × 3', '4 × 4'])
 })
 
@@ -955,7 +955,7 @@ test('a menu closes when something else on the page is clicked', async ({ page }
   const elsewhere = page.getByRole('heading', { name: 'Menüs' })
 
   // every menu of the toolbar and the header
-  for (const name of ['Sortieren', 'Fehlliste', 'Als PNG', 'Mehr', 'Backup']) {
+  for (const name of ['Sortieren', 'Was fehlt?', 'Als PNG', 'Mehr', 'Backup']) {
     await page.getByRole('button', { name, exact: true }).click()
     await expect(menu).toBeVisible()
     await elsewhere.click()
@@ -965,9 +965,9 @@ test('a menu closes when something else on the page is clicked', async ({ page }
   // opening another menu closes the one that was open: there is never more than one
   await page.getByRole('button', { name: 'Sortieren', exact: true }).click()
   await expect(menu).toHaveCount(1)
-  await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+  await page.getByRole('button', { name: 'Was fehlt?', exact: true }).click()
   await expect(menu).toHaveCount(1)
-  await expect(page.getByRole('menuitem', { name: 'Fehlliste als PDF' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Als PDF' })).toBeVisible()
 
   // a click on a pocket closes it and still selects the pocket (the last one: the menu lies over the first)
   await pocket(page, 1, 9).click()

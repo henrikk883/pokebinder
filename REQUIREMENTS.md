@@ -93,11 +93,11 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
 
 ### Exporte
 
-14. **Fehlliste.** Checkliste aller fehlenden Karten mit Set, Nummer, Name, Variante, Seltenheit und Preis.
+14. **Fehlende Karten** (Knopf „Was fehlt?“). Checkliste aller fehlenden Karten mit Set, Nummer, Name, Variante, Seltenheit und Preis.
     - Als PDF mit anklickbaren Kästchen: am PC digital abhakbar und druckbar. Bei gemischten Sprachen mit Sprach-Spalte.
     - Japanische Namen und Sets werden in japanischer Schrift gedruckt (ebenso im Proxy-Druck).
     - Als CSV, die Excel per Doppelklick öffnet.
-    - Als **Einkaufsliste** in der App: fehlende Karten mit Preis, günstigste zuerst, mit Summe, Budget („wie weit reicht das Geld?“) und Link zur Karte bei Cardmarket. Dieselbe Ansicht gibt es für jede Merkliste.
+    - Als **Kaufliste** in der App (eigener Knopf in der Werkzeugleiste): fehlende Karten mit Preis, günstigste zuerst, mit Summe, Budget („wie weit reicht das Geld?“) und Link zur Karte bei Cardmarket. Dieselbe Ansicht gibt es für jede Merkliste.
 15. **Proxy-Druck.** Schwarz-Weiß-Bild jeder fehlenden Karte als Platzhalter für den Binder.
     - DIN A4 bei 100 % Skalierung; jede Karte exakt 63 × 88 mm, 3×3 pro Blatt mit Schnittmarken, Reihenfolge wie im Binder.
     - Karten ohne Bild bekommen einen Rahmen mit Name und Nummer.
@@ -139,7 +139,7 @@ Das Mockup ist die verbindliche Vorlage für den Binder-Editor auf dem Desktop: 
 | --- | --- |
 | Kopfzeile | Logo „PokéBinder“ (führt zur Startseite), Meine Binder / Binder-Name, daneben „Karten stöbern“ (am Handy „Stöbern“); rechts Speicherstatus, Abgleich (bzw. „Anmelden“), Erinnerung an die Sicherung und „Backup“ |
 | Linke Spalte (Suche) | Tabs „Karten“ / „Eigene Bilder“, Suchfeld, Filter Set, Seltenheit, Typ, Sprache mit Flagge; Ergebnisse als 2-spaltiges Raster mit Name und Set · Nummer; Hinweis „Karten in einen Pocket ziehen“ |
-| Mitte, Werkzeugleiste | Binder-Name, „Sortieren“, „Fehlliste“ (PDF, CSV, Platzhalter), „Als PNG“, Rückgängig / Wiederholen, „Mehr“ (umbenennen, Master Set anpassen, Layout), „+ Seite“ als Hauptbutton |
+| Mitte, Werkzeugleiste | Binder-Name, „Sortieren“, „Was fehlt?“ (PDF, CSV, Platzhalter), „Kaufliste“, „Als PNG“, Rückgängig / Wiederholen, „Mehr“ (umbenennen, Master Set anpassen, Layout), „+ Seite“ als Hauptbutton |
 | Mitte, Steuerung | Umschalter „Bearbeiten“ / „Sammlung“, Blätterpfeile mit „Seiten 4 – 5“, Zoom mit − / Prozent / + |
 | Mitte, Binder | Doppelseite im dunklen Binder-Rahmen mit Ringen in der Mitte; leere Pockets zeigen ein Pokéball-Symbol; unter jeder Seite „Seite 4 · Öffnung rechts“ |
 | Mitte, unten | Miniaturen aller Doppelseiten (aktuelle hervorgehoben), Fortschrittsbalken „142 / 191 Karten gesammelt · 49 fehlen“, „Wert berechnen“ |
