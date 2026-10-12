@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { colourDistance, similarColours, SIGNATURE_LENGTH, type ColourIndex } from './similarColours'
+import { colourDistance, similarColours, sortByColour, SIGNATURE_LENGTH, type ColourIndex } from './similarColours'
 
 /** An index of cards given by how much of which colour bin their picture has. */
 function indexOf(cards: Record<string, Record<number, number>>, rare = Object.keys(cards).length): ColourIndex {
@@ -70,5 +70,37 @@ describe('similarColours', () => {
 
   it('has no answer for a card whose colours are not known', () => {
     expect(similarColours(index, 'sv2a-001', 3)).toBeUndefined()
+  })
+})
+
+describe('sortByColour', () => {
+  // bins: four per hue, twelve hues from red on; the greys from 48 (black) to 51 (white)
+  const index = indexOf({
+    blue: { 32: 255 },
+    white: { 51: 255 },
+    orange: { 4: 255 },
+    red: { 0: 255 },
+    black: { 48: 255 },
+    green: { 16: 200, 51: 55 },
+    purpleRed: { 44: 255 },
+    yellowGreen: { 8: 128, 16: 127 },
+  })
+
+  it('goes round the colour wheel and puts the grey ones last, dark before light', () => {
+    expect(sortByColour(index, index.ids)).toEqual(['red', 'orange', 'yellowGreen', 'green', 'blue', 'purpleRed', 'black', 'white'])
+  })
+
+  it('keeps the reds on both sides of the wheel together', () => {
+    const reds = indexOf({ green: { 16: 255 }, justBelowRed: { 44: 60, 0: 195 }, red: { 0: 255 } })
+    expect(sortByColour(reds, reds.ids)).toEqual(['justBelowRed', 'red', 'green'])
+  })
+
+  it('puts cards whose colours are not known at the end and leaves others out of it', () => {
+    expect(sortByColour(index, ['white', 'unknown', 'blue', 'red'])).toEqual(['red', 'blue', 'white', 'unknown'])
+  })
+
+  it('counts a picture with little colour in it as grey', () => {
+    const pale = indexOf({ nearlyGrey: { 0: 40, 50: 215 }, blue: { 32: 255 } })
+    expect(sortByColour(pale, pale.ids)).toEqual(['blue', 'nearlyGrey'])
   })
 })

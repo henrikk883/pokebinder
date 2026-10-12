@@ -684,6 +684,8 @@ export const de = {
     title: 'Ähnliche Karten',
     hint: 'Gesucht wird unter den Karten der hohen Seltenheiten (Illustration Rare, Special Illustration Rare, Ultra Rare, Gold- und Secret Rares) nach Karten, die in Motiv, Stil und Farben ähnlich wirken, die ähnlichste zuerst. Mit dem Stern merkst du dir eine Karte; von der Merkliste aus kommt sie in den Binder.',
     loading: 'Ähnliche Karten werden gesucht …',
+    more: 'Mehr anzeigen',
+    loadingMore: 'Die Karten werden geladen …',
     error: 'Die Auswertung der Karten konnte nicht geladen werden.',
     unknown: 'Diese Karte ist noch nicht ausgewertet. Das betrifft Karten, die es nicht auf Englisch gibt, und ganz neue Karten.',
   },
@@ -692,6 +694,11 @@ export const de = {
     pick: 'Thema',
     loading: 'Die Themen werden geladen …',
     loadingCards: 'Die Karten werden geladen …',
+    order: 'Reihenfolge',
+    orders: {
+      fit: 'Passendste zuerst',
+      colour: 'Nach Farbe',
+    },
     error: 'Die Themen konnten nicht geladen werden.',
     names: {
       autumn: 'Herbst',

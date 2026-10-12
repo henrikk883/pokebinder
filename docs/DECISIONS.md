@@ -617,3 +617,7 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - „Ähnliche Karten“ (vorher „Ähnliche Farben“): drei Viertel Bildmodell, ein Viertel Farben. Geht man von einer gewöhnlichen Karte aus, die das Modell nicht angesehen hat, zählen die Farben allein.
 - Themen stehen als fester Satz im Skript (englische Beschreibung für das Modell) und mit deutschem Namen in `de.ts`. Von mir gewählt, da Henrik keine Liste genannt hat: 14 Themen. Ausprobiert und weggelassen, weil die Treffer nicht passten: Himmel, Höhle, Gewitter, Regen, Weltraum.
 - Themen nur unter „Karten stöbern“ als eigener Reiter (Entscheidung Henrik), gezeigt werden 48 Karten je Thema.
+
+## 2026-10-12 – Mehr Karten und Reihenfolge nach Farbe
+- Auf Henriks Nachfrage: „Ähnliche Karten“ zeigt 24 und mit „Mehr anzeigen“ je 24 weitere, höchstens 96. Themen zeigen 48 und je 48 weitere, höchstens 144 (so viele hält das Skript je Thema fest). Weiter hinten passen die Karten weniger gut.
+- Themen lassen sich „Nach Farbe“ ordnen: dieselben Karten in der Reihenfolge des Farbkreises (Rot, Orange, Gelb, Grün, Blau, Violett), danach die überwiegend grauen von dunkel nach hell. Maßgeblich ist die mittlere Farbe des Bildes aus der Farbkennung. Es wird nur umsortiert, nicht anders ausgewählt.

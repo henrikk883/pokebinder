@@ -18,7 +18,7 @@ const AT_A_TIME = 4
  */
 const LIMIT = 0.25
 /** Cards kept per theme; the app shows fewer. */
-const PER_THEME = 60
+const PER_THEME = 144
 /**
  * The themes of "Karten stöbern": what the model is asked for. The names shown are in
  * src/i18n/de.ts under `themes.names`; a theme without a name there is not shown.

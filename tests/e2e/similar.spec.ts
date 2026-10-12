@@ -97,19 +97,43 @@ test('what the image model sees counts more than the colours', async ({ page }) 
   ])
 })
 
+test('more similar cards are shown when asked for', async ({ page }) => {
+  // thirty cards of the same colours as the one asked about
+  const cards = Object.fromEntries(
+    Array.from({ length: 31 }, (_, index) => [`sv03.5-${String(index + 1).padStart(3, '0')}`, { 0: 255 }]),
+  )
+  await mockColours(page, cards)
+  await mockLooks(page, {})
+  await page.goto('/')
+  await openSet151(page)
+
+  await page.getByTestId('browse-results').locator('[data-card-id="sv03.5-001"]').getByRole('button', { name: /^Infos zu/ }).click()
+  const dialog = page.getByRole('dialog', { name: 'Bisasam' })
+  await dialog.getByRole('button', { name: 'Ähnliche Karten' }).click()
+  const similar = dialog.getByTestId('similar-cards').getByTestId('card-tile')
+  await expect(similar).toHaveCount(24)
+  await dialog.getByRole('button', { name: 'Mehr anzeigen' }).click()
+  await expect(similar).toHaveCount(30)
+  await expect(dialog.getByRole('button', { name: 'Mehr anzeigen' })).toHaveCount(0)
+})
+
 test('"Karten stöbern" offers cards by theme', async ({ page }) => {
+  // fifty cards of the set, from number 51 on
+  const many = Array.from({ length: 50 }, (_, index) => `sv03.5-${String(index + 51).padStart(3, '0')}`)
   await mockLooks(
     page,
     { 'sv03.5-001': [1, 0] },
-    { autumn: ['sv03.5-004', 'sv03.5-025'], winter: ['sv03.5-007'], unnamed: ['sv03.5-001'] },
+    { autumn: ['sv03.5-004', 'sv03.5-025'], winter: ['sv03.5-007'], spring: many, unnamed: ['sv03.5-001'] },
   )
+  // Pikachu's picture is red, Glumanda's blue
+  await mockColours(page, { 'sv03.5-004': { 32: 255 }, 'sv03.5-025': { 0: 255 } })
   await page.goto('/')
   await page.getByRole('banner').getByRole('button', { name: 'Karten stöbern' }).click()
   await page.getByRole('tab', { name: 'Themen' }).click()
 
   // the themes that have a name, and nothing shown before one is chosen
   const themes = page.getByRole('group', { name: 'Thema' }).getByRole('button')
-  await expect(themes).toHaveText(['Herbst', 'Winter'])
+  await expect(themes).toHaveText(['Herbst', 'Winter', 'Frühling'])
   await expect(page.getByTestId('theme-results')).toHaveCount(0)
 
   await themes.filter({ hasText: 'Herbst' }).click()
@@ -122,9 +146,25 @@ test('"Karten stöbern" offers cards by theme', async ({ page }) => {
   await tiles.first().getByRole('button', { name: 'Infos zu Glumanda' }).click()
   await page.getByRole('dialog', { name: 'Glumanda' }).getByRole('button', { name: 'Schließen' }).click()
 
+  // the same cards in the order of the colour wheel: red before blue
+  const order = page.getByRole('combobox', { name: 'Reihenfolge' })
+  await order.selectOption('Nach Farbe')
+  await expect(tiles.first()).toContainText('Pikachu')
+  await expect(tiles.nth(1)).toContainText('Glumanda')
+  await order.selectOption('Passendste zuerst')
+  await expect(tiles.first()).toContainText('Glumanda')
+
   await themes.filter({ hasText: 'Winter' }).click()
   await expect(tiles).toHaveCount(1)
   await expect(tiles.first()).toContainText('Schiggy')
+  await expect(page.getByRole('button', { name: 'Mehr anzeigen' })).toHaveCount(0)
+
+  // a theme with many cards shows the best ones first and the others when asked
+  await themes.filter({ hasText: 'Frühling' }).click()
+  await expect(tiles).toHaveCount(48)
+  await page.getByRole('button', { name: 'Mehr anzeigen' }).click()
+  await expect(tiles).toHaveCount(50)
+  await expect(page.getByRole('button', { name: 'Mehr anzeigen' })).toHaveCount(0)
 
   // the search is still there on its tab
   await page.getByRole('tab', { name: 'Alle Karten' }).click()

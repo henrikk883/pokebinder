@@ -3,11 +3,17 @@ import { mapWithConcurrency, tcgdexFor, type CardSummary } from '../../lib/tcgde
 import type { CardLang } from '../../types/binder'
 import { loadColourIndex, loadLookIndex } from './colourIndex'
 import { similarCards } from './similarCards'
+import { sortByColour } from './similarColours'
 
-/** How many similar cards are shown. */
-export const SIMILAR_COUNT = 24
-/** How many cards of a theme are shown. */
-export const THEME_COUNT = 48
+/** How many similar cards are shown at first and added by "Mehr anzeigen", and how many at most. */
+export const SIMILAR_STEP = 24
+export const SIMILAR_MAX = 96
+/** The same for the cards of a theme; the most is what `scripts/looks/looks.mjs` keeps per theme. */
+export const THEME_STEP = 48
+export const THEME_MAX = 144
+
+/** Order of the cards of a theme: as they fit the theme, or by the colours of their pictures. */
+export type ThemeOrder = 'fit' | 'colour'
 
 export interface FoundCard {
   card: CardSummary
@@ -20,7 +26,14 @@ export type FoundCards =
   | { status: 'error' }
   /** Nothing is known of this card (cards that exist in Japanese only, new cards). */
   | { status: 'unknown' }
-  | { status: 'ready'; cards: FoundCard[] }
+  | {
+      status: 'ready'
+      cards: FoundCard[]
+      /** There are more cards than these to ask for. */
+      hasMore: boolean
+      /** These are the cards of before; the ones asked for now are on their way. */
+      updating: boolean
+    }
 
 /** The cards behind ids of English cards, in `lang` where they exist in it. */
 async function cardsOf(ids: readonly string[], lang: CardLang): Promise<FoundCard[]> {
@@ -35,51 +48,67 @@ async function cardsOf(ids: readonly string[], lang: CardLang): Promise<FoundCar
   return cards.filter((entry) => entry !== undefined)
 }
 
-async function findSimilar(cardId: string, lang: CardLang): Promise<FoundCards> {
+async function findSimilar(cardId: string, lang: CardLang, count: number): Promise<FoundCards> {
   // without what the image model has seen, the colours alone still give an answer
   const [colours, looks] = await Promise.all([loadColourIndex(), loadLookIndex().catch(() => undefined)])
-  const ids = similarCards(colours, looks, cardId, SIMILAR_COUNT)
-  return ids ? { status: 'ready', cards: await cardsOf(ids, lang) } : { status: 'unknown' }
+  const ids = similarCards(colours, looks, cardId, count + 1)
+  if (!ids) return { status: 'unknown' }
+  return {
+    status: 'ready',
+    cards: await cardsOf(ids.slice(0, count), lang),
+    hasMore: ids.length > count && count < SIMILAR_MAX,
+    updating: false,
+  }
 }
 
-async function findTheme(themeId: string, lang: CardLang): Promise<FoundCards> {
+async function findTheme(themeId: string, lang: CardLang, count: number, order: ThemeOrder): Promise<FoundCards> {
   const theme = (await loadLookIndex()).themes.find((entry) => entry.id === themeId)
-  return theme ? { status: 'ready', cards: await cardsOf(theme.cards.slice(0, THEME_COUNT), lang) } : { status: 'unknown' }
+  if (!theme) return { status: 'unknown' }
+  // by colour: the cards that fit best, laid out anew; not other cards
+  const fitting = theme.cards.slice(0, count)
+  const ids = order === 'colour' ? sortByColour(await loadColourIndex(), fitting) : fitting
+  return { status: 'ready', cards: await cardsOf(ids, lang), hasMore: theme.cards.length > count, updating: false }
 }
 
-function useFound(key: string | undefined, find: () => Promise<FoundCards>): FoundCards {
-  const [found, setFound] = useState<{ key: string; result: FoundCards }>()
+/**
+ * What `find` finds. `group` names what is asked about and `key` how (how many, in which
+ * order): while only the how changes, the cards of before stay in view.
+ */
+function useFound(group: string | undefined, key: string, find: () => Promise<FoundCards>): FoundCards {
+  const [found, setFound] = useState<{ group: string; key: string; result: FoundCards }>()
 
   useEffect(() => {
-    if (key === undefined) return
+    if (group === undefined) return
     let cancelled = false
     find().then(
       (result) => {
-        if (!cancelled) setFound({ key, result })
+        if (!cancelled) setFound({ group, key, result })
       },
       () => {
-        if (!cancelled) setFound({ key, result: { status: 'error' } })
+        if (!cancelled) setFound({ group, key, result: { status: 'error' } })
       },
     )
     return () => {
       cancelled = true
     }
-    // `find` belongs to the key: the same key asks for the same cards
+    // `find` belongs to group and key: the same ones ask for the same cards
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [group, key])
 
-  return found && found.key === key ? found.result : { status: 'loading' }
+  if (!found || found.group !== group) return { status: 'loading' }
+  if (found.key === key) return found.result
+  return found.result.status === 'ready' ? { ...found.result, updating: true } : { status: 'loading' }
 }
 
-/** The cards of the high rarities that look most like a card. */
-export function useSimilarCards(cardId: string, lang: CardLang): FoundCards {
-  return useFound(`similar:${lang}:${cardId}`, () => findSimilar(cardId, lang))
+/** The `count` cards of the high rarities that look most like a card. */
+export function useSimilarCards(cardId: string, lang: CardLang, count: number): FoundCards {
+  return useFound(`similar:${lang}:${cardId}`, String(count), () => findSimilar(cardId, lang, count))
 }
 
-/** The cards that fit a theme best; loading until a theme is chosen. */
-export function useThemeCards(themeId: string | undefined, lang: CardLang): FoundCards {
-  return useFound(themeId === undefined ? undefined : `theme:${lang}:${themeId}`, () =>
-    themeId === undefined ? Promise.resolve<FoundCards>({ status: 'unknown' }) : findTheme(themeId, lang),
+/** The `count` cards that fit a theme best; loading until a theme is chosen. */
+export function useThemeCards(themeId: string | undefined, lang: CardLang, count: number, order: ThemeOrder): FoundCards {
+  return useFound(themeId === undefined ? undefined : `theme:${lang}:${themeId}`, `${count}:${order}`, () =>
+    themeId === undefined ? Promise.resolve<FoundCards>({ status: 'unknown' }) : findTheme(themeId, lang, count, order),
   )
 }
 
