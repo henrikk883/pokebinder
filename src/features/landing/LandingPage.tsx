@@ -4,24 +4,49 @@ import { cardImageAt, cardImageUrl } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 
-// What lies in the binder beside the headline: cards everybody knows, from the set "151".
-// `null` is a pocket still waiting for its card.
-const SHOWCASE_SET = { lang: 'de', seriesId: 'sv', setId: 'sv03.5' } as const
-const SHOWCASE_PAGES: readonly (readonly (string | null)[])[] = [
-  ['025', '133', '006', '003', '009', '150', '052', '094', '143'],
-  ['001', '007', '016', '004', null, null, '131', '149', '054'],
+/** A card by its place at TCGdex: series, set, number. */
+type ShowcaseEntry = readonly [seriesId: string, setId: string, localId: string]
+
+const from151 = (localId: string): ShowcaseEntry => ['sv', 'sv03.5', localId]
+
+// What lies in the binder beside the headline. Henrik's favourites come first: Pikachu-ex
+// (Erhabene Helden 276), Mega-Lucario-ex (Mega-Entwicklung 179), Riolu (Bund der
+// Gleichgesinnten 116) and Qurtel V (Schwert & Schild 24). The rest are cards everybody
+// knows, from the set "151". `null` is a pocket still waiting for its card.
+const SHOWCASE_PAGES: readonly (readonly (ShowcaseEntry | null)[])[] = [
+  [
+    ['me', 'me02.5', '276'],
+    ['me', 'me01', '179'],
+    ['sm', 'sm11', '116'],
+    ['swsh', 'swsh1', '24'],
+    from151('006'),
+    from151('150'),
+    from151('133'),
+    from151('094'),
+    from151('143'),
+  ],
+  [
+    from151('001'),
+    from151('007'),
+    from151('004'),
+    from151('009'),
+    null,
+    null,
+    from151('131'),
+    from151('149'),
+    from151('054'),
+  ],
 ]
 
-function ShowcaseCard({ localId }: { localId: string | null }) {
+function ShowcaseCard({ entry }: { entry: ShowcaseEntry | null }) {
   // without a connection the pocket simply stays empty
   const [failed, setFailed] = useState(false)
-  const { lang, seriesId, setId } = SHOWCASE_SET
 
   return (
     <div className="aspect-[63/88] overflow-hidden rounded-pocket border border-line bg-bg">
-      {localId !== null && !failed && (
+      {entry !== null && !failed && (
         <img
-          src={cardImageUrl(cardImageAt(lang, seriesId, setId, localId), 'small')}
+          src={cardImageUrl(cardImageAt('de', ...entry), 'small')}
           alt=""
           loading="lazy"
           onError={() => setFailed(true)}
@@ -50,8 +75,8 @@ function ShowcaseBinder() {
             </div>
           )}
           <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5 rounded-control border border-line bg-raised p-2 max-md:gap-1 max-md:p-1">
-            {cards.map((localId, index) => (
-              <ShowcaseCard key={index} localId={localId} />
+            {cards.map((entry, index) => (
+              <ShowcaseCard key={index} entry={entry} />
             ))}
           </div>
         </div>
