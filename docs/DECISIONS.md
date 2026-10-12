@@ -446,3 +446,7 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Mit Henrik abgestimmt: „Fehlliste“ heißt „Was fehlt?“ und enthält nur noch, was fehlende Karten ausgibt (Als PDF, Als CSV, Platzhalter drucken). Die Einkaufsliste heißt „Kaufliste“ und ist ein eigener Knopf daneben; am Handy steht dafür ein Preisschild. Die Tauschliste (doppelte Karten) liegt jetzt unter „Mehr“.
 - In den Dateien steht „Fehlende Karten – <Binder>“ als Titel, der Dateiname beginnt mit `fehlende-karten-`: Als Überschrift eines Dokuments liest sich das besser als die Frage.
 - „Kaufliste“ heißt die Liste überall, auch bei den Merklisten.
+
+## 2026-10-12 – Neue To-do-Liste und Roadmap
+- Elf Ideen in REQUIREMENTS.md aufgenommen („Offen“) und in fünf Etappen geordnet („Roadmap“): Alltag, Preise, Gestalten, Mit Freunden, Groß. Bewusst ohne Zeitangaben, nur mit relativem Umfang.
+- Drei Punkte verlangen Regeländerungen (Teilen: andere dürfen lesen; englische Oberfläche: Texte je Sprache; Kamera: externer Dienst). Sie sind in der Roadmap benannt und werden erst entschieden, wenn der Punkt dran ist.

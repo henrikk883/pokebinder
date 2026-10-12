@@ -236,6 +236,44 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 ## Offen (To-do-Liste)
 
-Mit Henrik am 12.10.2026 vereinbart, in dieser Reihenfolge:
+Mit Henrik am 12.10.2026 vereinbart. Die Reihenfolge steht in der Roadmap darunter; hier steht, was jeder Punkt können soll.
 
-Nichts mehr: Die Liste ist abgearbeitet.
+1. **Installierbar als App.** PokéBinder lässt sich auf Handy, iPad und PC „zum Startbildschirm hinzufügen“: eigenes Symbol, eigener Name, Start ohne Browserleiste. Einmal gesehene Karten und die App selbst öffnen sich auch ohne Netz.
+2. **Sammlungswert im Regal.** Jeder Binder zeigt im Regal seinen Fortschritt (vorhanden / gesamt) und den Wert der vorhandenen Karten; über dem Regal steht die Summe über alle Binder. Preise wie überall: Cardmarket-Preistrend, Karten ohne Preis werden genannt.
+3. **Karte im Binder finden.** Ein Suchfeld im offenen Binder (Name oder Nummer) zeigt die Treffer und springt zur Seite, auf der die Karte liegt; das Pocket ist danach ausgewählt.
+4. **Preisverlauf.** Die App hält den Wert jedes Binders fest (höchstens einmal am Tag) und zeigt, wie er sich über Wochen und Monate entwickelt hat – je Binder und für die ganze Sammlung. Der Verlauf gleicht sich zwischen den Geräten ab.
+5. **Preisalarm auf der Merkliste.** Zu einer gemerkten Karte lässt sich ein Wunschpreis festlegen; liegt der Preistrend darunter, hebt die Merkliste die Karte hervor und nennt die Zahl solcher Karten am Reiter. Geprüft wird beim Öffnen der App, eine Benachrichtigung von außen gibt es nicht.
+6. **Mehr Layouts.** Zusätzlich zu 2 × 2, 3 × 3 und 4 × 4 auch 3 × 4 und 4 × 3, im Assistenten, beim Layoutwechsel, im PNG-Export und im Bilddruck.
+7. **Seiten-Vorlagen.** Eine gestaltete Seite (eigene Bilder mit Zuschnitt und Spannweite, auf Wunsch mit ihren Karten) lässt sich als Vorlage speichern und in jedem Binder mit gleichem Layout als neue Seite einfügen. Vorlagen sind Teil des Backups und des Abgleichs.
+8. **Binder mit Freunden teilen.** Zu einem Binder lässt sich ein Link erzeugen, über den andere ihn ansehen, aber nicht ändern können: Seiten, Karten, eigene Bilder, Fortschritt. Der Link lässt sich jederzeit wieder ungültig machen.
+9. **Tauschabgleich mit Freunden.** Für einen geteilten Binder vergleicht die App: Welche doppelten Karten des einen fehlen dem anderen, und umgekehrt – als Liste mit Preisen, wie die Tauschliste.
+10. **Englische Oberfläche.** Die Sprache der Oberfläche ist wählbar (Deutsch, Englisch); die Sprache der Karten bleibt davon unabhängig.
+11. **Karten per Kamera abhaken.** Das Handy erkennt eine Karte, die vor die Kamera gehalten wird, und hakt sie im offenen Binder ab bzw. schlägt die passende Karte vor.
+
+Noch von Henrik zu prüfen: Ausdruck von „Eigene Bilder drucken (PDF)“ nachmessen (63 × 88 mm bei 100 %).
+
+## Roadmap
+
+Fünf Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher Punkt für Punkt gebaut: Plan, OK, bauen, Lint/Tests/Build, live. Zeitangaben gibt es bewusst keine; „Umfang“ sagt nur, wie groß ein Punkt im Vergleich ist.
+
+| Etappe | Punkt | Umfang | Baut auf | Vorher zu klären |
+|---|---|---|---|---|
+| **A – Alltag** | 1 Installierbar als App | klein | Service Worker (vorhanden) | Symbol: das bestehende Logo oder ein neues? |
+| | 2 Sammlungswert im Regal | klein | Preise, Fortschritt (vorhanden) | – |
+| | 3 Karte im Binder finden | klein | – | – |
+| **B – Preise** | 4 Preisverlauf | mittel | Punkt 2 | Wie lange zurück? Vorschlag: täglich für 90 Tage, danach wöchentlich |
+| | 5 Preisalarm auf der Merkliste | klein | Merklisten (vorhanden) | – |
+| **C – Gestalten** | 6 Mehr Layouts | mittel | – | Welche Formate hast du wirklich? 3 × 4 und 4 × 3 sind der Vorschlag |
+| | 7 Seiten-Vorlagen | mittel | Punkt 6 (damit Vorlagen das Layout kennen) | Mit Karten oder nur die Bilder? Vorschlag: wählbar |
+| **D – Mit Freunden** | 8 Binder teilen | groß | Abgleich und Anmeldung (vorhanden) | Wer darf den Link öffnen: jeder mit Link oder nur freigeschaltete Adressen? |
+| | 9 Tauschabgleich | mittel | Punkt 8, Tauschliste (vorhanden) | – |
+| **E – Groß** | 10 Englische Oberfläche | mittel | – | Nur sinnvoll, wenn die App über den Freundeskreis hinausgehen soll |
+| | 11 Karten per Kamera | groß, unsicher | Punkt 1 (Kamera am Handy) | Ob es einen Erkennungsdienst gibt, der gut genug und bezahlbar ist; erst eine Machbarkeitsprüfung, dann die Entscheidung |
+
+**Regeln, die sich dafür ändern müssten** (jeweils erst mit Henriks OK, wenn der Punkt dran ist):
+
+- **Punkt 8 und 9:** Bisher gehört alles auf dem Server genau einem Sammler; CLAUDE.md beschreibt den Server-Teil nur für den Abgleich der eigenen Geräte. Teilen heißt, dass andere Daten eines Sammlers lesen dürfen. Das braucht eine neue Regel und eine eigene Prüfung der Zugriffe.
+- **Punkt 10:** „UI-Texte auf Deutsch und nur in `src/i18n/de.ts`“ wird zu „je Sprache eine Datei“.
+- **Punkt 11:** Sehr wahrscheinlich ein weiterer externer Dienst oder eine weitere Abhängigkeit; beides ist laut CLAUDE.md nur nach Rückfrage erlaubt. Kamerabilder verlassen dabei das Gerät, was zum Grundsatz „kein Tracking, alles zuerst lokal“ passen muss.
+
+**Empfohlene Reihenfolge:** A → B → C → D → E. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt und lohnt sich, sobald die Freunde die App wirklich benutzen; E zuletzt, weil beide Punkte davon abhängen, wohin die App sich entwickeln soll.
