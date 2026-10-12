@@ -261,7 +261,11 @@ Mit Henrik am 12.10.2026 vereinbart. Die Reihenfolge steht in der Roadmap darunt
 17. **Idee für später: Tauschbörse in der Nähe.** Langzeitziel für den Fall, dass die App einmal verkauft wird und viele Sammler sie nutzen: Man stellt einen Umkreis ein und bekommt Sammler in der Nähe angezeigt, deren doppelte Karten man braucht und die umgekehrt die eigenen doppelten brauchen – der Tauschabgleich (Punkt 9), nur nicht mit einem bestimmten Freund, sondern mit allen im Umkreis, die mitmachen. Bewusst nur als Idee notiert, nichts davon ist geplant oder entschieden.
 18. **Set-Logo als Cover – erledigt.** Ein Master-Set-Binder ohne eigenes Cover-Bild zeigt das Logo seines Sets (Regal, Cover-Innenseite, geteilte Ansicht). Ohne zusätzlichen Speicher: Das Logo wird beim Anzeigen geholt.
 
-Noch von Henrik zu prüfen: Ausdruck von „Eigene Bilder drucken (PDF)“ nachmessen (63 × 88 mm bei 100 %).
+Noch von Henrik zu prüfen:
+
+- **Import der Cardmarket-Wunschliste ausführlich testen** (Henrik, 12.10.2026): mit echten, größeren Wunschlisten aus mehreren Sets; darauf achten, welche Einträge nicht erkannt werden (Erweiterung heißt bei Cardmarket anders als bei TCGdex, Promos, Karten ohne Version) und ob die richtigen Drucke im Binder landen. Bisher nur mit der Beispieldatei (12 Einträge, zwei Sets) geprüft.
+- **Liste für Cardmarkets Wunschliste** mit weiteren Sets als „151“: ob Erweiterungsname und Version überall treffen.
+- Ausdruck von „Eigene Bilder drucken (PDF)“ nachmessen (63 × 88 mm bei 100 %).
 
 ## Roadmap
 
