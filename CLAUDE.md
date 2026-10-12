@@ -43,6 +43,7 @@ src/
     decks/      Decks zum Spielen: Regal, Deck-Ansicht, Regeln (seit 12.10.2026, von Henrik gewünscht)
     sync/       Anmelden und Abgleich zwischen Geräten
     share/      Binder per Link teilen und geteilte Binder ansehen
+    import/     Kartenlisten einlesen (kopierte Cardmarket-Wunschliste)
     landing/    Startseite
     export/     JSON-Backup, PDF-Fehlliste, später PNG
   store/        Zustand-Stores

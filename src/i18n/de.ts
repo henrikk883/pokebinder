@@ -314,6 +314,34 @@ export const de = {
       offline: 'Der Binder konnte nicht geladen werden. Besteht eine Internetverbindung?',
     },
   },
+  importList: {
+    button: 'Liste importieren',
+    title: 'Wunschliste von Cardmarket importieren',
+    steps: [
+      'Bei Cardmarket die Wunschliste öffnen, die Tabelle mit der Maus markieren (oder alles mit Strg + A) und kopieren.',
+      'Hier einfügen und prüfen lassen, welche Karten erkannt werden.',
+      'Aus den erkannten Karten wird ein neuer Binder; sie liegen darin in der Reihenfolge der Liste und gelten als fehlend.',
+    ],
+    list: 'Kopierte Wunschliste',
+    placeholder: 'Hier die kopierte Wunschliste einfügen …',
+    name: 'Name des Binders',
+    defaultName: 'Cardmarket-Wunschliste',
+    language: 'Sprache der Karten',
+    check: 'Liste prüfen',
+    working: 'Karten werden nachgeschlagen …',
+    failed: 'Die Liste konnte nicht geprüft werden. Besteht eine Internetverbindung?',
+    found: (found: number, total: number) =>
+      total === 0
+        ? 'In dem Text steht kein Eintrag einer Wunschliste.'
+        : `${found} von ${total} ${total === 1 ? 'Eintrag' : 'Einträgen'} erkannt.`,
+    problems: {
+      anyExpansion: 'ohne Erweiterung gewünscht: Welcher Druck gemeint ist, steht nicht in der Liste',
+      unknownSet: 'die Erweiterung ist der App nicht bekannt',
+      unknownCard: 'in der Erweiterung gibt es keine Karte mit dieser Nummer',
+      special: 'ein Sonderprodukt, das nicht zu den Karten des Sets gehört',
+    },
+    create: (count: number) => (count === 1 ? 'Binder mit 1 Karte anlegen' : `Binder mit ${count} Karten anlegen`),
+  },
   cardmarket: {
     menu: 'Für Cardmarket-Wunschliste …',
     title: (name: string) => `Fehlende Karten für Cardmarket – ${name}`,

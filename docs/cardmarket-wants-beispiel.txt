@@ -1,0 +1,82 @@
+		2	Bisasam [Schmarotzer]	Egal	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Lillys Entschlossenheit (MEG 184)	
+Mega-Entwicklung Version 3
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Lolas Schabernack (MEG 165)	
+Mega-Entwicklung Version 2
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Lolas Schabernack (MEG 183)	
+Mega-Entwicklung Version 3
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Mega Bisaflor ex (MEG 177)	
+Mega-Entwicklung Version 3
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Mega Guardevoir ex (MEG 178)	
+Mega-Entwicklung Version 3
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Mega Guardevoir ex (MEG 187)	
+Mega-Entwicklung Version 4
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Mega Latias ex (MEG 181)	
+Mega-Entwicklung Version 3
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Mew ex (MEW 151)	
+151 Version 1
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Mew ex (MEW 193)	
+151 Version 2
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Mew ex (MEW 205)	
+151 Version 3
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	
+		1	Mew ex (MEW 205)	
+151 Version 4
+	Egal	
+≥
+PO
+Poor
+	Any	Any	Any	Any		N	

@@ -30,6 +30,7 @@ import { shelfTotal, useShelfValues, type StoredValue } from './shelfValue'
 import { changeOf, seriesOf } from './valueHistory'
 import { ValueHistoryDialog } from './ValueHistoryDialog'
 import { DeckShelf } from '../decks/DeckShelf'
+import { ImportListDialog } from '../import/ImportListDialog'
 import { NewBinderDialog } from './NewBinderDialog'
 
 type Listing = { status: 'loading' } | { status: 'ready'; binders: Binder[] } | { status: 'error' }
@@ -167,6 +168,7 @@ export function BinderList() {
   const adoptBinder = useBinderStore((state) => state.adoptBinder)
   const [listing, setListing] = useState<Listing>({ status: 'loading' })
   const [creating, setCreating] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [version, setVersion] = useState(0)
   const [prefs, setPrefs] = useState(readShelfPrefs)
   const listVersion = useEditorStore((state) => state.binderListVersion)
@@ -245,7 +247,7 @@ export function BinderList() {
       <h2 className="text-2xl font-semibold">{de.binderList.title}</h2>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-xl font-semibold">{de.binderList.binders}</h3>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <select
             aria-label={de.binderList.sort}
             value={prefs.sort}
@@ -261,6 +263,13 @@ export function BinderList() {
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => setImporting(true)}
+            className="h-10 rounded-control border border-line bg-raised px-4 text-sm font-medium hover:border-accent"
+          >
+            {de.importList.button}
+          </button>
           <button
             type="button"
             onClick={() => setCreating(true)}
@@ -329,6 +338,15 @@ export function BinderList() {
 
       <DeckShelf />
 
+      {importing && (
+        <ImportListDialog
+          onCancel={() => setImporting(false)}
+          onCreate={(binder) => {
+            setImporting(false)
+            adoptBinder(binder)
+          }}
+        />
+      )}
       {creating && (
         <NewBinderDialog
           onCancel={() => setCreating(false)}
