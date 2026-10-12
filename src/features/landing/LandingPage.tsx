@@ -9,28 +9,30 @@ type ShowcaseEntry = readonly [seriesId: string, setId: string, localId: string]
 
 const from151 = (localId: string): ShowcaseEntry => ['sv', 'sv03.5', localId]
 
-// What lies in the binder beside the headline. Henrik's favourites come first: Pikachu-ex
-// (Erhabene Helden 276), Mega-Lucario-ex (Mega-Entwicklung 179), Riolu (Bund der
-// Gleichgesinnten 116) and Qurtel V (Schwert & Schild 24). The rest are cards everybody
-// knows, from the set "151". `null` is a pocket still waiting for its card.
+// What lies in the binder beside the headline. Henrik's favourites have their places:
+// Pikachu-ex first (Erhabene Helden 276), Mega-Lucario-ex in the middle of the first page
+// (Mega-Entwicklung 179), beside it Plinfa (Fatale Flammen 98), Riolu below (Bund der
+// Gleichgesinnten 116), and Qurtel V in the middle of the second page (Schwert & Schild
+// 24). The rest are cards everybody knows, from the set "151". `null` is a pocket still
+// waiting for its card.
 const SHOWCASE_PAGES: readonly (readonly (ShowcaseEntry | null)[])[] = [
   [
     ['me', 'me02.5', '276'],
-    ['me', 'me01', '179'],
-    ['sm', 'sm11', '116'],
-    ['swsh', 'swsh1', '24'],
     from151('006'),
-    from151('150'),
     from151('133'),
     from151('094'),
+    ['me', 'me01', '179'],
+    ['me', 'me02', '098'],
     from151('143'),
+    ['sm', 'sm11', '116'],
+    from151('009'),
   ],
   [
     from151('001'),
     from151('007'),
     from151('004'),
-    from151('009'),
     null,
+    ['swsh', 'swsh1', '24'],
     null,
     from151('131'),
     from151('149'),
