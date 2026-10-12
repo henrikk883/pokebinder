@@ -1,5 +1,5 @@
 import type { Browser, Page, Route } from '@playwright/test'
-import { expect, test } from './fixtures'
+import { expect, mockTcgdex, test } from './fixtures'
 import { makePng, pngFile } from './png'
 
 /**
@@ -408,4 +408,80 @@ test('sharing asks to sign in first', async ({ page }) => {
   await expect(dialog).toContainText('Zum Teilen musst du angemeldet sein')
   await expect(dialog.getByRole('button', { name: 'Link erzeugen' })).toHaveCount(0)
   await expect(dialog.getByRole('button', { name: 'Anmelden' })).toBeVisible()
+})
+
+/** A master set of "151" in which the card of one pocket of page 1 is there twice. */
+async function masterSetWithSpare(page: Page, pocketNumber: number) {
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  const wizard = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await wizard.getByText('Master Set', { exact: true }).click()
+  await wizard.getByRole('button', { name: 'Set', exact: true }).click()
+  await wizard.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  await expect(wizard.getByTestId('master-set-summary')).toBeVisible()
+  await wizard.getByRole('button', { name: 'Anlegen' }).click()
+  const pocket = page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket').nth(pocketNumber - 1)
+  await pocket.click()
+  await page.getByRole('group', { name: 'Besitz' }).getByRole('button', { name: 'Vorhanden' }).click()
+  await page.getByRole('button', { name: 'Anzahl erhöhen' }).click()
+  await expect(pocket.getByTestId('copies-badge')).toHaveText('×2')
+  await expect(page.getByText('Lokal gespeichert')).toBeVisible()
+}
+
+test('a shared binder is compared with one\'s own: who has spare what the other is missing', async ({ page, browser }) => {
+  // the friend: Bisasam twice, everything else missing
+  const server = newServer()
+  await connect(page, server)
+  await page.goto('/')
+  await masterSetWithSpare(page, 1)
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Teilen …' }).click()
+  await page.getByRole('button', { name: 'Link erzeugen' }).click()
+  const link = await page.getByRole('textbox', { name: 'Link zum Binder' }).inputValue()
+
+  // this collector, on another device and not signed in: Bisaknosp twice, everything else missing
+  const context = await browser.newContext({ serviceWorkers: 'block' })
+  const mine = await context.newPage()
+  await mine.addInitScript(() => sessionStorage.setItem('pokebinder:visited', '1'))
+  await mockTcgdex(mine)
+  await connect(mine, { ...server, email: null })
+  await mine.goto('/')
+  await masterSetWithSpare(mine, 2)
+
+  await mine.goto(link)
+  await mine.getByRole('button', { name: 'Tauschabgleich' }).click()
+  const dialog = mine.getByRole('dialog', { name: 'Tauschabgleich mit „151“' })
+
+  // the friend's spare Bisasam is missing here; the spare Bisaknosp of this device is missing there
+  const forMe = dialog.getByTestId('trade-for-me')
+  await expect(forMe.getByTestId('trade-row')).toHaveCount(1)
+  await expect(forMe.getByTestId('trade-row')).toContainText('Bisasam')
+  await expect(forMe.getByTestId('trade-row')).toContainText('151 · 001/165')
+  const forThem = dialog.getByTestId('trade-for-them')
+  await expect(forThem.getByTestId('trade-row')).toHaveCount(1)
+  await expect(forThem.getByTestId('trade-row')).toContainText('Bisaknosp')
+  await expect(forThem).toContainText(/Zusammen [0-9.,]+ €/)
+  await context.close()
+})
+
+test('the comparison says so when this device has no binder of its own', async ({ page, browser }) => {
+  const server = newServer()
+  await connect(page, server)
+  await page.goto('/')
+  await masterSetWithSpare(page, 1)
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Teilen …' }).click()
+  await page.getByRole('button', { name: 'Link erzeugen' }).click()
+  const link = await page.getByRole('textbox', { name: 'Link zum Binder' }).inputValue()
+
+  const context = await browser.newContext({ serviceWorkers: 'block' })
+  const visitor = await context.newPage()
+  await mockTcgdex(visitor)
+  await connect(visitor, { ...server, email: null })
+  await visitor.goto(link)
+  await visitor.getByRole('button', { name: 'Tauschabgleich' }).click()
+  const dialog = visitor.getByRole('dialog', { name: 'Tauschabgleich mit „151“' })
+
+  await expect(dialog).toContainText('Auf diesem Gerät gibt es noch keinen eigenen Binder')
+  await expect(dialog.getByTestId('trade-row')).toHaveCount(0)
+  await context.close()
 })

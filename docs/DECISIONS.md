@@ -579,3 +579,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 ## 2026-10-12 – Zwei weitere Punkte in der Roadmap
 - Von Henrik gewünscht, nur aufgenommen: Punkt 19 „Nach Illustrator sortieren“ (klein, passt zu Punkt 16) und Punkt 20 „Ähnliche Karten finden“ nach Farben oder Komposition, aus der Karten-Info heraus.
 - Punkt 20 steht als Idee mit vorgeschalteter Machbarkeitsprüfung: Die Ähnlichkeit lässt sich nur aus den Bildern errechnen, vorab und außerhalb der App.
+
+## 2026-10-12 – Tauschabgleich mit Freunden
+- In der Ansicht eines geteilten Binders gibt es „Tauschabgleich“: Der geteilte Binder wird mit allen eigenen Bindern des Geräts verglichen, in beide Richtungen – „Das kannst du bekommen“ (seine doppelten, die dir fehlen) und „Das kannst du geben“ (deine doppelten, die ihm fehlen), mit Preistrend und Summe je Richtung.
+- Doppelt heißt wie in der Tauschliste: was über das eine Exemplar im Pocket hinaus da ist. Fehlend heißt: Die Karte hat ein Pocket und ist nicht da. Es zählt dieselbe Karte in derselben Sprache und Variante; getauscht werden höchstens so viele, wie doppelt sind und wie fehlen.
+- Der Vergleich läuft im Browser dessen, der den Link öffnet; der Server erfährt davon nichts, und der Freund sieht ihn nicht. Verglichen wird der eine geteilte Binder, nicht die ganze Sammlung des Freundes – mehr gibt der Link nicht her.
+- Anmeldung ist dafür nicht nötig: Es zählen die Binder, die auf dem Gerät liegen.
+- Für den Browser-Test spielt ein zweites „Gerät“ mit denselben aufgezeichneten TCGdex-Antworten mit (`mockTcgdex` ist dafür exportiert).

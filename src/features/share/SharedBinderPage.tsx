@@ -12,6 +12,7 @@ import { PlacedImageLayer } from '../images/PlacedImageLayer'
 import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
 import { loadSharedBinder, SharedNotFoundError } from './sharedBinder'
+import { TradeMatchDialog } from './TradeMatchDialog'
 
 type Loaded = { status: 'loading' } | { status: 'ready'; binder: Binder } | { status: 'gone' } | { status: 'offline' }
 
@@ -104,6 +105,7 @@ function SharedSpread({ binder, spread, zoom }: { binder: Binder; spread: Spread
 export function SharedBinderPage({ token }: { token: string }) {
   const [loaded, setLoaded] = useState<Loaded>({ status: 'loading' })
   const [spreadIndex, setSpreadIndex] = useState(0)
+  const [matching, setMatching] = useState(false)
   const phone = useIsPhone()
 
   useEffect(() => {
@@ -167,7 +169,16 @@ export function SharedBinderPage({ token }: { token: string }) {
             {de.binderList.ownedOfAll(progress.owned, progress.total)}
           </p>
         )}
+        <button
+          type="button"
+          title={de.trade.matchButtonHint}
+          onClick={() => setMatching(true)}
+          className="mt-3 h-10 rounded-control border border-line bg-raised px-4 text-sm hover:border-accent"
+        >
+          {de.trade.matchButton}
+        </button>
       </div>
+      {matching && <TradeMatchDialog shared={binder} onClose={() => setMatching(false)} />}
       <div className="flex items-center justify-center gap-3">
         <button
           type="button"

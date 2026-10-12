@@ -56,7 +56,7 @@ export interface Tcgdex {
   goOffline: () => void
 }
 
-async function mockTcgdex(page: Page): Promise<Tcgdex> {
+export async function mockTcgdex(page: Page): Promise<Tcgdex> {
   const { index, englishImages } = await loadRecording()
   const state = {
     requests: [] as string[],
