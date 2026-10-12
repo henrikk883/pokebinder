@@ -4,6 +4,7 @@ import { chronologicalSetIds, tcgdexFor } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { LAYOUTS, type Binder, type Layout } from '../../types/binder'
+import { PngMenu } from '../export/PngMenu'
 import { MasterSetSettingsDialog } from '../masterset/MasterSetSettingsDialog'
 import { cardLangs, countCards } from './binderModel'
 import { buildSpreads, pageNumbersOf, type Spread } from './spreads'
@@ -74,6 +75,19 @@ function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
   )
 }
 
+function HistoryArrow({ direction }: { direction: 'undo' | 'redo' }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      className={`size-4 ${direction === 'redo' ? '-scale-x-100' : ''}`}
+      aria-hidden="true"
+    >
+      <path d="M7 4 3 8l4 4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 8h8a5 5 0 0 1 0 10H8" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
 export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spread }) {
   const addPage = useBinderStore((state) => state.addPage)
   const changeLayout = useBinderStore((state) => state.changeLayout)
@@ -83,6 +97,10 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
   const [adjusting, setAdjusting] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportFailed, setExportFailed] = useState(false)
+  const canUndo = useBinderStore((state) => state.canUndo)
+  const canRedo = useBinderStore((state) => state.canRedo)
+  const undo = useBinderStore((state) => state.undo)
+  const redo = useBinderStore((state) => state.redo)
 
   async function handleMissingList() {
     setExporting(true)
@@ -149,6 +167,29 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
             {de.missingList.failed}
           </p>
         )}
+      </div>
+      <PngMenu binderName={binder.name} pages={pageNumbersOf(spread)} buttonClass={buttonClass} />
+      <div className="flex">
+        <button
+          type="button"
+          aria-label={de.history.undo}
+          title={`${de.history.undo} (Strg+Z)`}
+          disabled={!canUndo}
+          onClick={undo}
+          className={`${buttonClass} rounded-r-none px-2.5`}
+        >
+          <HistoryArrow direction="undo" />
+        </button>
+        <button
+          type="button"
+          aria-label={de.history.redo}
+          title={`${de.history.redo} (Strg+Y)`}
+          disabled={!canRedo}
+          onClick={redo}
+          className={`${buttonClass} -ml-px rounded-l-none px-2.5`}
+        >
+          <HistoryArrow direction="redo" />
+        </button>
       </div>
       <button
         type="button"

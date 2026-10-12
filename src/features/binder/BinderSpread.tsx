@@ -24,7 +24,12 @@ function PageSide({ binder, page }: { binder: Binder; page: Page }) {
   const hasCards = page.slots.some((slot) => slot.cardRef)
 
   return (
-    <section className={sideClass} aria-label={de.binder.page(pageNumber)} data-testid="binder-page">
+    <section
+      className={sideClass}
+      aria-label={de.binder.page(pageNumber)}
+      data-testid="binder-page"
+      data-export={`page-${pageNumber}`}
+    >
       <div className={sheetClass}>
         <div className="relative">
           <PlacedImageLayer binder={binder} pageIndex={page.index} />
@@ -50,6 +55,7 @@ function PageSide({ binder, page }: { binder: Binder; page: Page }) {
         <button
           type="button"
           aria-label={de.binder.deletePageLabel(pageNumber)}
+          data-export-hide
           disabled={binder.pages.length <= 1}
           onClick={() => {
             if (!hasCards || window.confirm(de.binder.confirmDeletePage(pageNumber))) removePage(page.id)
@@ -135,6 +141,7 @@ export function BinderSpread({ binder, spread, zoom }: BinderSpreadProps) {
       role="group"
       aria-label={de.binder.spread}
       data-testid="binder-spread"
+      data-export="spread"
       className="mx-auto flex shrink-0 gap-[calc(var(--u)*10)] rounded-panel border border-line bg-panel p-[calc(var(--u)*14)] shadow-lg"
       style={{ width: `${(BASE_WIDTH_PX * zoom) / 100}px`, '--u': `${zoom / 100}px` } as CSSProperties}
     >

@@ -87,6 +87,7 @@ function PocketCard({ position, cardRef, owned }: PocketCardProps) {
         type="button"
         aria-label={owned ? de.binder.markMissingLabel : de.binder.markOwnedLabel}
         aria-pressed={!owned}
+        data-export-hide
         onClick={(event) => {
           event.stopPropagation()
           setOwned(position, !owned)

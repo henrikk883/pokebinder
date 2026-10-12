@@ -41,7 +41,10 @@ import type {
   SlotPosition,
 } from '../types/binder'
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+/** How many changes of a binder can be taken back. */
+export const HISTORY_LIMIT = 100
+
+export type SaveStatus ='idle' | 'saving' | 'saved' | 'error'
 
 export interface BinderState {
   binder: Binder | null
@@ -51,6 +54,13 @@ export interface BinderState {
   openBinder: (binder: Binder) => void
   closeBinder: () => void
   createBinder: (input: NewBinderInput) => void
+  /** Whether there is a change of the open binder to take back, or to bring back. */
+  canUndo: boolean
+  canRedo: boolean
+  /** Takes back the last change of the open binder. */
+  undo: () => void
+  /** Brings back the change that was last undone; a new change discards what was undone. */
+  redo: () => void
   /** Opens a binder that was built elsewhere (e.g. a master set) and stores it. */
   adoptBinder: (binder: Binder) => void
   /** Takes over a reworked version of the open binder, e.g. a rebuilt master set. */
@@ -115,13 +125,31 @@ export function createBinderStore(deps: BinderStoreDeps) {
       pending = runSaves()
     }
 
+    // Earlier and undone states of the open binder, oldest first. Binders are never
+    // changed in place, so keeping a state means keeping a reference.
+    let past: Binder[] = []
+    let future: Binder[] = []
+
+    /** Makes `next` the binder, remembering the current one for undo. */
+    function commit(current: Binder, next: Binder): void {
+      past = [...past, current].slice(-HISTORY_LIMIT)
+      future = []
+      set({ binder: next, canUndo: true, canRedo: false })
+      scheduleSave()
+    }
+
+    /** A different binder is on the table: its history starts empty. */
+    function forgetHistory(): void {
+      past = []
+      future = []
+    }
+
     function change(update: (binder: Binder) => Binder): void {
       const { binder } = get()
       if (!binder) return
       const next = update(binder)
       if (next === binder) return
-      set({ binder: next })
-      scheduleSave()
+      commit(binder, next)
     }
 
     /** Like `change`, for updates that can be refused. */
@@ -130,23 +158,50 @@ export function createBinderStore(deps: BinderStoreDeps) {
       if (!binder) return null
       const result = update(binder)
       if (!result.ok) return result.error
-      set({ binder: result.binder })
-      scheduleSave()
+      commit(binder, result.binder)
       return null
     }
 
     return {
       binder: null,
       saveStatus: 'idle',
+      canUndo: false,
+      canRedo: false,
 
-      openBinder: (binder) => set({ binder, saveStatus: 'saved' }),
-      closeBinder: () => set({ binder: null, saveStatus: 'idle' }),
+      openBinder: (binder) => {
+        forgetHistory()
+        set({ binder, saveStatus: 'saved', canUndo: false, canRedo: false })
+      },
+      closeBinder: () => {
+        forgetHistory()
+        set({ binder: null, saveStatus: 'idle', canUndo: false, canRedo: false })
+      },
       createBinder: (input) => {
-        set({ binder: createBinder(input) })
+        forgetHistory()
+        set({ binder: createBinder(input), canUndo: false, canRedo: false })
         scheduleSave()
       },
       adoptBinder: (binder) => {
-        set({ binder })
+        forgetHistory()
+        set({ binder, canUndo: false, canRedo: false })
+        scheduleSave()
+      },
+      undo: () => {
+        const { binder } = get()
+        const previous = past.at(-1)
+        if (!binder || !previous) return
+        past = past.slice(0, -1)
+        future = [...future, binder]
+        set({ binder: previous, canUndo: past.length > 0, canRedo: true })
+        scheduleSave()
+      },
+      redo: () => {
+        const { binder } = get()
+        const next = future.at(-1)
+        if (!binder || !next) return
+        future = future.slice(0, -1)
+        past = [...past, binder]
+        set({ binder: next, canUndo: true, canRedo: future.length > 0 })
         scheduleSave()
       },
       replaceContent: (next) =>

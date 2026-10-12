@@ -13,11 +13,20 @@ function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && target.closest('input, textarea, select') !== null
 }
 
-/** Arrow keys turn the pages, Delete empties the selected pocket. */
+/** Arrow keys turn the pages, Delete empties the selected pocket, Ctrl+Z / Ctrl+Y undo and redo. */
 function useEditorKeys(spreadCount: number) {
   useEffect(() => {
     function handleKey(event: KeyboardEvent) {
-      if (isTyping(event.target) || event.ctrlKey || event.metaKey || event.altKey) return
+      if (isTyping(event.target) || event.altKey) return
+      if (event.ctrlKey || event.metaKey) {
+        // Ctrl+Z takes back, Ctrl+Y or Ctrl+Shift+Z brings back
+        const key = event.key.toLowerCase()
+        if (key !== 'z' && key !== 'y') return
+        event.preventDefault()
+        if (key === 'z' && !event.shiftKey) binderStore.getState().undo()
+        else binderStore.getState().redo()
+        return
+      }
       const editor = useEditorStore.getState()
       const current = clampSpread(editor.spreadIndex, spreadCount)
       if (event.key === 'ArrowLeft') editor.showSpread(clampSpread(current - 1, spreadCount))

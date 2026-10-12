@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Binder, CardRef } from '../types/binder'
-import { createBinderStore } from './binderStore'
+import { createBinderStore, HISTORY_LIMIT } from './binderStore'
 
 const pikachu: CardRef = { cardId: 'sv03.5-025', lang: 'de', variant: 'normal' }
 
@@ -181,6 +181,147 @@ describe('binderStore', () => {
 
     expect(store.getState().binder?.pages[0]?.images).toMatchObject([{ assetId: 'wide', spanCols: 3 }])
     await store.getState().whenSaved()
+  })
+
+  describe('undo and redo', () => {
+    function withCard() {
+      const context = setup()
+      context.store.getState().createBinder({ name: 'Kanto Collection' })
+      const pageId = firstPageId(context.store.getState().binder)
+      const cardIds = () =>
+        context.store.getState().binder?.pages[0]?.slots.map((slot) => slot.cardRef?.cardId ?? null).slice(0, 3)
+      return { ...context, pageId, cardIds }
+    }
+
+    it('has nothing to take back in a fresh binder', () => {
+      const { store } = withCard()
+
+      expect(store.getState()).toMatchObject({ canUndo: false, canRedo: false })
+      store.getState().undo()
+      store.getState().redo()
+      expect(store.getState().binder?.pages).toHaveLength(1)
+    })
+
+    it('takes changes back step by step and brings them back again', async () => {
+      const { store, saved, pageId, cardIds } = withCard()
+      store.getState().setCard({ pageId, slotIndex: 0 }, pikachu)
+      store.getState().moveCard({ pageId, slotIndex: 0 }, { pageId, slotIndex: 2 })
+      store.getState().addPage()
+      expect(store.getState()).toMatchObject({ canUndo: true, canRedo: false })
+
+      store.getState().undo() // the page
+      expect(store.getState().binder?.pages).toHaveLength(1)
+      expect(cardIds()).toEqual([null, null, 'sv03.5-025'])
+      store.getState().undo() // the move
+      expect(cardIds()).toEqual(['sv03.5-025', null, null])
+      expect(store.getState()).toMatchObject({ canUndo: true, canRedo: true })
+      store.getState().undo() // the card
+      expect(cardIds()).toEqual([null, null, null])
+      expect(store.getState()).toMatchObject({ canUndo: false, canRedo: true })
+
+      store.getState().redo()
+      store.getState().redo()
+      expect(cardIds()).toEqual([null, null, 'sv03.5-025'])
+      store.getState().redo()
+      expect(store.getState().binder?.pages).toHaveLength(2)
+      expect(store.getState()).toMatchObject({ canUndo: true, canRedo: false })
+
+      // what is on screen is also what is stored
+      await store.getState().whenSaved()
+      expect(saved.at(-1)).toBe(store.getState().binder)
+    })
+
+    it('discards what was undone as soon as something new is done', () => {
+      const { store, pageId, cardIds } = withCard()
+      store.getState().setCard({ pageId, slotIndex: 0 }, pikachu)
+      store.getState().undo()
+
+      store.getState().setCard({ pageId, slotIndex: 1 }, pikachu)
+
+      expect(store.getState().canRedo).toBe(false)
+      store.getState().redo()
+      expect(cardIds()).toEqual([null, 'sv03.5-025', null])
+    })
+
+    it('covers owned state, variant, language, images, cover, sorting and layout', () => {
+      const { store, pageId } = withCard()
+      const position = { pageId, slotIndex: 0 }
+      const steps: (() => void)[] = [
+        () => store.getState().setCard(position, pikachu),
+        () => store.getState().setOwned(position, false),
+        () => store.getState().setVariant(position, 'reverse'),
+        () => store.getState().setCardLang(position, 'en'),
+        () => void store.getState().placeImage(pageId, 'forest', { fromSlot: 3, spanCols: 2, spanRows: 1 }),
+        () => store.getState().setCover({ title: 'Meine 151' }),
+        () => store.getState().setOpeningSide(pageId, 'mixed'),
+        () => store.getState().moveCard(position, { pageId, slotIndex: 8 }),
+        () => store.getState().sortCards({}, ['sv03.5']),
+        () => store.getState().changeLayout('4x4'),
+        () => store.getState().clearSlot(position),
+      ]
+      const states = [store.getState().binder]
+      for (const step of steps) {
+        step()
+        states.push(store.getState().binder)
+      }
+      // every step really changed something
+      expect(new Set(states).size).toBe(steps.length + 1)
+
+      for (let i = steps.length - 1; i >= 0; i--) {
+        store.getState().undo()
+        expect(store.getState().binder).toBe(states[i])
+      }
+      for (let i = 1; i <= steps.length; i++) {
+        store.getState().redo()
+        expect(store.getState().binder).toBe(states[i])
+      }
+    })
+
+    it('does not remember changes that were refused or changed nothing', () => {
+      const { store, pageId } = withCard()
+      store.getState().placeImage(pageId, 'forest', { fromSlot: 0, spanCols: 1, spanRows: 1 })
+      const binder = store.getState().binder
+
+      store.getState().placeImage(pageId, 'other', { fromSlot: 0, spanCols: 1, spanRows: 1 }) // overlap
+      store.getState().setOwned({ pageId, slotIndex: 5 }, true) // empty pocket
+      store.getState().undo()
+
+      expect(store.getState().binder).not.toBe(binder)
+      expect(store.getState().binder?.pages[0]?.images).toEqual([])
+      expect(store.getState().canUndo).toBe(false)
+    })
+
+    it('keeps at most a hundred steps', () => {
+      const { store, pageId } = withCard()
+      for (let i = 0; i < HISTORY_LIMIT + 20; i++) {
+        store.getState().setOwned({ pageId, slotIndex: 0 }, true)
+        store.getState().setCard({ pageId, slotIndex: 0 }, { ...pikachu, cardId: `sv03.5-${i}` })
+      }
+
+      let undone = 0
+      while (store.getState().canUndo) {
+        store.getState().undo()
+        undone++
+      }
+
+      expect(undone).toBe(HISTORY_LIMIT)
+      expect(store.getState().binder?.pages[0]?.slots[0]?.cardRef?.cardId).toBe('sv03.5-19')
+    })
+
+    it('starts afresh for another binder', () => {
+      const { store, pageId } = withCard()
+      store.getState().setCard({ pageId, slotIndex: 0 }, pikachu)
+      const binder = store.getState().binder
+      if (!binder) throw new Error('Binder missing')
+
+      store.getState().closeBinder()
+      expect(store.getState()).toMatchObject({ canUndo: false, canRedo: false })
+      store.getState().openBinder(binder)
+      store.getState().undo()
+
+      expect(store.getState().binder).toBe(binder)
+      expect(store.getState()).toMatchObject({ canUndo: false, canRedo: false })
+    })
   })
 
   it('does not save when nothing changed', async () => {

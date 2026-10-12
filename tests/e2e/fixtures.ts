@@ -78,10 +78,12 @@ async function mockTcgdex(page: Page): Promise<Tcgdex> {
   })
   await page.route('https://assets.tcgdex.net/**', (route) => {
     if (state.offline) return route.abort('internetdisconnected')
+    // like the real server, every answer may be read from any origin
+    const headers = { 'access-control-allow-origin': '*' }
     if (!imageExists(new URL(route.request().url()), englishImages)) {
-      return route.fulfill({ status: 404, contentType: 'text/plain', body: 'not found' })
+      return route.fulfill({ status: 404, contentType: 'text/plain', headers, body: 'not found' })
     }
-    return route.fulfill({ contentType: 'image/png', body: PIXEL })
+    return route.fulfill({ contentType: 'image/png', headers, body: PIXEL })
   })
 
   return {

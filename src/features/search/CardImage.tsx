@@ -34,6 +34,8 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
     return (
       <img
         key={card.image}
+        // asked for with CORS, so that the PNG export may read the picture
+        crossOrigin="anonymous"
         src={cardImageUrl(card.image, size)}
         alt={card.name}
         loading="lazy"
@@ -49,6 +51,7 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
       <img
         // a fresh element per address, so a failed load never sticks to the next card
         key={substitute}
+        crossOrigin="anonymous"
         src={substitute}
         alt={de.search.substituteImage(card.name)}
         title={de.search.substituteHint}

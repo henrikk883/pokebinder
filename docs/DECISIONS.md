@@ -199,5 +199,14 @@ Enthält die Liste Karten in mehr als einer Sprache, bekommt sie die Spalte „S
 ## 2026-10-12 – Sortieren über Sprachen hinweg
 Sortiert wird nach den Sets der Binder-Sprache, danach nach den Sets der übrigen Sprachen, die im Binder vorkommen.
 
+## 2026-10-12 – Ersatzbild-Fehler behoben: englisches Bild erscheint von Anfang an
+Ein Pocket merkte sich, dass ein englisches Ersatzbild nicht ladbar war, und zeigte danach auch für andere Karten nur den Platzhalter (auffällig nach dem Umblättern in Master Sets). Gemerkt wird jetzt die fehlgeschlagene Bildadresse, nicht mehr der Pocket. Von Henrik gemeldet.
+
+## 2026-10-12 – PNG-Export: feste Breite, Doppelseite oder einzelne Seite
+„Als PNG“ exportiert die aufgeschlagene Doppelseite mit 3000 px Breite oder eine ihrer Seiten mit 1500 px, unabhängig vom Zoom. Das Bild zeigt Karten, eigene Bilder, Öffnungs-Markierungen und die Seitenbeschriftung; Auswahlrahmen und Knöpfe fehlen, fehlende Karten bleiben schwarz-weiß. Von Henrik freigegeben. Kartenbilder werden dafür mit CORS angefordert, was TCGdex erlaubt.
+
+## 2026-10-12 – Undo/Redo: 100 Schritte, nicht gespeichert
+„Rückgängig“ und „Wiederholen“ (Strg+Z, Strg+Y oder Strg+Umschalt+Z) gelten für jede Änderung am geöffneten Binder. Der Verlauf beginnt neu, wenn ein Binder geöffnet, geschlossen oder die Seite neu geladen wird; der zurückgenommene Stand wird sofort gespeichert. Abgelehnte Aktionen und solche ohne Wirkung zählen nicht als Schritt. In Textfeldern gilt Strg+Z weiter für den Text. Von Henrik freigegeben.
+
 ## 2026-10-12 – Fehler beim Speichern oder Import ohne Rot
 Meldungen erscheinen in neutraler Textfarbe, weil Rot dem Löschen vorbehalten ist.

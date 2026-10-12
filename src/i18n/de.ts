@@ -49,6 +49,17 @@ export const de = {
     page: (page: number, pageCount: number) => `Seite ${page} von ${pageCount}`,
     failed: 'Die Fehlliste konnte nicht erstellt werden.',
   },
+  png: {
+    button: 'Als PNG',
+    busy: 'PNG wird erstellt …',
+    spread: 'Doppelseite',
+    page: (page: number) => `Nur Seite ${page}`,
+    failed: 'Das Bild konnte nicht erstellt werden. Sind alle Kartenbilder geladen?',
+  },
+  history: {
+    undo: 'Rückgängig',
+    redo: 'Wiederholen',
+  },
   progress: {
     collected: (owned: number, total: number) => `${owned} / ${total} Karten gesammelt`,
     missing: (count: number) => (count === 1 ? '1 fehlt' : `${count} fehlen`),
