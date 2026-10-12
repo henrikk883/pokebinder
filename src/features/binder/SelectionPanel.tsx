@@ -17,6 +17,7 @@ import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
 import { LanguageSelect } from '../search/LanguageSelect'
 import { useReadyCatalog } from '../search/useCatalog'
+import { canCloseGap } from './binderModel'
 import { spreadOfPage } from './spreads'
 import { useCard, useCardDetail, useCardLangs, usePrice } from './useCard'
 
@@ -141,6 +142,8 @@ export function SelectionPanel() {
   const movePage = useBinderStore((state) => state.movePage)
   const insertPage = useBinderStore((state) => state.insertPage)
   const duplicatePage = useBinderStore((state) => state.duplicatePage)
+  const insertGap = useBinderStore((state) => state.insertGap)
+  const closeGap = useBinderStore((state) => state.closeGap)
   const showSpread = useEditorStore((state) => state.showSpread)
   const select = useEditorStore((state) => state.select)
   const collecting = useEditorStore((state) => state.mode === 'collection')
@@ -190,6 +193,28 @@ export function SelectionPanel() {
             >
               {de.selection.clear}
             </button>
+            {binder && !collecting && (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  disabled={!slot.cardRef}
+                  title={de.selection.insertGapHint}
+                  onClick={() => insertGap({ pageId: page.id, slotIndex: slot.index })}
+                  className={pageButtonClass}
+                >
+                  {de.selection.insertGap}
+                </button>
+                <button
+                  type="button"
+                  disabled={!canCloseGap(binder, { pageId: page.id, slotIndex: slot.index })}
+                  title={de.selection.closeGapHint}
+                  onClick={() => closeGap({ pageId: page.id, slotIndex: slot.index })}
+                  className={pageButtonClass}
+                >
+                  {de.selection.closeGap}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3 border-t border-line pt-5">

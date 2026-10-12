@@ -349,3 +349,9 @@ Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket
 - Eine Zeile je Pocket wie in der Fehlliste: Eine Karte, die zweimal fehlt, steht zweimal da.
 - Dieselbe Ansicht gibt es für jede Merkliste (Knopf „Einkaufsliste“ neben „Wert berechnen“), dort mit der Grundvariante jeder Karte.
 - Link zu Cardmarket: TCGdex liefert die Produktnummer (`idProduct`) mit; der Link führt damit zur Karte (`…/Products?idProduct=…`), ohne Nummer zur Suche nach dem Namen. Er öffnet sich nur per Klick in einem neuen Tab. Die App selbst ruft Cardmarket nicht ab – deshalb kein Verstoß gegen „keine externen Dienste“.
+
+## 2026-10-12 – Lücke einfügen und schließen
+- Zwei Knöpfe in der rechten Spalte unter „Pocket leeren“, für das gewählte Pocket.
+- „Lücke einfügen“ (nur bei belegtem Pocket): Die Karte dort und alle Karten, die ohne Lücke darauf folgen, rücken um ein Pocket weiter, auch über Seitengrenzen, in das nächste freie Pocket. Reicht die Reihe bis ans Ende des Binders, kommt eine Seite dazu. Das gewählte Pocket ist danach leer und bleibt gewählt.
+- „Lücke schließen“ (nur bei leerem Pocket mit Karte direkt dahinter): Die folgenden Karten rücken um ein Pocket zurück, bis zur nächsten Lücke. Karten hinter einer weiteren Lücke bleiben stehen, damit bewusst gelassene Lücken nicht verschwinden.
+- Besitz-Markierungen wandern mit den Karten; eigene Bilder bleiben, wo sie sind. Im Modus „Sammlung“ ausgeblendet. Ein Schritt „Rückgängig“ nimmt alles zurück, auch die neue Seite.

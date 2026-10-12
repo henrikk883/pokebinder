@@ -701,3 +701,59 @@ test('pages are moved, duplicated and inserted; the thumbnails are dragged onto 
   await drag(page, miniPage(1), miniPage(3))
   await expect.poll(cardPages).toEqual([1, 2])
 })
+
+test('a gap is made between cards and closed again; the cards behind it move along', async ({ page }) => {
+  await createBinder(page, 'Lücken', '2 × 2')
+  // the first three cards of "151"
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const ids = ['sv03.5-001', 'sv03.5-002', 'sv03.5-003']
+  /** Card ids of the open pages in reading order, "" for an empty pocket. */
+  const cards = () =>
+    page.getByTestId('pocket').evaluateAll((pockets) => pockets.map((entry) => entry.getAttribute('data-card-id')))
+  for (const [index, id] of ids.entries()) {
+    const found = tile(page, id)
+    await found.scrollIntoViewIfNeeded()
+    await drag(page, found, pocket(page, 1, index + 1))
+    await expect(pocket(page, 1, index + 1)).toHaveAttribute('data-card-id', id)
+  }
+  const insert = page.getByRole('button', { name: 'Lücke einfügen' })
+  const close = page.getByRole('button', { name: 'Lücke schließen' })
+
+  // an empty pocket is a gap already; with nothing behind it there is nothing to close
+  await pocket(page, 1, 4).click()
+  await expect(insert).toBeDisabled()
+  await expect(close).toBeDisabled()
+
+  // room at the second pocket: its card and the one behind it move on
+  await pocket(page, 1, 2).click()
+  await expect(close).toBeDisabled()
+  await insert.click()
+  await expect.poll(cards).toEqual([ids[0], '', ids[1], ids[2]])
+  // the pocket stays selected, ready for the card that goes in between, or to close the gap again
+  await expect(pocket(page, 1, 2)).toHaveAttribute('aria-pressed', 'true')
+  await expect(insert).toBeDisabled()
+  await close.click()
+  await expect.poll(cards).toEqual([ids[0], ids[1], ids[2], ''])
+
+  // at the front of a full page the last card goes over to a new page
+  await pocket(page, 1, 4).click()
+  await drag(page, tile(page, ids[0] ?? ''), pocket(page, 1, 4))
+  await expect(pocket(page, 1, 4)).toHaveAttribute('data-card-id', ids[0] ?? '')
+  await pocket(page, 1, 1).click()
+  await insert.click()
+  await expect.poll(cards).toEqual(['', ids[0], ids[1], ids[2]])
+  await expect(page.getByTestId('mini-page')).toHaveCount(2)
+  await page.getByRole('button', { name: 'Weiterblättern' }).click()
+  await expect(pocket(page, 2, 1)).toHaveAttribute('data-card-id', ids[0] ?? '')
+
+  // one step back takes all of it back, the added page included
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect(page.getByTestId('mini-page')).toHaveCount(1)
+  await expect.poll(cards).toEqual([ids[0], ids[1], ids[2], ids[0]])
+
+  // while cards are ticked off nothing is moved
+  await pocket(page, 1, 1).click()
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  await expect(insert).toHaveCount(0)
+})

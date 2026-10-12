@@ -3,6 +3,8 @@ import { createStore } from 'zustand/vanilla'
 import { binderRepository } from '../db/binderRepository'
 import {
   addPage,
+  closeGap,
+  insertGap,
   duplicatePage,
   insertPage,
   movePage,
@@ -87,6 +89,10 @@ export interface BinderState {
   setCard: (position: SlotPosition, cardRef: CardRef, owned?: boolean) => void
   clearSlot: (position: SlotPosition) => void
   moveCard: (from: SlotPosition, to: SlotPosition) => void
+  /** Makes room at a pocket: its card and those behind it move one pocket on. */
+  insertGap: (position: SlotPosition) => void
+  /** Closes the gap at an empty pocket: the cards behind it move one pocket back. */
+  closeGap: (position: SlotPosition) => void
   setOwned: (position: SlotPosition, owned: boolean) => void
   setOpeningSide: (pageId: string, openingSide: OpeningSide) => void
   /** Drops a dragged card or library image on a pocket; an image may not fit there. */
@@ -236,6 +242,8 @@ export function createBinderStore(deps: BinderStoreDeps) {
         change((binder) => setCard(binder, position, cardRef, owned)),
       clearSlot: (position) => change((binder) => clearSlot(binder, position)),
       moveCard: (from, to) => change((binder) => moveCard(binder, from, to)),
+      insertGap: (position) => change((binder) => insertGap(binder, position)),
+      closeGap: (position) => change((binder) => closeGap(binder, position)),
       setOwned: (position, owned) => change((binder) => setOwned(binder, position, owned)),
       setOpeningSide: (pageId, openingSide) =>
         change((binder) => setOpeningSide(binder, pageId, openingSide)),

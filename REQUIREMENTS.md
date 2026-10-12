@@ -67,6 +67,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
    - Die Karte landet in ihrer Grundvariante (eine Karte, die es nur als Holo gibt, als Holo).
    - Karten zwischen Pockets und Seiten verschieben; belegte Pockets tauschen beim Drop.
    - Pocket leeren per Rechtsklick, Entf-Taste oder Button „Pocket leeren“.
+   - **Lücke einfügen / schließen:** Am gewählten Pocket rücken die Karten ab dort um ein Pocket weiter, damit eine Karte dazwischen passt, oder die folgenden Karten rücken in eine Lücke nach – jeweils bis zur nächsten Lücke, auch über Seiten.
    - Variante und Sprache einer Karte lassen sich in der rechten Spalte ändern.
 8. **Sortieren.** Ein Befehl sortiert die Karten einer Seite oder des ganzen Binders nach Set und Nummer oder nach Pokédex-Nummer.
 9. **Eigene Bilder.** Bild hochladen (JPG, PNG, WebP; höchstens 2000 px Kantenlänge) und in einen oder mehrere zusammenhängende Pockets legen.
@@ -222,10 +223,9 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Lücke einfügen und schließen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter; beim Herausnehmen rücken sie auf Wunsch nach.
-2. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
-3. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
-4. **Fortschritt pro Set** in gemischten Bindern.
-5. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-6. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-7. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
+2. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
+3. **Fortschritt pro Set** in gemischten Bindern.
+4. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+5. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+6. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

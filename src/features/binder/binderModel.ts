@@ -423,3 +423,75 @@ export function duplicatePage(binder: Binder, pageId: string, ctx: ModelContext 
   pages.splice(page.index + 1, 0, copy)
   return withPages(binder, renumbered(pages), ctx)
 }
+
+/** Every pocket of the binder in reading order: page by page, row by row. */
+function pocketsInOrder(binder: Binder): { position: SlotPosition; slot: Slot }[] {
+  return binder.pages.flatMap((page) =>
+    page.slots.map((slot) => ({ position: { pageId: page.id, slotIndex: slot.index }, slot })),
+  )
+}
+
+const samePosition = (a: SlotPosition, b: SlotPosition) => a.pageId === b.pageId && a.slotIndex === b.slotIndex
+
+/**
+ * Makes room at a pocket for a card to go in between: the card there and the cards that
+ * follow it without a gap each move one pocket on, across pages, into the first free
+ * pocket behind them. If they reach the end of the binder, a page is added. An empty
+ * pocket is a gap already; nothing changes.
+ */
+export function insertGap(binder: Binder, position: SlotPosition, ctx: ModelContext = defaultContext): Binder {
+  findSlot(binder, position)
+  let source = binder
+  let pockets = pocketsInOrder(source)
+  const start = pockets.findIndex((pocket) => samePosition(pocket.position, position))
+  if (!pockets[start]?.slot.cardRef) return binder
+  let end = start
+  while (pockets[end]?.slot.cardRef) end++
+  if (end === pockets.length) {
+    source = addPage(source, ctx)
+    pockets = pocketsInOrder(source)
+  }
+  const writes: { position: SlotPosition; content: SlotContent }[] = [{ position, content: { owned: false } }]
+  for (let i = start; i < end; i++) {
+    const from = pockets[i]
+    const to = pockets[i + 1]
+    if (from && to) writes.push({ position: to.position, content: contentOf(from.slot) })
+  }
+  return writeSlots(source, writes, ctx)
+}
+
+/** The cards that would move up if the gap at a pocket were closed: those behind it up to the next gap. */
+function runBehind(binder: Binder, position: SlotPosition): { position: SlotPosition; slot: Slot }[] {
+  const pockets = pocketsInOrder(binder)
+  const start = pockets.findIndex((pocket) => samePosition(pocket.position, position))
+  if (start < 0 || pockets[start]?.slot.cardRef) return []
+  let end = start + 1
+  while (pockets[end]?.slot.cardRef) end++
+  return pockets.slice(start, end)
+}
+
+/** Whether there is a gap at this pocket with cards right behind it to close it with. */
+export function canCloseGap(binder: Binder, position: SlotPosition): boolean {
+  return runBehind(binder, position).length > 1
+}
+
+/**
+ * Closes the gap at an empty pocket: the cards that follow it without a gap each move one
+ * pocket back, across pages; the gap ends up behind the last of them. Cards behind a
+ * further gap stay, so that gaps left on purpose are not swallowed.
+ */
+export function closeGap(binder: Binder, position: SlotPosition, ctx: ModelContext = defaultContext): Binder {
+  findSlot(binder, position)
+  const run = runBehind(binder, position)
+  const last = run[run.length - 1]
+  if (run.length < 2 || !last) return binder
+  const writes: { position: SlotPosition; content: SlotContent }[] = [
+    { position: last.position, content: { owned: false } },
+  ]
+  for (let i = 1; i < run.length; i++) {
+    const from = run[i]
+    const to = run[i - 1]
+    if (from && to) writes.push({ position: to.position, content: contentOf(from.slot) })
+  }
+  return writeSlots(binder, writes, ctx)
+}
