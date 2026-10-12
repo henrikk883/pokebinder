@@ -232,6 +232,20 @@ test.describe('PNG export', () => {
     expect(green).toBeLessThan(120)
     expect(blue).toBeLessThan(70)
 
+    // where the middle pocket opens there is no mark on the image, so it can be cut out
+    const opening = await pocket(page, 2, 5).getByTestId('pocket-opening').boundingBox()
+    const sheet = await page.locator('[data-export="page-2"]').boundingBox()
+    if (!opening || !sheet) throw new Error('Opening or page is not visible')
+    const [markRed, markGreen, markBlue] = await pixelOf(
+      page,
+      download,
+      (opening.x + opening.width / 2 - sheet.x) / sheet.width,
+      (opening.y + opening.height / 2 - sheet.y) / sheet.height,
+    )
+    expect(markRed).toBeGreaterThan(200)
+    expect(markGreen).toBeLessThan(120)
+    expect(markBlue).toBeLessThan(70)
+
     // the caption stays, the delete button next to it does not: the bottom right is plain background
     const corner = await pixelOf(page, download, 0.97, 0.985)
     expect(Math.max(...corner)).toBeLessThan(60)

@@ -191,6 +191,8 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketP
         aria-hidden="true"
         data-testid="pocket-opening"
         data-side={opening}
+        // a picture is printed, cut out and put in: on its export no mark should lie on it
+        data-export-hide={overImage && !slot.cardRef ? '' : undefined}
         className={`pointer-events-none absolute inset-y-[12%] w-0.5 rounded-full bg-text/50 ${
           opening === 'left' ? 'left-0' : 'right-0'
         }`}
