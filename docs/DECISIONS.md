@@ -534,3 +534,4 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 
 ## 2026-10-12 – Fehlerliste
 - Von Henrik gewünscht, weil jetzt drei Freunde die App nutzen: `docs/BUGS.md` sammelt gemeldete Fehler mit Nummer, Stand und dem, was zum Nachstellen nötig ist. Erster Eintrag B-001 (Seiten mit vielen grauen Karten laden langsam), aufgenommen, noch nicht untersucht.
+- Nachtrag zu Punkt 15: Die CSV von Cardmarket ist Pflicht (Henrik). Gebaut wird weiterhin nicht; vorher braucht es eine echte Beispieldatei, weil ich die Spalten der Cardmarket-Exporte nicht verlässlich kenne.
