@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
+import { de } from '../../i18n/de'
 import { binderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
@@ -97,13 +98,15 @@ export function BinderEditor({ binder }: { binder: Binder }) {
   const zoom = useEditorStore((state) => state.zoom)
   const spreadIndex = useEditorStore((state) => state.spreadIndex)
   const notice = useEditorStore((state) => state.notice)
+  const collecting = useEditorStore((state) => state.mode === 'collection')
 
   const spreads = buildSpreads(binder.pages.length)
   const current = clampSpread(spreadIndex, spreads.length)
   const spread = spreads[current]
   useEditorKeys(spreads.length)
   const frame = useRef<HTMLDivElement>(null)
-  useAutoZoom(frame, zoom, `${binder.id}:${binder.layout}`)
+  // the line that explains "Sammlung" takes room for as long as the mode lasts
+  useAutoZoom(frame, zoom, `${binder.id}:${binder.layout}:${collecting}`)
 
   if (!spread) return null
 
@@ -111,6 +114,11 @@ export function BinderEditor({ binder }: { binder: Binder }) {
     <section className="flex h-full flex-col gap-4 p-5">
       <BinderToolbar binder={binder} spread={spread} />
       <PageControls spread={spread} spreadCount={spreads.length} />
+      {collecting && (
+        <p data-testid="collection-hint" className="text-sm text-muted">
+          {de.binder.collectionHint}
+        </p>
+      )}
       {notice && (
         <p role="alert" className="rounded-control border border-line bg-raised px-3 py-2 text-sm">
           {notice}

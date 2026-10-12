@@ -69,3 +69,45 @@ test('both outer columns fold away on any screen; the choice is remembered', asy
   await page.getByRole('button', { name: 'Suche einblenden' }).click()
   expect(await centreWidth()).toBeCloseTo(1440 - 600, 0)
 })
+
+test('"Sammlung" folds the search away and says what a click does; "Bearbeiten" brings it back', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  await page.getByRole('dialog').getByLabel('Name').fill('Abhaken')
+  await page.getByRole('button', { name: 'Anlegen' }).click()
+  const left = page.getByTestId('column-left')
+  const mode = page.getByRole('group', { name: 'Modus' })
+  const hint = page.getByTestId('collection-hint')
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  await expect(left).toBeVisible()
+  await expect(hint).toHaveCount(0)
+
+  await mode.getByRole('button', { name: 'Sammlung' }).click()
+  await expect(left).toBeHidden()
+  await expect(hint).toHaveText('Ein Klick auf eine Karte schaltet zwischen „vorhanden“ und „fehlt“ um.')
+
+  // the tab still brings the search back for the moment
+  await page.getByRole('button', { name: 'Suche einblenden' }).click()
+  await expect(left).toBeVisible()
+  await mode.getByRole('button', { name: 'Bearbeiten' }).click()
+  await mode.getByRole('button', { name: 'Sammlung' }).click()
+  await expect(left).toBeHidden()
+
+  // back to arranging: the search is there again, with what was typed
+  await mode.getByRole('button', { name: 'Bearbeiten' }).click()
+  await expect(left).toBeVisible()
+  await expect(hint).toHaveCount(0)
+  await expect(page.getByRole('searchbox', { name: 'Name, Set oder Nummer' })).toHaveValue('Glurak')
+
+  // folding for "Sammlung" is not what gets remembered as the collector's choice
+  await mode.getByRole('button', { name: 'Sammlung' }).click()
+  await page.reload()
+  await expect(page.getByTestId('spread-label')).toBeVisible()
+  await expect(left).toBeVisible()
+
+  // a search folded away by hand stays away in both modes
+  await page.getByRole('button', { name: 'Suche ausblenden' }).click()
+  await mode.getByRole('button', { name: 'Sammlung' }).click()
+  await mode.getByRole('button', { name: 'Bearbeiten' }).click()
+  await expect(left).toBeHidden()
+})

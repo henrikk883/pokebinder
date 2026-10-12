@@ -60,6 +60,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
    - Ergebnisse erscheinen nach spätestens 300 ms Tipp-Pause.
    - Name ohne Set durchsucht alle Sets (ab zwei Buchstaben); Name mit Set nur dieses Set; eine Nummer wie „188/125“ findet genau diese Karte; jedes Set ist als komplette Liste in Nummernreihenfolge durchblätterbar.
    - Karten aus „Pokémon TCG Pocket“ sind ausgeblendet.
+   - Ein Info-Knopf auf jeder Karte öffnet eine Vorschau: großes Bild, Seltenheit, verfügbare Sprachen und alle Varianten mit Preistrend – bevor die Karte in den Binder kommt.
 7. **Karten platzieren.** Karte per Drag & Drop in einen Pocket ziehen.
    - Die Karte landet in ihrer Grundvariante (eine Karte, die es nur als Holo gibt, als Holo).
    - Karten zwischen Pockets und Seiten verschieben; belegte Pockets tauschen beim Drop.
@@ -77,6 +78,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
 ### Sammlung
 
 11. **Fehlende Karten markieren.** Ein Klick auf eine Karte im Modus „Sammlung“, der Knopf auf der Karte oder der Umschalter „Vorhanden / Fehlt“ markiert sie; fehlende Karten erscheinen schwarz-weiß.
+    - Im Modus „Sammlung“ ist die Suche eingeklappt und eine Zeile über dem Binder erklärt, was ein Klick bewirkt.
     - Fortschritt pro Binder sichtbar, z. B. 142 / 191 Karten.
 12. **Preise.** Für die gewählte Karte zeigt die App den Cardmarket-Preistrend; „Wert berechnen“ summiert den Binder.
 13. **Holo-Effekt.** Folienkarten, die ich besitze, schimmern unter der Maus.

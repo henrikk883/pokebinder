@@ -174,3 +174,57 @@ test('a search that cannot be loaded says so', async ({ page, tcgdex }) => {
 
   await expect(page.getByRole('alert')).toContainText('Die Karten konnten nicht geladen werden.')
 })
+
+test('the info button on a card opens a closer look: picture, languages, finishes with prices, rarity', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  await page.getByRole('dialog').getByLabel('Name').fill('Vorschau')
+  await page.getByRole('button', { name: 'Anlegen' }).click()
+  // the first card of the set "151"
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const tile = page.locator('[data-testid="card-tile"][data-card-id="sv03.5-001"]')
+  await expect(tile).toBeVisible()
+  const info = tile.getByRole('button', { name: 'Infos zu Bisasam' })
+  // under the mouse the button shows on the card pointed at
+  await expect(info).toHaveCSS('opacity', '0')
+  await tile.hover()
+  await expect(info).toHaveCSS('opacity', '1')
+
+  await info.click()
+  const dialog = page.getByRole('dialog', { name: 'Bisasam' })
+  await expect(dialog).toContainText('151 · 001/165')
+  // the large scan, as in the binder
+  await expect(dialog.getByRole('img', { name: 'Bisasam' })).toHaveAttribute('src', /\/de\/sv\/sv03\.5\/001\/high\.webp$/)
+  await expect(dialog.getByTestId('card-info-languages')).toHaveText('Deutsch, Englisch')
+  await expect(dialog.getByTestId('card-info-rarity')).not.toHaveText('')
+  // every finish the card exists in, each with what it costs
+  const variants = dialog.getByTestId('card-info-variant')
+  await expect(variants.filter({ hasText: 'Normal' })).toHaveText(/Normal\d+,\d{2} €$/)
+  await expect(variants.filter({ hasText: 'Reverse' })).toHaveText(/Reverse.*\d+,\d{2} €$/)
+  // looking does not put the card into the binder
+  await expect(page.locator('[data-testid="pocket"]:not([data-card-id=""])')).toHaveCount(0)
+
+  // closed by key, by button and by a click beside it
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await tile.hover()
+  await info.click()
+  await dialog.getByRole('button', { name: 'Schließen' }).click()
+  await expect(dialog).toBeHidden()
+  await tile.hover()
+  await info.click()
+  await page.mouse.click(5, 5)
+  await expect(dialog).toBeHidden()
+
+  // the card is dragged as before
+  const from = await tile.locator('img').boundingBox()
+  const to = await page.getByTestId('pocket').first().boundingBox()
+  if (!from || !to) throw new Error('Card or pocket is not visible')
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(from.x + from.width / 2 + 12, from.y + from.height / 2 + 12, { steps: 3 })
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 12 })
+  await page.mouse.up()
+  await expect(page.getByTestId('pocket').first()).toHaveAttribute('data-card-id', 'sv03.5-001')
+})

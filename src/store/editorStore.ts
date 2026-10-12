@@ -18,6 +18,12 @@ export interface EditorState {
   /** `edit` arranges the binder; in `collection` a click on a card toggles owned / missing. */
   mode: EditorMode
   setMode: (mode: EditorMode) => void
+  /**
+   * In `collection` the search is folded away, since nothing is dragged then. This says
+   * the collector brought it back for the time being; changing the mode forgets it.
+   */
+  searchShownWhileCollecting: boolean
+  showSearchWhileCollecting: (shown: boolean) => void
   /** Counts up when binders were added from outside (a backup), so that lists read them again. */
   binderListVersion: number
   refreshBinderList: () => void
@@ -46,7 +52,9 @@ export const useEditorStore = create<EditorState>()((set) => ({
   mode: 'edit',
   notice: null,
 
-  setMode: (mode) => set({ mode, notice: null }),
+  setMode: (mode) => set({ mode, notice: null, searchShownWhileCollecting: false }),
+  searchShownWhileCollecting: false,
+  showSearchWhileCollecting: (searchShownWhileCollecting) => set({ searchShownWhileCollecting }),
   binderListVersion: 0,
   refreshBinderList: () => set((state) => ({ binderListVersion: state.binderListVersion + 1 })),
   searchLang: DEFAULT_LANG,
@@ -64,6 +72,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
       selection: null,
       notice: null,
       mode: 'edit',
+      searchShownWhileCollecting: false,
       searchLang: searchLang ?? state.searchLang,
     })),
 }))

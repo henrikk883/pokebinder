@@ -294,3 +294,9 @@ Die fertige App wird als statische Dateien bei Cloudflare bereitgestellt (`wrang
 - Schrift und fontkit werden nur geladen, wenn eine Liste japanische Zeichen enthält (Name, Set oder Binder-Name); deutsche und englische Listen bleiben klein und unverändert. Ohne Verbindung fällt die Liste auf das alte Verhalten zurück (Karten-ID statt Name).
 - Die Schrift wird vollständig eingebettet, ein solches PDF wird dadurch etwa 1,6 MB größer. Ausprobiert und verworfen: die verkleinerte Einbettung von pdf-lib (`subset: true`) lässt bei dieser Schrift die meisten Zeichen weg, und WOFF/WOFF2 direkt einzubetten ergibt leere oder sehr langsam erzeugte Dateien.
 - Überschriften mit japanischen Zeichen stehen in normaler statt fetter Schrift, weil nur ein Schnitt beiliegt.
+
+## 2026-10-12 – Kartenvorschau in der Suche
+Jede Karte in der Suche hat einen Info-Knopf (unter der Maus beim Überfahren, auf Touch-Geräten immer sichtbar). Er öffnet ein Fenster mit dem großen Kartenbild, Set und Nummer, Seltenheit, den Sprachen, in denen es die Karte gibt, und allen Varianten mit ihrem Cardmarket-Preistrend. Klicken und Ziehen der Karte bleiben wie bisher; einen Knopf „In den Binder legen“ gibt es bewusst nicht. So von Henrik gewünscht.
+
+## 2026-10-12 – „Sammlung“ klappt die Suche ein und erklärt sich
+Im Modus „Sammlung“ wird nichts hineingezogen, deshalb ist die Suche dort eingeklappt; über dem Binder steht, was ein Klick auf eine Karte bewirkt. Die Lasche holt die Suche für den Moment zurück. Zurück in „Bearbeiten“ ist sie wieder so, wie man sie zuletzt selbst eingestellt hat – das automatische Einklappen wird nicht als eigene Wahl gespeichert. Anlass: Henrik sah zwischen den beiden Modi keinen Unterschied.

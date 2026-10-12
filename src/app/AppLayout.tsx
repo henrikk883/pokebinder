@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { de } from '../i18n/de'
+import { useBinderStore } from '../store/binderStore'
+import { useEditorStore } from '../store/editorStore'
 
 interface AppLayoutProps {
   header: ReactNode
@@ -68,7 +70,7 @@ function ColumnTab({ side, open, controls, label, onToggle }: ColumnTabProps) {
       aria-expanded={open}
       aria-controls={controls}
       onClick={onToggle}
-      className={`absolute top-1/2 z-40 flex h-20 w-6 -translate-y-1/2 items-center justify-center border border-line bg-raised text-muted hover:text-text touch:w-8 ${place}`}
+      className={`absolute top-1/2 z-[5] flex h-20 w-6 -translate-y-1/2 items-center justify-center border border-line bg-raised text-muted hover:text-text touch:w-8 ${place}`}
     >
       <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
         <path
@@ -99,10 +101,21 @@ const WIDE_COLUMNS = {
  * wide enough; on a narrow one (a tablet upright, a small window) it slides over the binder.
  */
 export function AppLayout({ header, left, center, right, footer }: AppLayoutProps) {
-  const [open, setOpen] = useState(readOpenColumns)
+  const [stored, setOpen] = useState(readOpenColumns)
+  // While cards are ticked off ("Sammlung") nothing is dragged in, so the search makes
+  // room for the binder. The tab still brings it back; that is not remembered.
+  const collecting = useEditorStore((state) => state.mode === 'collection')
+  const binderOpen = useBinderStore((state) => state.binder !== null)
+  const searchShownWhileCollecting = useEditorStore((state) => state.searchShownWhileCollecting)
+  const foldedForCollecting = collecting && binderOpen
+  const open: OpenColumns = foldedForCollecting ? { ...stored, left: searchShownWhileCollecting } : stored
 
   function toggle(side: keyof OpenColumns) {
-    const next = { ...open, [side]: !open[side] }
+    if (side === 'left' && foldedForCollecting) {
+      useEditorStore.getState().showSearchWhileCollecting(!searchShownWhileCollecting)
+      return
+    }
+    const next = { ...stored, [side]: !stored[side] }
     setOpen(next)
     storeOpenColumns(next)
   }
@@ -130,7 +143,7 @@ export function AppLayout({ header, left, center, right, footer }: AppLayoutProp
         <aside
           id="column-right"
           data-testid="column-right"
-          className={`min-h-0 overflow-y-auto border-l border-line bg-panel max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-30 max-xl:w-sidebar max-xl:shadow-2xl ${
+          className={`min-h-0 overflow-y-auto border-l border-line bg-panel max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-10 max-xl:w-sidebar max-xl:shadow-2xl ${
             open.right ? '' : 'hidden'
           }`}
         >

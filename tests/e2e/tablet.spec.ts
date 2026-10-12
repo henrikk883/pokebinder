@@ -230,3 +230,22 @@ test('the zoom adapts so that the whole binder is in view, until one is picked b
   await page.setViewportSize({ width: 1180, height: 820 })
   await expect(value).toHaveText(`${fitted} %`)
 })
+
+test('the info button of a card is there without a mouse and opens by a tap', async ({ page }) => {
+  await createBinder(page, 'Info')
+  await searchFor(page, 'Glurak')
+  const tile = page.getByTestId('card-tile').first()
+  const info = tile.getByRole('button', { name: /^Infos zu / })
+  await expect(info).toHaveCSS('opacity', '1')
+  expect((await info.boundingBox())?.width).toBeGreaterThanOrEqual(32)
+
+  await info.tap()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByTestId('card-info-languages')).toBeVisible()
+  // the whole window is on the screen
+  const box = await dialog.boundingBox()
+  expect(box?.y).toBeGreaterThanOrEqual(0)
+  expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(820)
+  await dialog.getByRole('button', { name: 'Schließen' }).tap()
+  await expect(dialog).toBeHidden()
+})

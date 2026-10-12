@@ -306,6 +306,12 @@ export const de = {
     markOwnedLabel: 'Als vorhanden markieren',
     unknownCard: 'Unbekannte Karte',
   },
+  cardInfo: {
+    open: (name: string) => `Infos zu ${name}`,
+    languages: 'Erhältlich auf',
+    variants: 'Varianten',
+    close: 'Schließen',
+  },
   layout: {
     showSearch: 'Suche einblenden',
     hideSearch: 'Suche ausblenden',
