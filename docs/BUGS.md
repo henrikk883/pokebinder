@@ -26,20 +26,26 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 
 | Nr. | Gemeldet | Von | Fehler | Stand |
 |---|---|---|---|---|
-| B-001 | 12.10.2026 | Henrik | Binder-Seiten mit vielen fehlenden (grauen) Karten laden langsam | offen |
+| B-001 | 12.10.2026 | Henrik | Binder-Seiten mit vielen fehlenden (grauen) Karten laden langsam | offen – am PC in Chrome nachgemessen, dort nicht der Graufilter; Gerät von Henrik erfragt |
 
 ### B-001 – Seiten mit vielen grauen Karten laden langsam
 
 - **Beobachtung (Henrik):** Das lange Laden von Binder-Seiten hängt damit zusammen, dass das Graustellen der fehlenden Karten lange dauert, wenn es viele sind.
 - **Wo:** noch nicht eingegrenzt (Gerät, Browser, welcher Binder).
 - **Vermutung, nicht geprüft:** Fehlende Karten werden im Browser per Filter grau gezeichnet, und zwar auf den großen Kartenbildern. Bei einem frisch angelegten Master Set sind alle 18 Karten einer Doppelseite grau; dazu kommen die vorab geladenen Nachbarseiten. Ob wirklich der Filter bremst oder das Laden der großen Bilder, muss eine Messung zeigen.
-- **Nächster Schritt:** nachmessen (Seite mit 18 grauen gegen 18 farbige Karten, am PC und am Handy), dann entscheiden.
+- **Messung am 12.10.2026 (Chrome, PC, echte Bilder von TCGdex, Master Set „151“, je 12-mal blättern, Bilder schon geladen):**
+  - Bis alle 18 Karten einer Doppelseite geladen und dekodiert sind: grau im Schnitt 96 ms, dieselben Karten ohne Filter 97 ms. Auch mit vier- und sechsfach gedrosseltem Prozessor kein Unterschied (rund 250 bzw. 400 ms in beiden Fällen).
+  - Zeichnen abseits des Hauptfadens, aus einer Browser-Aufzeichnung: grau 53 ms, farbig 40 ms – für alle zwölf Blättervorgänge zusammen. Der Filter kostet also messbar, aber rund 1 ms je Blättern.
+  - **Ergebnis:** In Chrome am PC ist der Graufilter nicht die Ursache. Nicht gemessen: Safari auf iPhone und iPad, wo solche Filter erfahrungsgemäß teurer sind, und das erstmalige Laden der Bilder über das Netz.
+- **Wahrscheinlicher:** Graue Seiten sind die Seiten großer Master Sets, die man zum ersten Mal durchblättert; dort lädt jede Karte ein großes Bild (60–125 KB), und TCGdex braucht für ein selten abgerufenes Bild bis zu 0,7 s.
+- **Vorschlag:** Jede Karte zuerst mit dem kleinen Bild zeigen (16–30 KB, oft schon von der Suche her da) und das große nachladen. Das hilft, wo immer die Ursache liegt.
+- **Nächster Schritt:** von Henrik wissen, auf welchem Gerät und in welchem Browser es auffällt, und ob beim ersten Durchblättern oder auch beim zweiten.
 
 ## Behobene Fehler
 
 | Nr. | Gemeldet | Von | Fehler | Behoben mit | Stand |
 |---|---|---|---|---|---|
-| B-002 | 12.10.2026 | Henrik | Die Suche fand ein Pokémon nur unter dem Namen in der eingestellten Kartensprache („psyduck“ fand bei Deutsch nichts) | siehe unten | behoben, Bestätigung offen |
+| B-002 | 12.10.2026 | Henrik | Die Suche fand ein Pokémon nur unter dem Namen in der eingestellten Kartensprache („psyduck“ fand bei Deutsch nichts) | `fba67f8`, Einzelheiten unten | bestätigt |
 | – | 12.10.2026 | Henrik | Kartenbilder blieben in Suche, Binder und Info-Anzeige leer oder luden erst nach einem Fensterwechsel | `554a043` (TCGdex schickt eine Kopfzeile teils doppelt; Bilder werden jetzt schlicht angezeigt) | bestätigt |
 | – | 12.10.2026 | Henrik | Menüs der Werkzeugleiste schlossen nicht bei einem Klick daneben | `6188e97` | bestätigt |
 
