@@ -516,3 +516,4 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Alles, was vom Layout abhängt (Öffnungsseiten, Bilder über mehrere Pockets, Miniaturen, Bilddruck, Layoutwechsel), rechnet schon mit Spalten und Zeilen; neu sind nur die beiden Einträge.
 - Die Doppelseite bleibt gleich breit: Bei 5 × 4 sind die Pockets bei gleichem Zoom kleiner, wie schon bei 4 × 4. Wer sie größer will, zoomt.
 - Eine ältere Fassung der App auf einem anderen Gerät kennt die neuen Layouts nicht und lässt solche Binder beim Abgleich liegen, bis sie aktualisiert ist.
+- Nachtrag: Punkt 7 (Seiten-Vorlagen) ist gestrichen. Henrik sieht den Anwendungsfall nicht; Seiten sind schnell neu gebaut. Etappe C ist damit abgeschlossen.
