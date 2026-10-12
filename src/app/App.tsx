@@ -5,12 +5,13 @@ import { SelectionPanel } from '../features/binder/SelectionPanel'
 import { LandingPage } from '../features/landing/LandingPage'
 import { DeckEditor } from '../features/decks/DeckEditor'
 import { CardBrowser } from '../features/search/CardBrowser'
+import { SharedBinderPage } from '../features/share/SharedBinderPage'
 import { startSync } from '../features/sync/syncStore'
 import { SearchPanel } from '../features/search/SearchPanel'
 import { assetStore } from '../store/assetStore'
 import { restoreLastBinder } from '../store/binderStore'
 import { useDeckStore } from '../store/deckStore'
-import { useEditorStore } from '../store/editorStore'
+import { sharedToken, useEditorStore } from '../store/editorStore'
 import { AppFooter } from './AppFooter'
 import { AppHeader } from './AppHeader'
 import { AppLayout } from './AppLayout'
@@ -21,7 +22,9 @@ export function App() {
   const deck = useDeckStore((state) => state.deck)
   // an open deck takes the place of the shelf it was taken from
   const page =
-    view === 'home' ? (
+    view === 'shared' && sharedToken !== undefined ? (
+      <SharedBinderPage token={sharedToken} />
+    ) : view === 'home' ? (
       <LandingPage />
     ) : view === 'cards' ? (
       <CardBrowser />

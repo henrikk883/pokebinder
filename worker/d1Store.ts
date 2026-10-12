@@ -1,4 +1,11 @@
-import { mayWrite, type AssetRecord, type BinderRecord, type SyncStore, type WriteResult } from './store'
+import {
+  mayWrite,
+  type AssetRecord,
+  type BinderRecord,
+  type ShareRecord,
+  type SyncStore,
+  type WriteResult,
+} from './store'
 import type { D1Database, R2Bucket } from './types'
 
 const SCHEMA = [
@@ -17,6 +24,13 @@ const SCHEMA = [
      deleted INTEGER NOT NULL DEFAULT 0,
      data TEXT,
      PRIMARY KEY (user, id)
+   )`,
+  `CREATE TABLE IF NOT EXISTS shares (
+     token TEXT PRIMARY KEY,
+     user TEXT NOT NULL,
+     binder_id TEXT NOT NULL,
+     created_at TEXT NOT NULL,
+     UNIQUE (user, binder_id)
    )`,
   `CREATE TABLE IF NOT EXISTS watchlists (
      user TEXT PRIMARY KEY,
@@ -47,6 +61,14 @@ interface AssetRow {
   height: number
   created_at: string | null
 }
+
+interface ShareRow {
+  token: string
+  binder_id: string
+  created_at: string
+}
+
+const toShare = (row: ShareRow): ShareRecord => ({ token: row.token, binderId: row.binder_id, createdAt: row.created_at })
 
 const toRecord = (row: BinderRow): BinderRecord => ({ id: row.id, updatedAt: row.updated_at, deleted: row.deleted === 1 })
 
@@ -160,6 +182,48 @@ export function createD1Store(db: D1Database, images: R2Bucket): SyncStore {
         .bind(user, updatedAt, data)
         .run()
       return { ok: true }
+    },
+
+    async listShares(user) {
+      await prepared()
+      const { results } = await db
+        .prepare('SELECT token, binder_id, created_at FROM shares WHERE user = ? ORDER BY created_at')
+        .bind(user)
+        .all<ShareRow>()
+      return results.map(toShare)
+    },
+
+    async createShare(user, binderId, token, createdAt) {
+      await prepared()
+      await db
+        .prepare(
+          `INSERT INTO shares (token, user, binder_id, created_at) VALUES (?, ?, ?, ?)
+           ON CONFLICT (user, binder_id) DO NOTHING`,
+        )
+        .bind(token, user, binderId, createdAt)
+        .run()
+      const row = await db
+        .prepare('SELECT token, binder_id, created_at FROM shares WHERE user = ? AND binder_id = ?')
+        .bind(user, binderId)
+        .first<ShareRow>()
+      return row ? toShare(row) : { token, binderId, createdAt }
+    },
+
+    async deleteShare(user, token) {
+      await prepared()
+      const row = await db.prepare('SELECT token FROM shares WHERE user = ? AND token = ?').bind(user, token).first<{ token: string }>()
+      if (!row) return false
+      await db.prepare('DELETE FROM shares WHERE user = ? AND token = ?').bind(user, token).run()
+      return true
+    },
+
+    async findShare(token) {
+      await prepared()
+      const row = await db
+        .prepare('SELECT user, binder_id FROM shares WHERE token = ?')
+        .bind(token)
+        .first<{ user: string; binder_id: string }>()
+      return row ? { user: row.user, binderId: row.binder_id } : undefined
     },
 
     async listAssets(user) {

@@ -46,6 +46,11 @@ export interface SyncApi {
   deleteDeck(id: string, deletedAt: string, base: string | null): Promise<boolean>
   getWatchlists(): Promise<{ updatedAt: string | null; lists: unknown }>
   putWatchlists(updatedAt: string, lists: unknown, base: string | null): Promise<boolean>
+  /** The links this collector made, by binder. */
+  listShares(): Promise<{ token: string; binderId: string }[]>
+  /** Makes (or gets) the link for a binder; `undefined` if the server does not have the binder. */
+  createShare(binderId: string): Promise<string | undefined>
+  deleteShare(token: string): Promise<void>
   listAssets(): Promise<RemoteAsset[]>
   /** The picture of an image on record; `undefined` if the server has none. */
   getAsset(record: RemoteAsset): Promise<Asset | undefined>
@@ -150,6 +155,35 @@ export function createSyncApi(send: Send = sendFromBrowser): SyncApi {
     },
 
     putWatchlists: (updatedAt, lists, base) => write('/api/watchlists', 'PUT', { updatedAt, lists, base }),
+
+    async listShares() {
+      const { shares } = await read('/api/shares')
+      if (!Array.isArray(shares)) throw new Error('sync: no list of links')
+      return (shares as unknown[]).flatMap((entry) =>
+        isRecord(entry) && typeof entry.token === 'string' && typeof entry.binderId === 'string'
+          ? [{ token: entry.token, binderId: entry.binderId }]
+          : [],
+      )
+    },
+
+    async createShare(binderId) {
+      const response = await call('/api/shares', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ binderId }),
+      })
+      if (response.status === 404) return undefined
+      const body: unknown = response.ok && isJson(response) ? await response.json() : undefined
+      const share = isRecord(body) ? body.share : undefined
+      if (!isRecord(share) || typeof share.token !== 'string') throw new Error(`sync: link answered ${response.status}`)
+      return share.token
+    },
+
+    async deleteShare(token) {
+      const response = await call(`/api/shares/${encodeURIComponent(token)}`, { method: 'DELETE' })
+      // a link that is gone already is as good as withdrawn
+      if (!response.ok && response.status !== 404) throw new Error(`sync: link answered ${response.status}`)
+    },
 
     async listAssets() {
       const { assets } = await read('/api/assets')

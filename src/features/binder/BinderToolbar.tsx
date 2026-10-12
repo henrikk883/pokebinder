@@ -11,6 +11,7 @@ import { PngMenu } from '../export/PngMenu'
 import { ShoppingButton } from '../export/ShoppingButton'
 import { ShoppingDialog } from '../export/ShoppingDialog'
 import { MasterSetSettingsDialog } from '../masterset/MasterSetSettingsDialog'
+import { ShareDialog } from '../share/ShareDialog'
 import { cardLangs, countCards } from './binderModel'
 import { createCardComparator, createDexComparator, type CardComparator } from './sorting'
 import { applyVariantFixes, loadVariantFixes } from './variantFix'
@@ -136,6 +137,7 @@ function MoreMenu({ binder }: { binder: Binder }) {
   const [checking, setChecking] = useState(false)
   // the list is of the binder as it was when asked for; later changes do not move it
   const [trading, setTrading] = useState<Binder | null>(null)
+  const [sharing, setSharing] = useState(false)
 
   /** Looks for cards in a finish they do not exist in and, after a question, puts them right. */
   async function handleVariants() {
@@ -230,6 +232,17 @@ function MoreMenu({ binder }: { binder: Binder }) {
             role="menuitem"
             onClick={() => {
               setOpen(false)
+              setSharing(true)
+            }}
+            className={menuItemClass}
+          >
+            {de.share.menu}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
               setTrading(binder)
             }}
             className={menuItemClass}
@@ -254,6 +267,7 @@ function MoreMenu({ binder }: { binder: Binder }) {
           ))}
         </div>
       )}
+      {sharing && <ShareDialog binder={binder} onClose={() => setSharing(false)} />}
       {trading && (
         <ShoppingDialog
           title={de.trade.title(trading.name)}

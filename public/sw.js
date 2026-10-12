@@ -126,7 +126,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
   // Only the app's own files; signing in and the sync go straight to the server.
-  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/cdn-cgi/')) {
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/shared/') || url.pathname.startsWith('/cdn-cgi/')) {
     return
   }
   if (request.mode === 'navigate') event.respondWith(page(event))

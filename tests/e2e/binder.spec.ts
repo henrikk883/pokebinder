@@ -591,7 +591,7 @@ test('the toolbar fits in one row; rarely used actions sit under "Mehr"', async 
   expect(Math.abs((await top(heading)) - (await top(addPage)))).toBeLessThan(12)
 
   await page.getByRole('button', { name: 'Mehr', exact: true }).click()
-  await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen', 'Varianten prüfen', 'Tauschliste (doppelte Karten)'])
+  await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen', 'Varianten prüfen', 'Teilen …', 'Tauschliste (doppelte Karten)'])
   await expect(page.getByRole('menuitemradio')).toHaveText(['2 × 2', '✓3 × 3', '3 × 4', '4 × 4', '5 × 4'])
 })
 

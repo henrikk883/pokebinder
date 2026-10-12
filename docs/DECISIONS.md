@@ -517,3 +517,12 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Die Doppelseite bleibt gleich breit: Bei 5 × 4 sind die Pockets bei gleichem Zoom kleiner, wie schon bei 4 × 4. Wer sie größer will, zoomt.
 - Eine ältere Fassung der App auf einem anderen Gerät kennt die neuen Layouts nicht und lässt solche Binder beim Abgleich liegen, bis sie aktualisiert ist.
 - Nachtrag: Punkt 7 (Seiten-Vorlagen) ist gestrichen. Henrik sieht den Anwendungsfall nicht; Seiten sind schnell neu gebaut. Etappe C ist damit abgeschlossen.
+
+## 2026-10-12 – Binder per Link teilen
+- Regeländerung, von Henrik entschieden: Wer den Link hat, darf den Binder ansehen, ohne Anmeldung („theoretisch kann ja auch jeder auf die Seite, der die URL hat“). CLAUDE.md ist ergänzt. Bisher gehörte alles auf dem Server genau einem Sammler.
+- Der Link ist `…/?share=<Token>`. Das Token macht der Server: 18 Zufallsbytes, nicht zu erraten. Je Binder gibt es einen Link; wer ihn erneut anfordert, bekommt denselben. „Link ungültig machen“ löscht ihn, ein neuer Link ist ein anderer.
+- Was offen ist, steht in `worker/shared.ts` und sonst nirgends: `/shared/<Token>` gibt genau den einen Binder heraus, `/shared/<Token>/assets/<Bild>` nur Bilder, die dieser Binder zeigt. Kein Name, keine E-Mail-Adresse, keine anderen Binder, Decks, Merklisten oder Bilder; nur Lesen. Zurückgezogene Links und gelöschte Binder antworten wie Links, die es nie gab. Die Cloudflare-Access-Anwendung schützt weiterhin `/api`; `/shared` liegt bewusst daneben.
+- Geteilt wird der Binder, wie er auf dem Server liegt, darum braucht Teilen die Anmeldung und gleicht vorher ab. Der Link zeigt immer den aktuellen Stand.
+- Ansehen: eine eigene Ansicht (`SharedBinderPage`) statt des Editors mit abgeschalteten Knöpfen – so kann nichts versehentlich änderbar sein, und der geteilte Binder landet nicht in der Datenbank des Besuchers. Seine Bilder werden nur für die Dauer der Ansicht gehalten.
+- Beim Bauen gefunden und behoben: Beim Start setzte die App die Ansicht aufs Regal zurück; ein geteilter Link hätte so das eigene Regal gezeigt.
+- Decks lassen sich noch nicht teilen.

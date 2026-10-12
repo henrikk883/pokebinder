@@ -1,3 +1,4 @@
+import { newShareToken } from './shared'
 import type { AssetRecord, SyncStore } from './store'
 
 /**
@@ -11,6 +12,9 @@ import type { AssetRecord, SyncStore } from './store'
  *   PUT    /api/binders/:id           { binder, base }  store a version
  *   DELETE /api/binders/:id           { deletedAt, base }  record its deletion
  *   …      /api/decks, /api/decks/:id   the same for decks, with { deck, base }
+ *   GET    /api/shares                the links this collector made
+ *   POST   /api/shares                { binderId }  a link under which anybody may look at that binder
+ *   DELETE /api/shares/:token         withdraw a link
  *   GET    /api/watchlists            the lists, or none
  *   PUT    /api/watchlists            { updatedAt, lists, base }
  *   GET    /api/assets                every image on record (without the pictures)
@@ -105,6 +109,23 @@ export async function handleApi(request: Request, user: string, store: SyncStore
       return result.ok ? json({ updatedAt: body.deletedAt }) : json({ current: result.current }, 409)
     }
     return refuse(405, 'method')
+  }
+
+  if (resource === 'shares') {
+    if (id === undefined) {
+      if (method === 'GET') return json({ shares: await store.listShares(user) })
+      if (method !== 'POST') return refuse(405, 'method')
+      const body = await readJson(request)
+      if (body instanceof Response) return body
+      const { binderId } = body
+      if (typeof binderId !== 'string' || !ID.test(binderId)) return refuse(400, 'body')
+      // only a binder the server has can be shown to others
+      if ((await store.getBinder(user, binderId)) === undefined) return refuse(404, 'not found')
+      return json({ share: await store.createShare(user, binderId, newShareToken(), new Date().toISOString()) })
+    }
+    if (!ID.test(id)) return refuse(400, 'id')
+    if (method !== 'DELETE') return refuse(405, 'method')
+    return (await store.deleteShare(user, id)) ? json({ token: id }) : refuse(404, 'not found')
   }
 
   if (resource === 'watchlists' && id === undefined) {

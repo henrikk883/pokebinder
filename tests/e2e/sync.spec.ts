@@ -12,9 +12,11 @@ interface FakeServer {
   decks: Map<string, { updatedAt: string; deleted: boolean; data: unknown }>
   lists: { updatedAt: string; lists: unknown } | null
   images: Map<string, { record: Record<string, unknown>; body: Buffer }>
+  /** Share links: token → binder id. */
+  shares: Map<string, string>
 }
 
-const newServer = (): FakeServer => ({ email: 'ash@example.com', binders: new Map(), decks: new Map(), lists: null, images: new Map() })
+const newServer = (): FakeServer => ({ email: 'ash@example.com', binders: new Map(), decks: new Map(), lists: null, images: new Map(), shares: new Map() })
 
 /** A device with its own connection, which can be cut. */
 interface Connection {
@@ -23,6 +25,14 @@ interface Connection {
 
 async function connect(page: Page, server: FakeServer): Promise<Connection> {
   const connection: Connection = { online: true }
+  // what a share link shows needs no sign-in
+  await page.route('**/shared/**', (route: Route) => {
+    const [, , token] = new URL(route.request().url()).pathname.split('/')
+    const binder = server.binders.get(server.shares.get(token ?? '') ?? '')
+    return binder && !binder.deleted
+      ? route.fulfill({ json: { binder: binder.data } })
+      : route.fulfill({ status: 404, json: { error: 'not found' } })
+  })
   await page.route('**/api/**', (route: Route) => {
     if (!connection.online) return route.abort('internetdisconnected')
     const request = route.request()
@@ -58,6 +68,22 @@ async function connect(page: Page, server: FakeServer): Promise<Connection> {
     if (server.email === null) return route.fulfill({ status: 401, json: { error: 'not signed in' } })
 
     if (resource === 'me') return route.fulfill({ json: { email: server.email } })
+    if (resource === 'shares') {
+      if (method === 'GET') {
+        return route.fulfill({ json: { shares: [...server.shares].map(([token, binderId]) => ({ token, binderId })) } })
+      }
+      if (method === 'DELETE') {
+        return server.shares.delete(id ?? '')
+          ? route.fulfill({ json: { token: id } })
+          : route.fulfill({ status: 404, json: { error: 'not found' } })
+      }
+      const binderId = (request.postDataJSON() as { binderId?: string }).binderId ?? ''
+      if (!server.binders.has(binderId)) return route.fulfill({ status: 404, json: { error: 'not found' } })
+      const known = [...server.shares].find(([, shared]) => shared === binderId)?.[0]
+      const token = known ?? `link${String(server.shares.size + 1).padStart(20, '0')}`
+      server.shares.set(token, binderId)
+      return route.fulfill({ json: { share: { token, binderId } } })
+    }
     if ((resource === 'binders' || resource === 'decks') && id === undefined) {
       const entries = [...server[resource]].map(([key, entry]) => ({
         id: key,
@@ -304,4 +330,82 @@ test('a deck built on one device stands on the shelf of the other, with its card
   await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
   await expect(page.getByTestId('deck-tile')).toHaveCount(0)
   await phone.close()
+})
+
+test('a binder is shared by a link that anybody can open to look at it, until the link is withdrawn', async ({
+  page,
+  browser,
+}) => {
+  const server = newServer()
+  await connect(page, server)
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  const wizard = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await wizard.getByText('Master Set', { exact: true }).click()
+  await wizard.getByRole('button', { name: 'Set', exact: true }).click()
+  await wizard.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  await expect(wizard.getByTestId('master-set-summary')).toBeVisible()
+  await wizard.getByRole('button', { name: 'Anlegen' }).click()
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  const first = page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket').first()
+  await first.click()
+  await expect(first).toHaveAttribute('data-owned', 'true')
+
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Teilen …' }).click()
+  const dialog = page.getByRole('dialog', { name: '„151“ teilen' })
+  await expect(dialog).toContainText('Für diesen Binder gibt es noch keinen Link.')
+  await dialog.getByRole('button', { name: 'Link erzeugen' }).click()
+  const link = await dialog.getByRole('textbox', { name: 'Link zum Binder' }).inputValue()
+  expect(link).toMatch(/^http:\/\/localhost:\d+\/\?share=link0+1$/)
+  // the binder went to the server first: that is what the link shows
+  expect(server.binders.size).toBe(1)
+
+  // somebody who is not signed in, on another device
+  const context = await browser.newContext({ serviceWorkers: 'block' })
+  const visitor = await context.newPage()
+  await visitor.route(/^https:/, (route) => route.abort())
+  // the same server, but nobody is signed in on this device
+  await connect(visitor, { ...server, email: null })
+  await visitor.goto(link)
+
+  await expect(visitor.getByRole('heading', { name: '151', exact: true })).toBeVisible()
+  await expect(visitor.getByText('Geteilter Binder · nur zum Ansehen')).toBeVisible()
+  await expect(visitor.getByTestId('shared-progress')).toHaveText('1 von 207 Karten vorhanden')
+  const pockets = visitor.getByTestId('shared-pocket')
+  await expect(pockets).toHaveCount(9)
+  await expect(pockets.first()).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await expect(pockets.first()).toHaveAttribute('data-owned', 'true')
+  await expect(pockets.nth(1)).toHaveAttribute('data-owned', 'false')
+  // leafing through, but nothing to change with
+  await visitor.getByRole('button', { name: 'Weiterblättern' }).click()
+  await expect(visitor.getByTestId('shared-spread-label')).toHaveText('Seiten 2 – 3')
+  await expect(visitor.getByRole('button', { name: 'Seite hinzufügen' })).toHaveCount(0)
+  await expect(visitor.getByRole('group', { name: 'Modus' })).toHaveCount(0)
+  // and nothing of it lands among the visitor's own binders
+  await visitor.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
+  await expect(visitor.getByTestId('binder-tile')).toHaveCount(0)
+
+  // the same link again later shows the same; withdrawn, it shows nothing
+  await page.getByRole('dialog', { name: '„151“ teilen' }).getByRole('button', { name: 'Link ungültig machen' }).click()
+  await expect(dialog).toContainText('Für diesen Binder gibt es noch keinen Link.')
+  await visitor.goto(link)
+  await expect(visitor.getByRole('alert')).toContainText('Diesen Link gibt es nicht (mehr).')
+  await context.close()
+})
+
+test('sharing asks to sign in first', async ({ page }) => {
+  const server = newServer()
+  server.email = null
+  await connect(page, server)
+  await page.goto('/')
+  await createBinder(page, 'Privat')
+
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Teilen …' }).click()
+  const dialog = page.getByRole('dialog', { name: '„Privat“ teilen' })
+
+  await expect(dialog).toContainText('Zum Teilen musst du angemeldet sein')
+  await expect(dialog.getByRole('button', { name: 'Link erzeugen' })).toHaveCount(0)
+  await expect(dialog.getByRole('button', { name: 'Anmelden' })).toBeVisible()
 })

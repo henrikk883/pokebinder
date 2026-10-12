@@ -25,6 +25,13 @@ export interface AssetRecord {
  */
 export type WriteResult = { ok: true } | { ok: false; current: BinderRecord | null }
 
+/** A link under which one binder can be looked at by anybody who has it. */
+export interface ShareRecord {
+  token: string
+  binderId: string
+  createdAt: string
+}
+
 export interface SyncStore {
   listBinders(user: string): Promise<BinderRecord[]>
   /** The stored binder as the JSON text it came in; `undefined` if unknown or deleted. */
@@ -52,6 +59,14 @@ export interface SyncStore {
     data: string,
     base: string | null,
   ): Promise<{ ok: true } | { ok: false; currentUpdatedAt: string | null }>
+
+  listShares(user: string): Promise<ShareRecord[]>
+  /** Makes a link for a binder; a binder that has one keeps it, and that one is returned. */
+  createShare(user: string, binderId: string, token: string, createdAt: string): Promise<ShareRecord>
+  /** Withdraws a link of this collector; `false` if there was none. */
+  deleteShare(user: string, token: string): Promise<boolean>
+  /** Whose binder a link shows; `undefined` for a link that does not exist (any more). */
+  findShare(token: string): Promise<{ user: string; binderId: string } | undefined>
 
   listAssets(user: string): Promise<AssetRecord[]>
   getAsset(user: string, id: string): Promise<{ record: AssetRecord; bytes: ArrayBuffer } | undefined>

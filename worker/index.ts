@@ -1,6 +1,7 @@
 import { tokenOf, verifiedEmail } from './access'
 import { handleApi } from './api'
 import { createD1Store } from './d1Store'
+import { handleShared } from './shared'
 import type { SyncStore } from './store'
 import type { Env } from './types'
 
@@ -19,6 +20,18 @@ function returnPath(url: URL): string {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
+    // What a share link shows is open to anybody who has the link; it is all they get.
+    if (url.pathname.startsWith('/shared/')) {
+      store ??= createD1Store(env.DB, env.IMAGES)
+      try {
+        return await handleShared(request, store)
+      } catch {
+        return new Response(JSON.stringify({ error: 'failed' }), {
+          status: 500,
+          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+        })
+      }
+    }
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
 
     const email = await verifiedEmail(tokenOf(request), {

@@ -234,6 +234,24 @@ export function startSync(): () => void {
   }
 }
 
+/** The link under which a binder is shared, if there is one. Needs the collector to be signed in. */
+export async function findShare(binderId: string): Promise<string | undefined> {
+  return (await api.listShares()).find((share) => share.binderId === binderId)?.token
+}
+
+/**
+ * Makes the link for a binder. What is shared is the binder as the server has it, so the
+ * device syncs first; `undefined` if the server still does not have the binder after that.
+ */
+export async function createShare(binderId: string): Promise<string | undefined> {
+  await run()
+  return api.createShare(binderId)
+}
+
+export function withdrawShare(token: string): Promise<void> {
+  return api.deleteShare(token)
+}
+
 /** Sends the browser to sign in; it comes back to where it was. */
 export function signIn(): void {
   const { pathname, search } = window.location

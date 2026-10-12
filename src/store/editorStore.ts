@@ -1,10 +1,15 @@
+import { shareTokenOf } from '../features/share/sharedBinder'
 import { create } from 'zustand'
 import { clampZoom, DEFAULT_ZOOM } from '../features/binder/spreads'
 import { DEFAULT_LANG, type CardLang, type SlotPosition } from '../types/binder'
 
 export type EditorMode = 'edit' | 'collection'
 /** What fills the app: the binders (shelf or open binder), or the page to browse cards. */
-export type AppView = 'home' | 'binders' | 'cards'
+export type AppView = 'home' | 'binders' | 'cards' | 'shared'
+
+/** The share link the app was opened with, if any; see `SharedBinderPage`. */
+export const sharedToken: string | undefined =
+  typeof window === 'undefined' ? undefined : shareTokenOf(window.location.search)
 
 const VISITED_KEY = 'pokebinder:visited'
 
@@ -13,6 +18,8 @@ const VISITED_KEY = 'pokebinder:visited'
  * does that in the middle of a binder wants to stay in it.
  */
 function startView(): AppView {
+  // opened by a share link: that binder is what the visit is for
+  if (sharedToken !== undefined) return 'shared'
   try {
     if (sessionStorage.getItem(VISITED_KEY)) return 'binders'
     sessionStorage.setItem(VISITED_KEY, '1')
@@ -158,8 +165,9 @@ export const useEditorStore = create<EditorState>()((set) => ({
   reset: (searchLang) =>
     set((state) => ({
       // A binder that is opened is what the collector wants to see. Not at the start,
-      // though: the binder of last time is put back on the table behind the start page.
-      view: state.view === 'home' ? 'home' : 'binders',
+      // though: the binder of last time is put back on the table behind the start page, or
+      // behind the binder somebody shared.
+      view: state.view === 'home' || state.view === 'shared' ? state.view : 'binders',
       pane: 'binder',
       tapped: null,
       spreadIndex: 0,
