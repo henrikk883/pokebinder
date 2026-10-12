@@ -26,28 +26,14 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 
 | Nr. | Gemeldet | Von | Fehler | Stand |
 |---|---|---|---|---|
-| B-001 | 12.10.2026 | Henrik | Binder-Seiten mit vielen fehlenden (grauen) Karten laden langsam | offen – lässt sich an Henriks PC im Testbrowser nicht nachstellen; Vergleich mit `?grau=aus` durch Henrik steht aus |
 
-### B-001 – Seiten mit vielen grauen Karten laden langsam
-
-- **Beobachtung (Henrik):** Das lange Laden von Binder-Seiten hängt damit zusammen, dass das Graustellen der fehlenden Karten lange dauert, wenn es viele sind.
-- **Wo:** noch nicht eingegrenzt (Gerät, Browser, welcher Binder).
-- **Vermutung, nicht geprüft:** Fehlende Karten werden im Browser per Filter grau gezeichnet, und zwar auf den großen Kartenbildern. Bei einem frisch angelegten Master Set sind alle 18 Karten einer Doppelseite grau; dazu kommen die vorab geladenen Nachbarseiten. Ob wirklich der Filter bremst oder das Laden der großen Bilder, muss eine Messung zeigen.
-- **Messung am 12.10.2026 (Chrome, PC, echte Bilder von TCGdex, Master Set „151“, je 12-mal blättern, Bilder schon geladen):**
-  - Bis alle 18 Karten einer Doppelseite geladen und dekodiert sind: grau im Schnitt 96 ms, dieselben Karten ohne Filter 97 ms. Auch mit vier- und sechsfach gedrosseltem Prozessor kein Unterschied (rund 250 bzw. 400 ms in beiden Fällen).
-  - Zeichnen abseits des Hauptfadens, aus einer Browser-Aufzeichnung: grau 53 ms, farbig 40 ms – für alle zwölf Blättervorgänge zusammen. Der Filter kostet also messbar, aber rund 1 ms je Blättern.
-  - **Ergebnis:** In Chrome am PC ist der Graufilter nicht die Ursache. Nicht gemessen: Safari auf iPhone und iPad, wo solche Filter erfahrungsgemäß teurer sind, und das erstmalige Laden der Bilder über das Netz.
-- **Wahrscheinlicher:** Graue Seiten sind die Seiten großer Master Sets, die man zum ersten Mal durchblättert; dort lädt jede Karte ein großes Bild (60–125 KB), und TCGdex braucht für ein selten abgerufenes Bild bis zu 0,7 s.
-- **Vorschlag:** Jede Karte zuerst mit dem kleinen Bild zeigen (16–30 KB, oft schon von der Suche her da) und das große nachladen. Das hilft, wo immer die Ursache liegt.
-- **Henrik dazu (12.10.2026):** am Handy und am PC, auch beim zweiten Aufschlagen; nur wenn fast alles grau ist, bei wenigen grauen Karten und ganz ohne Graufilter nicht.
-- **Zweite Messung, mit Grafikkarte:** an Henriks PC (Chromium mit eingeschalteter Grafikbeschleunigung), gemessen wurde, wann sich das Bild auf dem Schirm nach dem Blättern nicht mehr ändert. Grau 54 ms, farbig 55 ms; auch bei 140 % Zoom auf einem hochauflösenden Schirm und in den Sets „Erhabene Helden“ und „Weiße Flammen“ kein Unterschied. **Der Fehler lässt sich hier nicht nachstellen.**
-- **Was sich zwischen der Messung und Henriks Alltag unterscheidet:** sein Browser, die Fassung im Netz mit dem Bilder-Vorrat, seine echten, sehr großen Binder (bis 613 Karten) und Seiten weiter hinten im Binder.
-- **Nächster Schritt:** Henrik vergleicht denselben Binder mit und ohne Graufilter – mit `?grau=aus` hinter der Adresse zeigt die App fehlende Karten farbig – und nennt Browser und Binder. Erst danach wird etwas geändert.
+_Zurzeit keine._
 
 ## Behobene Fehler
 
 | Nr. | Gemeldet | Von | Fehler | Behoben mit | Stand |
 |---|---|---|---|---|---|
+| B-001 | 12.10.2026 | Henrik | Binder-Seiten laden langsam, „man sieht anfangs nur den Namen“ – in Sets, von denen TCGdex keine Bilder hat (gemeldet als „graue Karten laden langsam“) | Einzelheiten unten | behoben, Bestätigung offen |
 | B-002 | 12.10.2026 | Henrik | Die Suche fand ein Pokémon nur unter dem Namen in der eingestellten Kartensprache („psyduck“ fand bei Deutsch nichts) | `fba67f8`, Einzelheiten unten | bestätigt |
 | – | 12.10.2026 | Henrik | Kartenbilder blieben in Suche, Binder und Info-Anzeige leer oder luden erst nach einem Fensterwechsel | `554a043` (TCGdex schickt eine Kopfzeile teils doppelt; Bilder werden jetzt schlicht angezeigt) | bestätigt |
 | – | 12.10.2026 | Henrik | Menüs der Werkzeugleiste schlossen nicht bei einem Klick daneben | `6188e97` | bestätigt |
@@ -59,3 +45,17 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 - **Grenzen:**
   - Nur Pokémon. Trainer- und Energiekarten haben keine Pokédex-Nummer, über die sich die Sprachen verbinden lassen: „professor's research“ findet bei Deutsch weiterhin nichts.
   - Die andere Sprache wird nur gefragt, wenn der Name so, wie er getippt wurde, gar nichts findet. Findet er zufällig etwas anderes, bleibt es dabei: „Enton“ zeigt bei Englisch „Professor Laventon“, weil der Name darin steckt.
+
+### B-001 – Seiten laden langsam, anfangs steht nur der Name da (behoben)
+
+- **Gemeldet als:** Seiten mit vielen grauen Karten laden langsam. Der Graufilter war es nicht: Zwei Messungen (ohne und mit Grafikkarte) zeigten keinen Unterschied zwischen grau und farbig, und Henriks Vergleich mit `?grau=aus` auch nicht.
+- **Der entscheidende Hinweis:** Firefox, ein Master Set der „Galar-Galerie“, anfangs steht nur der Name da. Von diesem Set hat TCGdex keine Kartenbilder; die App holt sie von der zweiten Bildquelle (pokemontcg.io).
+- **Ursache, nachgestellt:** Für jede solche Karte lud die App bei jedem Aufschlagen der Seite neu: erst der Versuch beim englischen TCGdex-Bild (gibt es nicht), dann die Prüfung des Ersatzbildes durch vollständiges Herunterladen in voller Größe (440–790 KB je Karte), dann das Bild selbst. Gemessen in Chromium: auch beim zweiten und dritten Aufschlagen 520–550 ms je Doppelseite.
+- **Behoben:**
+  - Die App merkt sich, welche Bilder es nicht gibt, und nach drei Karten eines Sets, dass das ganze Set bei TCGdex keine hat (eine Woche lang, auch nach dem Schließen).
+  - Ersatzbilder werden zuerst klein gezeigt (160–210 KB) und im Hintergrund durch das große ersetzt.
+  - Geprüft wird ein Ersatzbild nur noch über den Status der Antwort, nicht mehr durch Herunterladen.
+  - Die Nachbarseiten werden auch für solche Karten vorab geholt.
+- **Gemessen danach (Chromium, dieselbe Doppelseite):** zweites und drittes Aufschlagen 30–40 ms statt 520–550 ms; eine vorab geholte Seite steht nach 1 ms. Das erste Aufschlagen einer noch nie gesehenen Seite dauert weiterhin rund 1,5 s: Die Bilder müssen einmal aus dem Netz kommen.
+- **Nicht gemessen:** Firefox und das Handy, wo Henrik den Fehler sieht. Darum „Bestätigung offen“.
+- **Aufgeräumt:** Der Schalter `?grau=aus` zum Vergleichen ist wieder entfernt.

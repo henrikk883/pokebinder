@@ -26,7 +26,9 @@ export {
   readPicture,
   setLogoUrl,
   type CardImageSize,
+  type SubstituteImage,
 } from './images'
+export { scanMemory } from './scanMemory'
 export type * from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000

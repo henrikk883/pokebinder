@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { cardImageSources, tcgdexFor } from '../../lib/tcgdex'
+import { cardImageSources, imageExists, scanMemory, setIdOfCard, tcgdexFor } from '../../lib/tcgdex'
 import type { Binder, CardRef } from '../../types/binder'
 import type { Spread } from './spreads'
 
@@ -17,17 +17,40 @@ const SETTLE_MS = 150
 // its way is not dropped.
 const preloaded = new Map<string, HTMLImageElement>()
 
+function fetchAhead(url: string): void {
+  if (preloaded.has(url)) return
+  const image = new Image()
+  image.src = url
+  preloaded.set(url, image)
+}
+
 async function preload(cards: readonly CardRef[], cancelled: () => boolean): Promise<void> {
   for (const { cardId, lang } of cards) {
     const card = await tcgdexFor(lang)
       .getCard(cardId)
       .catch(() => undefined)
     if (cancelled()) return
-    const url = card && cardImageSources(card, undefined, 'large').own
-    if (!url || preloaded.has(url)) continue
-    const image = new Image()
-    image.src = url
-    preloaded.set(url, image)
+    if (!card) continue
+    const url = cardImageSources(card, undefined, 'large').own
+    if (url) {
+      fetchAhead(url)
+      continue
+    }
+    // No scan in the card's language: the small stand-in is what the page shows first.
+    const catalog = await tcgdexFor(lang)
+      .getCatalog()
+      .catch(() => undefined)
+    if (cancelled()) return
+    const set = catalog?.setsById.get(setIdOfCard(card))
+    for (const candidate of cardImageSources(card, set, 'small').substitutes) {
+      if (scanMemory.isMissing(candidate.url)) continue
+      // one that has to be checked is only fetched if it is there; of the others the first is tried
+      if (!candidate.mustVerify || (await imageExists(candidate.url))) {
+        fetchAhead(candidate.url)
+        break
+      }
+    }
+    if (cancelled()) return
   }
 }
 

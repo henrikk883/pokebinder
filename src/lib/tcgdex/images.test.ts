@@ -149,18 +149,32 @@ describe('imageExists', () => {
 
   it('goes by the status of the answer, not by whether a picture came back', async () => {
     // pokemontcg.io sends a picture of a card back along with its "not found"
-    const fetched = vi.fn((url: string) =>
-      Promise.resolve(
-        new Response('picture', {
+    const methods: (string | undefined)[] = []
+    vi.stubGlobal('fetch', (url: string, init?: RequestInit) => {
+      methods.push(init?.method)
+      return Promise.resolve(
+        new Response(null, {
           status: url.includes('missing') ? 404 : 200,
           headers: { 'content-type': 'image/png' },
         }),
-      ),
-    )
-    vi.stubGlobal('fetch', fetched)
+      )
+    })
 
     expect(await imageExists('https://images.pokemontcg.io/smp/missing.png')).toBe(false)
     expect(await imageExists('https://images.pokemontcg.io/smp/there.png')).toBe(true)
+    // only the status is asked for: the picture itself is fetched once, when it is shown
+    expect(methods).toEqual(['HEAD', 'HEAD'])
+  })
+
+  it('asks for the picture itself where the status cannot be had, as without a connection', async () => {
+    // a picture kept for offline use answers the plain request, nothing answers the other
+    const fetched = vi.fn((_url: string, init?: RequestInit) =>
+      init?.method === 'HEAD' ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve(new Response('picture')),
+    )
+    vi.stubGlobal('fetch', fetched)
+
+    expect(await imageExists('https://images.pokemontcg.io/smp/kept.png')).toBe(true)
+    expect(fetched).toHaveBeenCalledTimes(2)
   })
 
   it('takes an address that cannot be reached as having no picture', async () => {

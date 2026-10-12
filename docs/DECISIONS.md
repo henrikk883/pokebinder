@@ -552,3 +552,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Nur wenn der Name gar nichts findet – sonst würde jede Suche doppelt fragen, und Treffer aus zwei Wegen müssten gemischt und geblättert werden.
 - Trainer und Energie bleiben außen vor (keine Pokédex-Nummer). Ein Weg über gemeinsame Kartenkennungen wäre möglich, aber eine eigene Erweiterung.
 - Für den Browser-Test sind drei Antworten zusätzlich aufgezeichnet; der Test-Doppelgänger erkennt die neue GraphQL-Abfrage am Namen.
+
+## 2026-10-12 – B-001: Karten ohne Bild bei TCGdex
+- Ursache und Korrektur stehen in `docs/BUGS.md`. Kern: Was die App über fehlende Bilder herausfindet, merkt sie sich jetzt (`scanMemory`), statt bei jedem Aufschlagen neu zu fragen; Ersatzbilder der zweiten Quelle kommen erst klein, dann groß; ihre Prüfung fragt nur noch den Status ab (`HEAD`), ohne Netz das Bild selbst.
+- „Drei Karten ohne Bild und keine mit Bild“ gilt als „das Set hat keine“: genug, um nicht jede Karte einzeln zu probieren, und ein einziges gefundenes Bild nimmt die Annahme zurück. Gemerkt für eine Woche, weil TCGdex Bilder nachliefert.
+- Im PNG-Export kann eine Karte aus der zweiten Quelle in der kleinen Fassung landen, wenn die große noch nicht da ist. In Kauf genommen: Der Export wartet nicht auf Megabytes.
+- Lehre aus der Fehlersuche: Die erste Meldung nannte die grauen Karten, weil die betroffenen Sets zufällig die fast leeren waren. Erst Browser, Binder und „man sieht nur den Namen“ führten zur Ursache; darum steht in der Fehlerliste, was eine Meldung enthalten soll.

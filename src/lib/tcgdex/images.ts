@@ -138,16 +138,20 @@ const verified = new Map<string, Promise<boolean>>()
 
 /**
  * Whether a picture really exists at an address, judged by the status of the answer and
- * not by whether something displayable came back. The picture is fetched in full, so the
- * browser has it at hand when it is shown, and a picture kept for offline use still counts.
+ * not by whether something displayable came back. Only the status is asked for: the
+ * pictures of the second source are several hundred kilobytes each, and fetching one to
+ * check it meant fetching it twice. Without a connection the picture itself is asked for,
+ * which a picture kept for offline use answers.
  */
 export function imageExists(url: string): Promise<boolean> {
   let answer = verified.get(url)
   if (!answer) {
-    answer = fetch(url).then(
-      (response) => response.ok,
-      () => false,
-    )
+    answer = fetch(url, { method: 'HEAD' })
+      .catch(() => fetch(url))
+      .then(
+        (response) => response.ok,
+        () => false,
+      )
     verified.set(url, answer)
   }
   return answer

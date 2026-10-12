@@ -142,8 +142,3 @@
     user-select: text;
   }
 }
-
-/* B-001: see src/main.tsx. Outside the layers, so that it wins over the utility class. */
-.no-grey .grayscale {
-  filter: none;
-}
