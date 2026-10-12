@@ -118,6 +118,68 @@ describe('binderStore', () => {
     await store.getState().whenSaved()
   })
 
+  it('places, resizes, crops and removes images, and reports what does not fit', async () => {
+    const { store, saved } = setup()
+    store.getState().createBinder({ name: 'Kanto Collection' })
+    const pageId = firstPageId(store.getState().binder)
+
+    expect(store.getState().placeImage(pageId, 'forest', { fromSlot: 0, spanCols: 2, spanRows: 1 })).toBeNull()
+    const imageId = store.getState().binder?.pages[0]?.images[0]?.id ?? ''
+    await store.getState().whenSaved()
+    const savedBefore = saved.length
+
+    // refused changes leave the binder untouched and are not saved
+    expect(store.getState().placeImage(pageId, 'other', { fromSlot: 1, spanCols: 1, spanRows: 1 })).toBe('overlap')
+    expect(store.getState().changePlacement(pageId, imageId, { fromSlot: 0, spanCols: 4, spanRows: 1 })).toBe(
+      'outOfBounds',
+    )
+    expect(
+      store.getState().dropCard(
+        { kind: 'asset', assetId: 'other' },
+        { kind: 'pocket', position: { pageId, slotIndex: 0 } },
+      ),
+    ).toBe('overlap')
+    await store.getState().whenSaved()
+    expect(saved).toHaveLength(savedBefore)
+
+    expect(
+      store.getState().dropCard(
+        { kind: 'asset', assetId: 'other' },
+        { kind: 'pocket', position: { pageId, slotIndex: 8 } },
+      ),
+    ).toBeNull()
+    expect(store.getState().changePlacement(pageId, imageId, { fromSlot: 0, spanCols: 3, spanRows: 2 })).toBeNull()
+    store.getState().setImageCrop(pageId, imageId, { x: 0.1, y: 0.9, zoom: 2 })
+    expect(store.getState().binder?.pages[0]?.images).toMatchObject([
+      { assetId: 'forest', spanCols: 3, spanRows: 2, crop: { x: 0.1, y: 0.9, zoom: 2 } },
+      { assetId: 'other', fromSlot: 8, spanCols: 1, spanRows: 1 },
+    ])
+
+    store.getState().removeImage(pageId, imageId)
+    expect(store.getState().binder?.pages[0]?.images.map((image) => image.assetId)).toEqual(['other'])
+
+    store.getState().setCover({ title: 'Meine 151', assetId: 'forest' })
+    expect(store.getState().binder?.cover).toEqual({ title: 'Meine 151', assetId: 'forest' })
+    await store.getState().whenSaved()
+    expect(saved.at(-1)).toBe(store.getState().binder)
+  })
+
+  it('cuts images across two pages back when a page is removed', async () => {
+    const { store } = setup()
+    store.getState().createBinder({ name: 'Kanto Collection' })
+    store.getState().addPage()
+    store.getState().addPage()
+    const [first, second] = store.getState().binder?.pages ?? []
+    if (!first || !second) throw new Error('Expected pages')
+    expect(store.getState().placeImage(second.id, 'wide', { fromSlot: 0, spanCols: 6, spanRows: 1 })).toBeNull()
+
+    // page 2 becomes page 1, which lies alone next to the cover
+    store.getState().removePage(first.id)
+
+    expect(store.getState().binder?.pages[0]?.images).toMatchObject([{ assetId: 'wide', spanCols: 3 }])
+    await store.getState().whenSaved()
+  })
+
   it('does not save when nothing changed', async () => {
     const { store, saved } = setup()
     store.getState().createBinder({ name: 'Kanto Collection' })

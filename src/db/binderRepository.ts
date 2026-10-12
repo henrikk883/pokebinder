@@ -24,6 +24,18 @@ export function createBinderRepository(database: PokeBinderDatabase = db) {
       await database.assets.bulkPut(assets)
     },
 
+    /** The image library: every stored image, oldest first. */
+    async listAssets(): Promise<Asset[]> {
+      const assets = await database.assets.toArray()
+      return assets.sort(
+        (a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? '') || a.id.localeCompare(b.id),
+      )
+    },
+
+    async deleteAsset(id: string): Promise<void> {
+      await database.assets.delete(id)
+    },
+
     /** Returns the assets that exist; unknown ids are skipped. */
     async loadAssets(ids: string[]): Promise<Asset[]> {
       const assets = await database.assets.bulkGet(ids)

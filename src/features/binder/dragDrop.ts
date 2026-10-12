@@ -2,10 +2,13 @@ import type { CardSummary } from '../../lib/tcgdex'
 import type { Binder, CardLang, SlotPosition } from '../../types/binder'
 import { moveCard, setCard, type ModelContext } from './binderModel'
 
-/** What is being dragged: a card from the search, or a card that already sits in a pocket. */
-export type DragSource =
+/** A card being dragged: from the search, or one that already sits in a pocket. */
+export type CardDragSource =
   | { kind: 'search'; card: CardSummary }
   | { kind: 'pocket'; position: SlotPosition; cardId: string }
+
+/** What is being dragged: a card, or an image from the library. */
+export type DragSource = CardDragSource | { kind: 'asset'; assetId: string }
 
 export interface DropTarget {
   kind: 'pocket'
@@ -15,7 +18,7 @@ export interface DropTarget {
 export function isDragSource(value: unknown): value is DragSource {
   if (typeof value !== 'object' || value === null) return false
   const kind = (value as { kind?: unknown }).kind
-  return kind === 'search' || kind === 'pocket'
+  return kind === 'search' || kind === 'pocket' || kind === 'asset'
 }
 
 export function isDropTarget(value: unknown): value is DropTarget {
@@ -28,12 +31,12 @@ export function pocketId(position: SlotPosition): string {
 }
 
 /**
- * Result of dropping `source` on a pocket. A card from the search replaces what is there;
+ * Result of dropping a card on a pocket. A card from the search replaces what is there;
  * a card from another pocket moves, and swaps places with a card in the target.
  */
 export function applyDrop(
   binder: Binder,
-  source: DragSource,
+  source: CardDragSource,
   target: DropTarget,
   lang: CardLang,
   ctx?: ModelContext,

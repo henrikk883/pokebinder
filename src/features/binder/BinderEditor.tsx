@@ -34,6 +34,7 @@ function useEditorKeys(spreadCount: number) {
 export function BinderEditor({ binder }: { binder: Binder }) {
   const zoom = useEditorStore((state) => state.zoom)
   const spreadIndex = useEditorStore((state) => state.spreadIndex)
+  const notice = useEditorStore((state) => state.notice)
   const catalog = useCatalog()
 
   const spreads = buildSpreads(binder.pages.length)
@@ -47,6 +48,11 @@ export function BinderEditor({ binder }: { binder: Binder }) {
     <section className="flex h-full flex-col gap-4 p-5">
       <BinderToolbar binder={binder} spread={spread} />
       <PageControls spread={spread} spreadCount={spreads.length} />
+      {notice && (
+        <p role="alert" className="rounded-control border border-line bg-raised px-3 py-2 text-sm">
+          {notice}
+        </p>
+      )}
       <div className="min-h-0 flex-1 overflow-auto">
         <BinderSpread
           binder={binder}

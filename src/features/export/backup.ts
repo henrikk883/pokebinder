@@ -24,6 +24,7 @@ export interface BackupAsset {
   height: number
   /** Base64-encoded file content. */
   data: string
+  createdAt?: string
 }
 
 export interface BackupFile {
@@ -101,6 +102,7 @@ export async function createBackup(
       width: asset.width,
       height: asset.height,
       data: bytesToBase64(new Uint8Array(await asset.blob.arrayBuffer())),
+      ...(asset.createdAt === undefined ? {} : { createdAt: asset.createdAt }),
     })),
   )
   return { format: BACKUP_FORMAT, version: BACKUP_VERSION, exportedAt, binder, assets: backupAssets }
@@ -245,13 +247,15 @@ function readAsset(value: unknown, path: string): Asset {
     if (error instanceof BackupError) throw error
     invalid(`${path}.data`)
   }
-  return {
+  const asset: Asset = {
     id: readString(raw.id, `${path}.id`),
     blob: new Blob([bytes], { type: mimeType }),
     mimeType,
     width: readInt(raw.width, `${path}.width`, 0),
     height: readInt(raw.height, `${path}.height`, 0),
   }
+  if (raw.createdAt !== undefined) asset.createdAt = readString(raw.createdAt, `${path}.createdAt`)
+  return asset
 }
 
 /** Parses and validates a backup file. Throws `BackupError` when it cannot be used. */

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createTestContext } from '../../test/modelContext'
 import type { Binder, SlotPosition } from '../../types/binder'
 import { addPage, createBinder, setCard, setOwned, type ModelContext } from './binderModel'
-import { applyDrop, isDragSource, isDropTarget, pocketId, type DragSource } from './dragDrop'
+import { applyDrop, isDragSource, isDropTarget, pocketId, type CardDragSource } from './dragDrop'
 
 const glurak = { id: 'sv03.5-006', localId: '006', name: 'Glurak-ex' }
 const pikachu = { id: 'sv03.5-025', localId: '025', name: 'Pikachu' }
@@ -18,11 +18,11 @@ function slot(source: Binder, pageIndex: number, slotIndex: number) {
   return source.pages[pageIndex]?.slots[slotIndex]
 }
 
-function fromSearch(card: typeof glurak): DragSource {
+function fromSearch(card: typeof glurak): CardDragSource {
   return { kind: 'search', card }
 }
 
-function fromPocket(position: SlotPosition, cardId: string): DragSource {
+function fromPocket(position: SlotPosition, cardId: string): CardDragSource {
   return { kind: 'pocket', position, cardId }
 }
 
@@ -101,6 +101,7 @@ describe('drag data', () => {
   it('recognises sources and targets', () => {
     expect(isDragSource(fromSearch(glurak))).toBe(true)
     expect(isDragSource(fromPocket(at(0, 0), glurak.id))).toBe(true)
+    expect(isDragSource({ kind: 'asset', assetId: 'a' })).toBe(true)
     expect(isDragSource({ kind: 'other' })).toBe(false)
     expect(isDragSource(undefined)).toBe(false)
 

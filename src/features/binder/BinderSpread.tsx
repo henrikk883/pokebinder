@@ -3,6 +3,9 @@ import { de } from '../../i18n/de'
 import type { Catalog } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import type { Binder, Page } from '../../types/binder'
+import { useAssetUrl } from '../../store/assetStore'
+import { imageAt } from '../images/imageModel'
+import { PlacedImageLayer } from '../images/PlacedImageLayer'
 import { layoutDimensions, pocketOpening } from './binderModel'
 import { Pocket } from './Pocket'
 import type { Spread } from './spreads'
@@ -24,20 +27,24 @@ function PageSide({ binder, page, catalog }: { binder: Binder; page: Page; catal
   return (
     <section className={sideClass} aria-label={de.binder.page(pageNumber)} data-testid="binder-page">
       <div className={sheetClass}>
-        <div
-          className="grid gap-[calc(var(--u)*8)]"
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-        >
-          {page.slots.map((slot) => (
-            <Pocket
-              key={slot.index}
-              pageId={page.id}
-              pageNumber={pageNumber}
-              slot={slot}
-              opening={pocketOpening(page.openingSide, page.index, slot.index, binder.layout)}
-              catalog={catalog}
-            />
-          ))}
+        <div className="relative">
+          <PlacedImageLayer binder={binder} pageIndex={page.index} />
+          <div
+            className="relative grid gap-[calc(var(--u)*8)]"
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+          >
+            {page.slots.map((slot) => (
+              <Pocket
+                key={slot.index}
+                pageId={page.id}
+                pageNumber={pageNumber}
+                slot={slot}
+                opening={pocketOpening(page.openingSide, page.index, slot.index, binder.layout)}
+                overImage={imageAt(binder, page.index, slot.index) !== undefined}
+                catalog={catalog}
+              />
+            ))}
+          </div>
         </div>
       </div>
       <p className="mt-2 flex items-center justify-center gap-3 text-xs text-muted">
@@ -58,11 +65,28 @@ function PageSide({ binder, page, catalog }: { binder: Binder; page: Page; catal
   )
 }
 
-function CoverInside({ title }: { title: string }) {
+function CoverInside({ binder }: { binder: Binder }) {
+  const imageUrl = useAssetUrl(binder.cover.assetId)
+
   return (
     <section className={sideClass} aria-label={de.binder.coverInside}>
-      <div className={`${sheetClass} flex items-center justify-center border-dashed`}>
-        <p className="px-4 text-center text-lg font-semibold text-muted">{title}</p>
+      <div className={`${sheetClass} relative flex items-center justify-center overflow-hidden border-dashed`}>
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt=""
+            data-testid="cover-image"
+            draggable={false}
+            className="absolute inset-0 size-full object-cover"
+          />
+        )}
+        <p
+          className={`relative px-4 text-center text-lg font-semibold ${
+            imageUrl ? 'rounded-control bg-bg/75 py-2 text-text' : 'text-muted'
+          }`}
+        >
+          {binder.cover.title}
+        </p>
       </div>
       <p className="mt-2 text-center text-xs text-muted">{de.binder.coverInside}</p>
     </section>
@@ -104,7 +128,7 @@ interface BinderSpreadProps {
 /** The open binder: two facing sides in a dark frame with the rings in between. */
 export function BinderSpread({ binder, spread, zoom, catalog }: BinderSpreadProps) {
   function side(content: Spread['left']) {
-    if (content === 'cover') return <CoverInside title={binder.cover.title} />
+    if (content === 'cover') return <CoverInside binder={binder} />
     const page = content === null ? undefined : binder.pages[content]
     return page ? <PageSide binder={binder} page={page} catalog={catalog} /> : <NoPage />
   }

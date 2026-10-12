@@ -124,5 +124,32 @@ Ein Ziehen beginnt nach 6 px Bewegung, damit ein Klick die Karte auswählt. Touc
 ## 2026-10-12 – Rückfragen über den Browser-Dialog
 Seite löschen, Binder löschen und Layout ändern fragen per `window.confirm` nach. Grund: einfach und zuverlässig; ein eigener Dialog im App-Design kann später folgen.
 
+## 2026-10-12 – Bildgröße frei in Pockets statt dreier fester Knöpfe
+„Breite“ und „Höhe“ sind Auswahlfelder in Pockets, dazu „Ganze Seite“. Das Mockup zeigt nur 1 × 1, 1 × 3 und 3 × 3; so sind auch 2 × 1 und die Layouts 2 × 2 und 4 × 4 abgedeckt. Von Henrik bestätigt.
+
+## 2026-10-12 – Bilder dürfen auf einer Doppelseite über beide Seiten reichen
+Ein Bild, das auf einer linken Seite (gerade Seitenzahl) beginnt, kann über die Ringe auf die rechte Seite reichen, z. B. 6 breit und 1 hoch. Auf Seite 1 geht das nicht, weil sie allein neben dem Cover liegt; von einer rechten Seite aus ebenfalls nicht. Gespeichert wird das Bild auf der linken Seite mit einer Breite, die größer ist als die verbleibenden Spalten. Von Henrik gewünscht.
+
+## 2026-10-12 – Löschen einer Seite kürzt Bilder über zwei Seiten
+Rutscht eine Seite durch das Löschen auf die andere Buchseite, verliert ihr Gegenüber oder träfe ihr Bild dort ein anderes, wird das Bild auf die eigene Seite gekürzt statt gelöscht.
+
+## 2026-10-12 – Bilder überlappen sich nicht
+Ein Bild, das ein anderes überdecken würde, wird mit Hinweis abgelehnt. Karten liegen dagegen immer über Bildern und lassen sich in jeden Pocket legen. Von Henrik bestätigt.
+
+## 2026-10-12 – Hochgeladene Bilder: höchstens 2000 px Kantenlänge, JPG/PNG/WebP
+Größere Bilder werden beim Hochladen verkleinert, damit Speicher und Backup klein bleiben. Von Henrik bestätigt.
+
+## 2026-10-12 – Bild-Bibliothek gilt für alle Binder
+Der Tab „Eigene Bilder“ zeigt alle hochgeladenen Bilder, unabhängig vom Binder. Ein Bild lässt sich dort erst löschen, wenn kein Binder es mehr verwendet. Das Backup eines Binders enthält nur die Bilder, die er verwendet.
+
+## 2026-10-12 – Ausschnitt als Blickpunkt und Vergrößerung
+`crop.x` und `crop.y` (0 bis 1, 0,5 = Mitte) legen fest, welcher Teil des Bildes zu sehen ist, `crop.zoom` (1 bis 4) die Vergrößerung. Das Bild füllt seine Fläche immer vollständig.
+
+## 2026-10-12 – `Asset.createdAt` ergänzt
+Optionales Feld, nach dem die Bibliothek sortiert wird. Grund: ohne es stünden neue Bilder an zufälliger Stelle.
+
+## 2026-10-12 – Cover-Titel getrennt vom Binder-Namen
+„Cover bearbeiten“ ändert Titel und Bild des Covers; der Name des Binders in Liste und Kopfzeile bleibt. Das Cover-Bild füllt die Cover-Innenseite mittig, ohne eigenen Ausschnitt.
+
 ## 2026-10-12 – Fehler beim Speichern oder Import ohne Rot
 Meldungen erscheinen in neutraler Textfarbe, weil Rot dem Löschen vorbehalten ist.

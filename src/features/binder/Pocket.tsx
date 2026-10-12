@@ -13,6 +13,8 @@ interface PocketProps {
   pageNumber: number
   slot: Slot
   opening: PocketOpening
+  /** An uploaded image lies behind this pocket and should stay visible. */
+  overImage: boolean
   catalog: Catalog | undefined
 }
 
@@ -76,7 +78,7 @@ function PocketCard({ position, cardId, owned, catalog }: PocketCardProps) {
   )
 }
 
-export function Pocket({ pageId, pageNumber, slot, opening, catalog }: PocketProps) {
+export function Pocket({ pageId, pageNumber, slot, opening, overImage, catalog }: PocketProps) {
   const position: SlotPosition = { pageId, slotIndex: slot.index }
   const selected = useEditorStore(
     (state) => state.selection?.pageId === pageId && state.selection.slotIndex === slot.index,
@@ -112,9 +114,10 @@ export function Pocket({ pageId, pageNumber, slot, opening, catalog }: PocketPro
         event.preventDefault()
         if (slot.cardRef) clearSlot(position)
       }}
-      className={`relative flex aspect-[63/88] items-center justify-center rounded-pocket bg-bg/60 outline-offset-2 ${
-        selected ? 'ring-2 ring-accent' : isOver ? 'ring-2 ring-accent/60' : 'ring-1 ring-line'
-      }`}
+      data-over-image={overImage}
+      className={`relative flex aspect-[63/88] items-center justify-center rounded-pocket outline-offset-2 ${
+        overImage ? '' : 'bg-bg/60'
+      } ${selected ? 'ring-2 ring-accent' : isOver ? 'ring-2 ring-accent/60' : 'ring-1 ring-line'}`}
     >
       {slot.cardRef ? (
         <PocketCard
@@ -124,7 +127,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, catalog }: PocketPro
           catalog={catalog}
         />
       ) : (
-        <EmptyPocketIcon />
+        !overImage && <EmptyPocketIcon />
       )}
       {/* the side where cards slide in */}
       <span

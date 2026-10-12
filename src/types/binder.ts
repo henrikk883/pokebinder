@@ -34,12 +34,18 @@ export interface Slot {
   owned: boolean
 }
 
+/** Which part of an image shows: focus point (0–1 on both axes, 0.5 = centre) and magnification (1 = fills the area). */
 export interface ImageCrop {
   x: number
   y: number
   zoom: number
 }
 
+/**
+ * An uploaded image behind the pockets. It starts at `fromSlot` and covers `spanCols` ×
+ * `spanRows` pockets. On a left-hand page it may reach across the rings onto the facing
+ * page; `spanCols` is then larger than the columns left on its own page.
+ */
 export interface PlacedImage {
   id: string
   assetId: string
@@ -87,6 +93,8 @@ export interface Asset {
   mimeType: string
   width: number
   height: number
+  /** ISO 8601; orders the image library. Missing on images from older backups. */
+  createdAt?: string
 }
 
 export interface SlotPosition {

@@ -114,11 +114,12 @@ export function createBinder(input: NewBinderInput, ctx: ModelContext = defaultC
   return binder
 }
 
-function withPages(binder: Binder, pages: Page[], ctx: ModelContext): Binder {
+/** The binder with new pages and a fresh change date. */
+export function withPages(binder: Binder, pages: Page[], ctx: ModelContext): Binder {
   return { ...binder, pages, updatedAt: ctx.now() }
 }
 
-function findPage(binder: Binder, pageId: string): Page {
+export function findPage(binder: Binder, pageId: string): Page {
   const page = binder.pages.find((p) => p.id === pageId)
   if (!page) throw new RangeError(`Unknown page: ${pageId}`)
   return page

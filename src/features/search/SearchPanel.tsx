@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { setIdOfCard, tcgdex } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
+import { ImageLibrary } from '../images/ImageLibrary'
 import { CardTile } from './CardTile'
 import { FilterSelect } from './FilterSelect'
 import { SetPicker } from './SetPicker'
@@ -28,7 +29,7 @@ function GermanFlag() {
   )
 }
 
-export function SearchPanel() {
+function CardSearch() {
   const [text, setText] = useState('')
   const [setId, setSetId] = useState<string>()
   const [rarity, setRarity] = useState<string>()
@@ -44,19 +45,8 @@ export function SearchPanel() {
   const selectedSet = setId ? sets?.get(setId) : undefined
 
   return (
-    <section className="flex h-full flex-col">
-      <div className="shrink-0 space-y-3 p-4 pb-3">
-        <h2 className="text-lg font-semibold">{de.search.title}</h2>
-
-        <div role="tablist" className="flex border-b border-line">
-          <button type="button" role="tab" aria-selected="true" className={`${tabClass} border-accent text-accent-hover`}>
-            {de.search.tabs.cards}
-          </button>
-          <button type="button" role="tab" aria-selected="false" disabled className={`${tabClass} border-transparent text-muted`}>
-            {de.search.tabs.images}
-          </button>
-        </div>
-
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 space-y-3 px-4 pb-3">
         <input
           type="search"
           value={text}
@@ -158,6 +148,47 @@ export function SearchPanel() {
           {de.search.dragHint}
         </p>
       )}
+    </div>
+  )
+}
+
+type Tab = 'cards' | 'images'
+
+/** Left column: card search and the library of uploaded images. */
+export function SearchPanel() {
+  const [tab, setTab] = useState<Tab>('cards')
+
+  return (
+    <section className="flex h-full flex-col">
+      <div className="shrink-0 space-y-3 p-4 pb-3">
+        <h2 className="text-lg font-semibold">{de.search.title}</h2>
+        <div role="tablist" className="flex border-b border-line">
+          {(['cards', 'images'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="tab"
+              aria-selected={tab === option}
+              onClick={() => setTab(option)}
+              className={`${tabClass} ${
+                tab === option
+                  ? 'border-accent text-accent-hover'
+                  : 'border-transparent text-muted hover:text-text'
+              }`}
+            >
+              {de.search.tabs[option]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* both stay mounted, so the search keeps its results while images are shown */}
+      <div className={tab === 'cards' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
+        <CardSearch />
+      </div>
+      <div className={tab === 'images' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
+        <ImageLibrary />
+      </div>
     </section>
   )
 }

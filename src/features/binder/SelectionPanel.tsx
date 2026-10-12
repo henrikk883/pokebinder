@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { setIdOfCard } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { OPENING_SIDES, type OpeningSide, type Page, type Slot } from '../../types/binder'
+import { CoverDialog } from '../images/CoverDialog'
+import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
 import { useCatalog } from '../search/useCatalog'
 import { useCard } from './useCard'
@@ -10,7 +13,7 @@ import { useCard } from './useCard'
 const fieldClass =
   'flex h-10 items-center rounded-control border border-line bg-raised px-3 text-sm'
 const outlineButtonClass =
-  'flex h-10 w-full items-center justify-center rounded-control border border-line bg-raised text-sm disabled:cursor-not-allowed disabled:text-muted'
+  'flex h-10 w-full items-center justify-center rounded-control border border-line bg-raised text-sm hover:border-accent'
 
 function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
   const setOwned = useBinderStore((state) => state.setOwned)
@@ -68,7 +71,9 @@ export function SelectionPanel() {
   const binder = useBinderStore((state) => state.binder)
   const clearSlot = useBinderStore((state) => state.clearSlot)
   const setOpeningSide = useBinderStore((state) => state.setOpeningSide)
+  const setCover = useBinderStore((state) => state.setCover)
   const selection = useEditorStore((state) => state.selection)
+  const [editingCover, setEditingCover] = useState(false)
 
   const page = selection ? binder?.pages.find((entry) => entry.id === selection.pageId) : undefined
   const slot = selection ? page?.slots[selection.slotIndex] : undefined
@@ -125,17 +130,27 @@ export function SelectionPanel() {
             {page.openingSide === 'mixed' && (
               <p className="text-xs text-muted">{de.openingMixedHint}</p>
             )}
-            <button type="button" disabled className={outlineButtonClass}>
-              {de.selection.addImage}
-            </button>
-            <button type="button" disabled className={outlineButtonClass}>
-              {de.selection.cropImage}
-            </button>
-            <button type="button" disabled className={outlineButtonClass}>
-              {de.selection.editCover}
-            </button>
+            {binder && <ImageControls binder={binder} page={page} slot={slot} />}
           </div>
         </>
+      )}
+
+      {binder && (
+        <div className="border-t border-line pt-5">
+          <button type="button" onClick={() => setEditingCover(true)} className={outlineButtonClass}>
+            {de.selection.editCover}
+          </button>
+        </div>
+      )}
+      {binder && editingCover && (
+        <CoverDialog
+          cover={binder.cover}
+          onCancel={() => setEditingCover(false)}
+          onSave={(cover) => {
+            setCover(cover)
+            setEditingCover(false)
+          }}
+        />
       )}
     </section>
   )

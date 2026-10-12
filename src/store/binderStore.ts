@@ -16,9 +16,22 @@ import {
 } from '../features/binder/binderModel'
 import { applyDrop, type DragSource, type DropTarget } from '../features/binder/dragDrop'
 import { createCardComparator } from '../features/binder/sorting'
+import {
+  changePlacement,
+  normalizeImages,
+  placeImage,
+  removeImage,
+  setCover,
+  setImageCrop,
+  type Placement,
+  type PlacementError,
+  type PlacementResult,
+} from '../features/images/imageModel'
 import type {
   Binder,
+  BinderCover,
   CardLang,
+  ImageCrop,
   CardRef,
   Layout,
   OpeningSide,
@@ -45,8 +58,14 @@ export interface BinderState {
   moveCard: (from: SlotPosition, to: SlotPosition) => void
   setOwned: (position: SlotPosition, owned: boolean) => void
   setOpeningSide: (pageId: string, openingSide: OpeningSide) => void
-  /** Drops a dragged card on a pocket. */
-  dropCard: (source: DragSource, target: DropTarget) => void
+  /** Drops a dragged card or library image on a pocket; an image may not fit there. */
+  dropCard: (source: DragSource, target: DropTarget) => PlacementError | null
+  /** Puts a library image behind the pockets; returns why if that is not possible. */
+  placeImage: (pageId: string, assetId: string, placement: Placement) => PlacementError | null
+  changePlacement: (pageId: string, imageId: string, placement: Placement) => PlacementError | null
+  setImageCrop: (pageId: string, imageId: string, crop: ImageCrop) => void
+  removeImage: (pageId: string, imageId: string) => void
+  setCover: (cover: BinderCover) => void
   /** Sorts one page (or, without `pageId`, the whole binder) by set and number. */
   sortCards: (scope: { pageId?: string }, setOrder: readonly string[]) => void
   changeLayout: (layout: Layout) => void
@@ -99,6 +118,17 @@ export function createBinderStore(deps: BinderStoreDeps) {
       scheduleSave()
     }
 
+    /** Like `change`, for updates that can be refused. */
+    function attempt(update: (binder: Binder) => PlacementResult): PlacementError | null {
+      const { binder } = get()
+      if (!binder) return null
+      const result = update(binder)
+      if (!result.ok) return result.error
+      set({ binder: result.binder })
+      scheduleSave()
+      return null
+    }
+
     return {
       binder: null,
       saveStatus: 'idle',
@@ -110,7 +140,8 @@ export function createBinderStore(deps: BinderStoreDeps) {
         scheduleSave()
       },
       addPage: () => change((binder) => addPage(binder)),
-      removePage: (pageId) => change((binder) => removePage(binder, pageId)),
+      // pages behind the removed one change sides, which may cut off images spanning two pages
+      removePage: (pageId) => change((binder) => normalizeImages(removePage(binder, pageId))),
       setCard: (position, cardRef, owned) =>
         change((binder) => setCard(binder, position, cardRef, owned)),
       clearSlot: (position) => change((binder) => clearSlot(binder, position)),
@@ -118,7 +149,22 @@ export function createBinderStore(deps: BinderStoreDeps) {
       setOwned: (position, owned) => change((binder) => setOwned(binder, position, owned)),
       setOpeningSide: (pageId, openingSide) =>
         change((binder) => setOpeningSide(binder, pageId, openingSide)),
-      dropCard: (source, target) => change((binder) => applyDrop(binder, source, target, CARD_LANG)),
+      dropCard: (source, target) => {
+        if (source.kind === 'asset') {
+          const { pageId, slotIndex: fromSlot } = target.position
+          return get().placeImage(pageId, source.assetId, { fromSlot, spanCols: 1, spanRows: 1 })
+        }
+        change((binder) => applyDrop(binder, source, target, CARD_LANG))
+        return null
+      },
+      placeImage: (pageId, assetId, placement) =>
+        attempt((binder) => placeImage(binder, pageId, assetId, placement)),
+      changePlacement: (pageId, imageId, placement) =>
+        attempt((binder) => changePlacement(binder, pageId, imageId, placement)),
+      setImageCrop: (pageId, imageId, crop) =>
+        change((binder) => setImageCrop(binder, pageId, imageId, crop)),
+      removeImage: (pageId, imageId) => change((binder) => removeImage(binder, pageId, imageId)),
+      setCover: (cover) => change((binder) => setCover(binder, cover)),
       sortCards: (scope, setOrder) =>
         change((binder) => sortCards(binder, scope, createCardComparator(setOrder))),
       changeLayout: (layout) => change((binder) => changeLayout(binder, layout)),
