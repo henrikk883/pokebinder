@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { de } from '../../i18n/de'
 import { useBinderStore } from '../../store/binderStore'
+import { confirmDialog } from '../../store/dialogStore'
 import type { Binder, Page } from '../../types/binder'
 import { useAssetUrl } from '../../store/assetStore'
 import { imageAt } from '../images/imageModel'
@@ -57,8 +58,17 @@ function PageSide({ binder, page }: { binder: Binder; page: Page }) {
           aria-label={de.binder.deletePageLabel(pageNumber)}
           data-export-hide
           disabled={binder.pages.length <= 1}
-          onClick={() => {
-            if (!hasCards || window.confirm(de.binder.confirmDeletePage(pageNumber))) removePage(page.id)
+          onClick={async () => {
+            // an empty page goes without a question
+            const agreed =
+              !hasCards ||
+              (await confirmDialog({
+                title: de.binder.deletePageTitle(pageNumber),
+                text: de.binder.confirmDeletePage(pageNumber),
+                confirmLabel: de.binder.deletePage,
+                danger: true,
+              }))
+            if (agreed) removePage(page.id)
           }}
           className="text-danger hover:underline disabled:cursor-not-allowed disabled:text-muted disabled:no-underline disabled:opacity-50"
         >

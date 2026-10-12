@@ -16,6 +16,11 @@ export interface CardSummary {
 export interface CardDetail extends CardSummary {
   /** Rarity in the card language, e.g. "Selten, Illustration". */
   rarity?: string
+  /**
+   * National Pokédex number of the Pokémon on the card; the lowest one for cards that
+   * show several. Missing for trainer and energy cards.
+   */
+  dexNumber?: number
   /** Finishes that belong into a binder, base finish first; never empty. */
   variants: CardVariant[]
 }

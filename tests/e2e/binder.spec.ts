@@ -261,17 +261,22 @@ test('a page can be deleted, with a question when it holds cards', async ({ page
   await expect(page.getByTestId('spread-label')).toHaveText('Seite 2')
   await expect(pocket(page, 2, 1)).toHaveAttribute('data-card-id', 'sv03.5-001')
 
-  let question = ''
-  page.once('dialog', (dialog) => {
-    question = dialog.message()
-    void dialog.dismiss()
-  })
+  // a page with cards asks first, in the app's own dialog
+  const question = page.getByRole('alertdialog', { name: 'Seite 2 löschen?' })
   await page.getByRole('button', { name: 'Seite 2 löschen' }).click()
-  expect(question).toContain('Seite 2 mit allen Karten darauf löschen?')
+  await expect(question).toContainText('Seite 2 wird mit allen Karten darauf gelöscht.')
+  await question.getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(question).toBeHidden()
   await expect(pocket(page, 2, 1)).toHaveAttribute('data-card-id', 'sv03.5-001')
 
-  page.once('dialog', (dialog) => void dialog.accept())
+  // Escape declines as well
   await page.getByRole('button', { name: 'Seite 2 löschen' }).click()
+  await page.keyboard.press('Escape')
+  await expect(question).toBeHidden()
+  await expect(pocket(page, 2, 1)).toHaveAttribute('data-card-id', 'sv03.5-001')
+
+  await page.getByRole('button', { name: 'Seite 2 löschen' }).click()
+  await question.getByRole('button', { name: 'Seite löschen' }).click()
   await expect(page.getByTestId('spread-label')).toHaveText('Seite 1')
   await expect(page.getByTestId('pocket')).toHaveCount(9)
 })
@@ -339,13 +344,20 @@ test('changing the layout redistributes the cards after a question', async ({ pa
     await expect(pocket(page, 1, position)).toHaveAttribute('data-card-id', cardId)
   }
 
-  page.once('dialog', (dialog) => void dialog.dismiss())
-  await page.getByLabel('Layout').selectOption('3x3')
+  // the layout sits in the menu "Mehr", with the current one ticked
+  const more = page.getByRole('button', { name: 'Mehr' })
+  await more.click()
+  await expect(page.getByRole('menuitemradio', { name: '2 × 2' })).toHaveAttribute('aria-checked', 'true')
+  await page.getByRole('menuitemradio', { name: '3 × 3' }).click()
+  const question = page.getByRole('alertdialog', { name: 'Layout auf 3 × 3 ändern?' })
+  await expect(question).toContainText('neu auf die Seiten verteilt')
+  await question.getByRole('button', { name: 'Abbrechen' }).click()
   await expect(page.getByTestId('pocket')).toHaveCount(4)
-  await expect(page.getByLabel('Layout')).toHaveValue('2x2')
 
-  page.once('dialog', (dialog) => void dialog.accept())
-  await page.getByLabel('Layout').selectOption('3x3')
+  await more.click()
+  await expect(page.getByRole('menuitemradio', { name: '2 × 2' })).toHaveAttribute('aria-checked', 'true')
+  await page.getByRole('menuitemradio', { name: '3 × 3' }).click()
+  await question.getByRole('button', { name: 'Layout ändern' }).click()
   await expect(page.getByTestId('pocket')).toHaveCount(9)
   await expect(pocket(page, 1, 4)).toHaveAttribute('data-card-id', 'sv03.5-004')
   await expect(pocket(page, 1, 5)).toHaveAttribute('data-card-id', '')
@@ -425,8 +437,100 @@ test('"Meine Binder" lists the binders; they can be opened and deleted', async (
   await expect(page.getByText('Karten in einen Pocket ziehen')).toBeVisible()
 
   await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
-  page.once('dialog', (dialog) => void dialog.accept())
+  const question = page.getByRole('alertdialog', { name: 'Binder „Erster Binder“ löschen?' })
   await page.getByRole('button', { name: 'Erster Binder löschen' }).click()
+  await question.getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(page.getByRole('button', { name: 'Erster Binder öffnen' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Erster Binder löschen' }).click()
+  await question.getByRole('button', { name: 'Löschen', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Erster Binder öffnen' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Zweiter Binder öffnen' })).toBeVisible()
+})
+
+test('a binder is renamed in the editor and in the list; undo takes the name back', async ({ page }) => {
+  await createBinder(page, 'Kanto')
+  await expect(page.getByRole('region', { name: 'Cover-Innenseite' })).toContainText('Kanto')
+
+  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('menuitem', { name: 'Binder umbenennen' }).click()
+  const prompt = page.getByRole('dialog', { name: 'Binder umbenennen' })
+  await expect(prompt.getByLabel('Name')).toHaveValue('Kanto')
+  await prompt.getByLabel('Name').fill('Kanto Collection')
+  await prompt.getByRole('button', { name: 'Umbenennen' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
+  await expect(page.getByRole('banner')).toContainText('Kanto Collection')
+  // the cover carried the binder's name, so it follows
+  await expect(page.getByRole('region', { name: 'Cover-Innenseite' })).toContainText('Kanto Collection')
+
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect(page.getByRole('heading', { name: 'Kanto', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Wiederholen' }).click()
+  await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
+
+  // an empty name or "cancel" changes nothing
+  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('menuitem', { name: 'Binder umbenennen' }).click()
+  await prompt.getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
+
+  // in the list, without opening the binder
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('button', { name: 'Kanto Collection umbenennen' }).click()
+  await prompt.getByLabel('Name').fill('Erste Generation')
+  await prompt.getByLabel('Name').press('Enter')
+  await expect(page.getByRole('button', { name: 'Erste Generation öffnen' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Erste Generation' })).toBeVisible()
+})
+
+test('the toolbar fits in one row; rarely used actions sit under "Mehr"', async ({ page }) => {
+  await createBinder(page, 'Ein ziemlich langer Bindername für den Test')
+  const heading = page.getByRole('heading', { name: /Ein ziemlich langer/ })
+  const addPage = page.getByRole('button', { name: 'Seite hinzufügen' })
+  const top = async (locator: Locator) => (await locator.boundingBox())?.y ?? -1
+
+  // same height: nothing wrapped into a second row
+  expect(Math.abs((await top(page.getByRole('button', { name: 'Sortieren' }))) - (await top(addPage)))).toBeLessThan(2)
+  expect(Math.abs((await top(heading)) - (await top(addPage)))).toBeLessThan(12)
+
+  await page.getByRole('button', { name: 'Mehr' }).click()
+  await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen'])
+  await expect(page.getByRole('menuitemradio')).toHaveText(['2 × 2', '✓3 × 3', '4 × 4'])
+})
+
+test('sorting by Pokédex number brings the Pokémon in order, trainers last', async ({ page }) => {
+  await createBinder(page, 'Pokédex')
+  await showSet151(page)
+  // Pikachu (25), Bisasam (1), the trainer "Erikas Einladung", Glurak-ex (6), Pikachu as illustration rare (25)
+  for (const [cardId, position] of [
+    ['sv03.5-025', 1],
+    ['sv03.5-001', 2],
+    ['sv03.5-196', 3],
+    ['sv03.5-006', 5],
+    ['sv03.5-173', 7],
+  ] as const) {
+    await drag(page, tile(page, cardId), pocket(page, 1, position))
+    await expect(pocket(page, 1, position)).toHaveAttribute('data-card-id', cardId)
+  }
+
+  await page.getByRole('button', { name: 'Sortieren' }).click()
+  await expect(page.getByRole('menuitem')).toHaveText([
+    'Seite 1 sortieren',
+    'Ganzen Binder sortieren',
+    'Seite 1 nach Pokédex',
+    'Ganzen Binder nach Pokédex',
+  ])
+  await page.getByRole('menuitem', { name: 'Seite 1 nach Pokédex' }).click()
+
+  const cards = () =>
+    page.getByTestId('pocket').evaluateAll((pockets) => pockets.map((item) => item.getAttribute('data-card-id')))
+  await expect
+    .poll(cards)
+    .toEqual(['sv03.5-001', 'sv03.5-006', 'sv03.5-025', 'sv03.5-173', 'sv03.5-196', '', '', '', ''])
+
+  // one step back and the page lies as it was placed
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect.poll(cards).toEqual(['sv03.5-025', 'sv03.5-001', 'sv03.5-196', '', 'sv03.5-006', '', 'sv03.5-173', '', ''])
 })

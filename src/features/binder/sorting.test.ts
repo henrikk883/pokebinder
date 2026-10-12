@@ -8,6 +8,7 @@ import {
   countCards,
   countProgress,
   createBinder,
+  renameBinder,
   setCard,
   setCardLang,
   setVariant,
@@ -15,7 +16,7 @@ import {
   type ModelContext,
   type PlacedCard,
 } from './binderModel'
-import { createCardComparator } from './sorting'
+import { createCardComparator, createDexComparator } from './sorting'
 
 /** Release order: Darkness Ablaze, a set whose id contains a dash, then 151. */
 const setOrder = ['swsh3', '30th-c', 'sv03.5']
@@ -29,8 +30,12 @@ function placed(cardId: string, variant: CardVariant = 'normal'): PlacedCard {
   return { cardRef: ref(cardId, variant), owned: true }
 }
 
+function sortedBy(order: (a: PlacedCard, b: PlacedCard) => number, cards: PlacedCard[]): string[] {
+  return [...cards].sort(order).map((card) => `${card.cardRef.cardId}/${card.cardRef.variant}`)
+}
+
 function sortedIds(cards: PlacedCard[]): string[] {
-  return [...cards].sort(compare).map((card) => `${card.cardRef.cardId}/${card.cardRef.variant}`)
+  return sortedBy(compare, cards)
 }
 
 describe('createCardComparator', () => {
@@ -71,6 +76,55 @@ describe('createCardComparator', () => {
       'sv03.5-001/normal',
       'mystery-2/normal',
       'mystery-7/normal',
+    ])
+  })
+})
+
+describe('createDexComparator', () => {
+  const dexNumbers: Record<string, number> = {
+    'sv03.5-001': 1,
+    'sv03.5-006': 6,
+    'sv03.5-025': 25,
+    'swsh3-020': 6, // a Glurak from an older set
+    'sv03.5-173': 25, // Pikachu again, as illustration rare
+  }
+  const byDex = createDexComparator((card) => dexNumbers[card.cardRef.cardId], compare)
+
+  it('orders by Pokédex number across sets', () => {
+    const cards = [placed('sv03.5-025'), placed('sv03.5-001'), placed('swsh3-020'), placed('sv03.5-006')]
+
+    expect([...cards].sort(byDex).map((card) => card.cardRef.cardId)).toEqual([
+      'sv03.5-001',
+      'swsh3-020',
+      'sv03.5-006',
+      'sv03.5-025',
+    ])
+  })
+
+  it('keeps cards of the same Pokémon together, by set, number and finish', () => {
+    const cards = [
+      placed('sv03.5-173'),
+      placed('sv03.5-025', 'reverse'),
+      placed('sv03.5-006'),
+      placed('sv03.5-025'),
+    ]
+
+    expect(sortedBy(byDex, cards)).toEqual([
+      'sv03.5-006/normal',
+      'sv03.5-025/normal',
+      'sv03.5-025/reverse',
+      'sv03.5-173/normal',
+    ])
+  })
+
+  it('puts cards without a number (trainers, energy) last, in set order', () => {
+    const cards = [placed('sv03.5-200'), placed('sv03.5-025'), placed('swsh3-190'), placed('sv03.5-001')]
+
+    expect(sortedBy(byDex, cards)).toEqual([
+      'sv03.5-001/normal',
+      'sv03.5-025/normal',
+      'swsh3-190/normal',
+      'sv03.5-200/normal',
     ])
   })
 })
@@ -136,6 +190,25 @@ describe('binder operations', () => {
     })
     expect(setVariant(next, position, 'pokeball', ctx)).toBe(next)
     expect(setVariant(binder, { ...position, slotIndex: 0 }, 'reverse', ctx)).toBe(binder)
+  })
+
+  it('renames the binder, and the cover with it while the cover still carries the name', () => {
+    const renamed = renameBinder(binder, '  Kanto  ', ctx)
+
+    expect(renamed).toMatchObject({ name: 'Kanto', cover: { title: 'Kanto' } })
+    expect(renamed.updatedAt > binder.updatedAt).toBe(true)
+    expect(renamed.pages).toBe(binder.pages)
+  })
+
+  it('leaves a cover title alone that was set on its own', () => {
+    const custom = { ...binder, cover: { title: 'Meine ersten 151', assetId: 'a' } }
+
+    expect(renameBinder(custom, 'Kanto', ctx).cover).toEqual({ title: 'Meine ersten 151', assetId: 'a' })
+  })
+
+  it('ignores an empty or unchanged name', () => {
+    expect(renameBinder(binder, '   ', ctx)).toBe(binder)
+    expect(renameBinder(binder, 'Test', ctx)).toBe(binder)
   })
 
   it('is German unless another language is chosen', () => {

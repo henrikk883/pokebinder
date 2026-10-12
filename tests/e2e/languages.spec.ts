@@ -151,7 +151,8 @@ test('an English binder builds its master set in English', async ({ page }) => {
   await expect(searchLanguage(page)).toHaveValue('en')
 
   // and the master set can still be adjusted in that language
-  await page.getByRole('button', { name: 'Master Set anpassen' }).click()
+  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('menuitem', { name: 'Master Set anpassen' }).click()
   const settings = page.getByRole('dialog', { name: 'Master Set anpassen' })
   await settings.getByRole('switch', { name: /Mit Holo-Varianten/ }).check()
   await expect(settings.getByTestId('master-set-summary')).toContainText('360 Karten')

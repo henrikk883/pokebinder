@@ -66,9 +66,10 @@ const responses: Record<string, unknown> = {
 /** What TCGdex answers to the set details query for "151" (shortened). */
 const setDetailsResponse = {
   cards: [
-    { ...card('sv03.5-025', '025', 'Pikachu'), rarity: 'Häufig' },
-    { ...card('sv03.5-006', '006', 'Glurak-ex'), rarity: 'Doppelselten' },
-    { ...card('sv03.5-173', '173', 'Pikachu'), rarity: 'Selten, Illustration' },
+    { ...card('sv03.5-025', '025', 'Pikachu'), rarity: 'Häufig', dexId: [25] },
+    { ...card('sv03.5-006', '006', 'Glurak-ex'), rarity: 'Doppelselten', dexId: [6] },
+    // a card showing two Pokémon is filed under the first of them
+    { ...card('sv03.5-173', '173', 'Pikachu'), rarity: 'Selten, Illustration', dexId: [133, 25] },
     { ...card('sv03.5-207', '207', 'Mew-ex', false), rarity: null },
     // the id filter of TCGdex matches loosely and may return cards of other sets
     { ...card('xsv03.5-001', '001', 'Fremd'), rarity: 'Häufig' },
@@ -245,10 +246,20 @@ describe('getSetDetails', () => {
       name: 'Pikachu',
       image: 'https://assets.tcgdex.net/de/x/sv03.5-025',
       rarity: 'Häufig',
+      dexNumber: 25,
       // stamped prints and the cosmos foil from special products are not part of the set
       variants: ['normal', 'reverse', 'pokeball'],
     })
-    expect(details[0]).toMatchObject({ rarity: 'Doppelselten', variants: ['holo'] })
+    expect(details[0]).toMatchObject({ rarity: 'Doppelselten', variants: ['holo'], dexNumber: 6 })
+  })
+
+  it('reads the Pokédex number: the lowest for several Pokémon, none for trainers', async () => {
+    const { client } = setup()
+
+    const details = await client.getSetDetails('sv03.5')
+
+    expect(details[2]).toMatchObject({ id: 'sv03.5-173', dexNumber: 25 })
+    expect(details[3]).not.toHaveProperty('dexNumber')
   })
 
   it('gives every card a finish, even without print data, and tolerates a missing rarity', async () => {
@@ -267,14 +278,14 @@ describe('getSetDetails', () => {
     await client.getSetDetails('sv03.5')
 
     expect(queries).toHaveLength(1)
-    expect(queries[0]).toContain('@locale(lang: "de") { id localId name image rarity }')
+    expect(queries[0]).toContain('@locale(lang: "de") { id localId name image rarity dexId }')
     expect(queries[0]).toContain('@locale(lang: "en") { id variants_detailed')
   })
 
   it('reads the finishes of Japanese sets from the Japanese data', () => {
     // western sets share their ids with the English data, Japanese sets do not exist there
     expect(setDetailsQuery('sv03.5', 'en')).toContain('@locale(lang: "en") { id variants_detailed')
-    expect(setDetailsQuery('SV2a', 'ja')).toContain('@locale(lang: "ja") { id localId name image rarity }')
+    expect(setDetailsQuery('SV2a', 'ja')).toContain('@locale(lang: "ja") { id localId name image rarity dexId }')
     expect(setDetailsQuery('SV2a', 'ja')).toContain('@locale(lang: "ja") { id variants_detailed')
     expect(setDetailsQuery('SV2a', 'ja')).toContain('id: "SV2a-"')
   })

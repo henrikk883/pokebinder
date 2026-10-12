@@ -124,13 +124,13 @@ export function setDetailsQuery(setId: string, lang: CardLang): string {
   const cards = `cards(filters: { id: ${JSON.stringify(`${setId}-`)} }, pagination: { page: 1, itemsPerPage: ${MAX_CARDS_PER_REQUEST} })`
   const printsLang = lang === 'ja' || lang === 'ko' ? lang : 'en'
   return `{
-  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity }
+  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity dexId }
   prints: ${cards} @locale(lang: "${printsLang}") { id variants_detailed { type foil stamp size } }
 }`
 }
 
 interface RawSetDetails {
-  cards?: (RawCard & { rarity?: string | null })[] | null
+  cards?: (RawCard & { rarity?: string | null; dexId?: number[] | null })[] | null
   prints?: { id: string; variants_detailed?: RawVariant[] | null }[] | null
 }
 
@@ -279,6 +279,8 @@ export function createTcgdexClient({
         .map((raw): CardDetail => {
           const detail: CardDetail = { ...toCard(raw), variants: variantsOf(printsById.get(raw.id) ?? []) }
           if (raw.rarity) detail.rarity = raw.rarity
+          const dexNumbers = (raw.dexId ?? []).filter((number) => Number.isInteger(number) && number > 0)
+          if (dexNumbers.length > 0) detail.dexNumber = Math.min(...dexNumbers)
           return detail
         }),
     )

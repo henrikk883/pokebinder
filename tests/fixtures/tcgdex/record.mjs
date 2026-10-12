@@ -78,7 +78,7 @@ for (const [setId, lang] of [
   const cards = `cards(filters: { id: "${setId}-" }, pagination: { page: 1, itemsPerPage: 1000 })`
   const printsLang = lang === 'ja' ? 'ja' : 'en'
   const query = `{
-  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity }
+  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity dexId }
   prints: ${cards} @locale(lang: "${printsLang}") { id variants_detailed { type foil stamp size } }
 }`
   const response = await fetch(`${API}/graphql`, {

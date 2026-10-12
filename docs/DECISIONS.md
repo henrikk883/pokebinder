@@ -217,6 +217,18 @@ Gibt es Binder und wurde noch nie oder seit 14 Tagen nicht mehr alles gesichert,
 ## 2026-10-12 – Karten aus der Suche landen in ihrer Grundvariante
 Beim Ablegen schlägt die App die Varianten der Karte nach und setzt „normal“, wenn es sie gibt, sonst „holo“. Die Abfrage startet schon beim Aufnehmen der Karte; dauert sie länger als 1,5 Sekunden oder schlägt fehl, landet die Karte als „normal“. Ersetzt die frühere Regel, dass Karten aus der Suche immer „normal“ sind. Von Henrik gewünscht.
 
+## 2026-10-12 – Binder umbenennen
+Über „Mehr“ → „Binder umbenennen“ im Editor und über „Umbenennen“ in „Meine Binder“. Der Cover-Titel zieht mit, solange er noch dem Binder-Namen entspricht; ein eigens gesetzter Titel bleibt. Von Henrik gewünscht.
+
+## 2026-10-12 – Werkzeugleiste mit Menü „Mehr“
+Sichtbar bleiben Sortieren, Fehlliste, Als PNG, Rückgängig/Wiederholen und „+ Seite“. Unter „Mehr“ liegen „Binder umbenennen“, „Master Set anpassen“ und die Layout-Wahl (das aktuelle Layout ist abgehakt). Grund: Die Leiste brach in zwei Zeilen um und nahm dem Binder Platz. Weicht vom Mockup ab, das die Layout-Auswahl direkt in der Leiste zeigt. Von Henrik gewünscht.
+
+## 2026-10-12 – Eigene Dialoge statt Browser-Rückfragen
+Seite löschen, Binder löschen und Layout ändern fragen in einem Fenster im App-Design nach; beim Löschen ist der Bestätigungsknopf rot und „Abbrechen“ vorausgewählt. Ersetzt die Regel „Rückfragen über den Browser-Dialog“ weiter oben.
+
+## 2026-10-12 – Sortieren nach Pokédex-Nummer
+Zweite Gruppe im Menü „Sortieren“, für eine Seite oder den ganzen Binder. Die Nummer kommt mit den Kartendaten von TCGdex; bei Karten mit mehreren Pokémon zählt die niedrigste. Karten desselben Pokémon liegen nach Set, Nummer und Variante beieinander; Karten ohne Nummer (Trainer, Energie) kommen ans Ende. Von Henrik gewünscht.
+
 ## 2026-10-12 – Playwright-Tests auf eigenem Port
 Die Tests starten ihren Server auf Port 5174. Auf 5173 läuft die App selbst; ein dort laufender älterer Stand war von den Tests versehentlich mitbenutzt worden.
 

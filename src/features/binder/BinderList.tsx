@@ -4,7 +4,8 @@ import { de } from '../../i18n/de'
 import { binderStore, useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
-import { countCards } from './binderModel'
+import { confirmDialog, promptDialog } from '../../store/dialogStore'
+import { countCards, renameBinder } from './binderModel'
 import { NewBinderDialog } from './NewBinderDialog'
 
 type Listing = { status: 'loading' } | { status: 'ready'; binders: Binder[] } | { status: 'error' }
@@ -37,8 +38,26 @@ export function BinderList() {
     }
   }, [version, listVersion])
 
+  async function handleRename(binder: Binder) {
+    const name = await promptDialog({
+      title: de.binder.rename,
+      label: de.newBinder.name,
+      value: binder.name,
+      confirmLabel: de.binder.renameConfirm,
+    })
+    if (name === null) return
+    await binderRepository.saveBinder(renameBinder(binder, name))
+    setVersion((current) => current + 1)
+  }
+
   async function handleDelete(binder: Binder) {
-    if (!window.confirm(de.binderList.confirmDelete(binder.name))) return
+    const agreed = await confirmDialog({
+      title: de.binderList.deleteTitle(binder.name),
+      text: de.binderList.confirmDelete,
+      confirmLabel: de.binderList.delete,
+      danger: true,
+    })
+    if (!agreed) return
     await binderRepository.deleteBinder(binder.id)
     setVersion((current) => current + 1)
     // others that count binders (the backup reminder) should notice too
@@ -90,6 +109,14 @@ export function BinderList() {
                   {' · '}
                   {dateFormat.format(new Date(binder.updatedAt))}
                 </span>
+              </button>
+              <button
+                type="button"
+                aria-label={de.binderList.renameLabel(binder.name)}
+                onClick={() => handleRename(binder)}
+                className="h-9 shrink-0 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent"
+              >
+                {de.binderList.rename}
               </button>
               <button
                 type="button"

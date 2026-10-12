@@ -294,6 +294,21 @@ export function changeLayout(
   return { ...withPages(binder, pages, ctx), layout }
 }
 
+/**
+ * Gives the binder another name. The cover title follows as long as it is still the
+ * binder's name; a title that was set on its own stays.
+ */
+export function renameBinder(
+  binder: Binder,
+  name: string,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const trimmed = name.trim()
+  if (trimmed === '' || trimmed === binder.name) return binder
+  const cover = binder.cover.title === binder.name ? { ...binder.cover, title: trimmed } : binder.cover
+  return { ...binder, name: trimmed, cover, updatedAt: ctx.now() }
+}
+
 /** Changes the print finish of the card in a pocket. */
 export function setVariant(
   binder: Binder,

@@ -8,6 +8,7 @@ import {
   createBinder,
   moveCard,
   removePage,
+  renameBinder,
   setCard,
   setCardLang,
   setOpeningSide,
@@ -15,6 +16,7 @@ import {
   setVariant,
   sortCards,
   type NewBinderInput,
+  type PlacedCard,
 } from '../features/binder/binderModel'
 import { applyDrop, type DragSource, type DropTarget } from '../features/binder/dragDrop'
 import { createCardComparator } from '../features/binder/sorting'
@@ -65,6 +67,9 @@ export interface BinderState {
   adoptBinder: (binder: Binder) => void
   /** Takes over a reworked version of the open binder, e.g. a rebuilt master set. */
   replaceContent: (binder: Binder) => void
+  renameBinder: (name: string) => void
+  /** Sorts one page (or, without `pageId`, the whole binder) in the given order. */
+  sortCardsBy: (scope: { pageId?: string }, compare: (a: PlacedCard, b: PlacedCard) => number) => void
   setVariant: (position: SlotPosition, variant: CardVariant) => void
   setCardLang: (position: SlotPosition, lang: CardLang) => void
   addPage: () => void
@@ -206,6 +211,8 @@ export function createBinderStore(deps: BinderStoreDeps) {
       },
       replaceContent: (next) =>
         change((binder) => (next.id === binder.id ? normalizeImages(next) : binder)),
+      renameBinder: (name) => change((binder) => renameBinder(binder, name)),
+      sortCardsBy: (scope, compare) => change((binder) => sortCards(binder, scope, compare)),
       setVariant: (position, variant) => change((binder) => setVariant(binder, position, variant)),
       setCardLang: (position, lang) => change((binder) => setCardLang(binder, position, lang)),
       addPage: () => change((binder) => addPage(binder)),

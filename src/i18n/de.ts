@@ -89,6 +89,9 @@ export const de = {
     unpriced: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} ohne Preis`,
     failed: 'Die Preise konnten nicht geladen werden.',
   },
+  dialog: {
+    cancel: 'Abbrechen',
+  },
   png: {
     button: 'Als PNG',
     busy: (done: number, total: number) => `PNG ${Math.min(done + 1, total)} / ${total} …`,
@@ -210,8 +213,10 @@ export const de = {
     open: (name: string) => `${name} öffnen`,
     delete: 'Löschen',
     deleteLabel: (name: string) => `${name} löschen`,
-    confirmDelete: (name: string) =>
-      `Binder „${name}“ wirklich löschen? Das lässt sich nicht rückgängig machen.`,
+    deleteTitle: (name: string) => `Binder „${name}“ löschen?`,
+    confirmDelete: 'Der Binder wird mit allen Seiten und Karten gelöscht. Das lässt sich nicht rückgängig machen.',
+    rename: 'Umbenennen',
+    renameLabel: (name: string) => `${name} umbenennen`,
     summary: (layout: string, pageCount: number, cardCount: number) =>
       `${layout.replace('x', ' × ')} · ${pageCount} ${pageCount === 1 ? 'Seite' : 'Seiten'} · ${cardCount} ${cardCount === 1 ? 'Karte' : 'Karten'}`,
     loadFailed: 'Die Binder konnten nicht geladen werden.',
@@ -241,10 +246,20 @@ export const de = {
   binder: {
     layout: 'Layout',
     confirmLayout:
-      'Layout ändern? Die Karten bleiben in ihrer Reihenfolge und werden neu auf die Seiten verteilt. Eigene Bilder auf den Seiten gehen dabei verloren.',
+      'Die Karten bleiben in ihrer Reihenfolge und werden neu auf die Seiten verteilt. Eigene Bilder auf den Seiten gehen dabei verloren.',
     sort: 'Sortieren',
+    sortBySet: 'Nach Set und Nummer',
+    sortByDex: 'Nach Pokédex-Nummer',
     sortPage: (page: number) => `Seite ${page} sortieren`,
     sortBinder: 'Ganzen Binder sortieren',
+    sortPageByDex: (page: number) => `Seite ${page} nach Pokédex`,
+    sortBinderByDex: 'Ganzen Binder nach Pokédex',
+    more: 'Mehr',
+    rename: 'Binder umbenennen',
+    renameConfirm: 'Umbenennen',
+    layoutTitle: (layout: string) => `Layout auf ${layout} ändern?`,
+    layoutConfirm: 'Layout ändern',
+    deletePageTitle: (page: number) => `Seite ${page} löschen?`,
     sortFailed: 'Sortieren braucht die Set-Liste von TCGdex. Besteht eine Internetverbindung?',
     addPage: 'Seite',
     addPageLabel: 'Seite hinzufügen',
@@ -272,7 +287,7 @@ export const de = {
     deletePage: 'Seite löschen',
     deletePageLabel: (page: number) => `Seite ${page} löschen`,
     confirmDeletePage: (page: number) =>
-      `Seite ${page} mit allen Karten darauf löschen? Die folgenden Seiten rücken nach.`,
+      `Seite ${page} wird mit allen Karten darauf gelöscht. Die folgenden Seiten rücken nach.`,
     pocket: (page: number, position: number) => `Pocket ${position} auf Seite ${page}`,
     pocketWithCard: (page: number, position: number, name: string) =>
       `Pocket ${position} auf Seite ${page}: ${name}`,

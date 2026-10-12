@@ -8,6 +8,7 @@ import { restoreLastBinder } from '../store/binderStore'
 import { AppFooter } from './AppFooter'
 import { AppHeader } from './AppHeader'
 import { AppLayout } from './AppLayout'
+import { DialogHost } from './DialogHost'
 
 export function App() {
   useEffect(() => {
@@ -25,6 +26,7 @@ export function App() {
         right={<SelectionPanel />}
         footer={<AppFooter />}
       />
+      <DialogHost />
     </CardDragLayer>
   )
 }
