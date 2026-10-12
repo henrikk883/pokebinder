@@ -42,7 +42,7 @@ function LibraryImage({ asset, number, draggable, onDelete }: LibraryImageProps)
         type="button"
         aria-label={de.images.deleteLabel(number)}
         onClick={onDelete}
-        className="absolute top-1 right-1 rounded-control border border-danger/70 bg-bg/90 px-1.5 py-0.5 text-[0.65rem] font-medium text-danger opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+        className="absolute top-1 right-1 rounded-control border border-danger/70 bg-bg/90 px-1.5 py-0.5 text-[0.65rem] font-medium text-danger opacity-0 group-hover:opacity-100 focus-visible:opacity-100 touch:px-2.5 touch:py-1.5 touch:text-xs touch:opacity-100"
       >
         {de.images.delete}
       </button>

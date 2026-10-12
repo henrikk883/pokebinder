@@ -1,3 +1,4 @@
+import { newId } from '../../lib/id'
 import {
   DEFAULT_LANG,
   type Binder,
@@ -73,7 +74,7 @@ export interface ModelContext {
 }
 
 export const defaultContext: ModelContext = {
-  newId: () => crypto.randomUUID(),
+  newId,
   now: () => new Date().toISOString(),
 }
 

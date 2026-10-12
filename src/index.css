@@ -27,6 +27,9 @@
   --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* Devices used by finger: no mouse that could point at something without pressing it. */
+@custom-variant touch (@media (hover: none));
+
 /*
  * Holo effect: a foil card in the binder tips towards the mouse and shows a glare where it
  * points. The component sets --holo-x / --holo-y (pointer position) and the two tilt angles.
@@ -36,8 +39,15 @@
     transition: transform 150ms ease-out;
   }
 
-  .holo-card:hover {
-    transform: perspective(600px) rotateX(var(--holo-tilt-x, 0deg)) rotateY(var(--holo-tilt-y, 0deg));
+  /* Only under a mouse: a finger leaves ":hover" behind on the card it tapped last. */
+  @media (hover: hover) {
+    .holo-card:hover {
+      transform: perspective(600px) rotateX(var(--holo-tilt-x, 0deg)) rotateY(var(--holo-tilt-y, 0deg));
+    }
+
+    .holo-card:hover .holo-shine {
+      opacity: 1;
+    }
   }
 
   .holo-shine {
@@ -67,10 +77,6 @@
     background-position:
       0 0,
       var(--holo-x, 50%) var(--holo-y, 50%);
-  }
-
-  .holo-card:hover .holo-shine {
-    opacity: 1;
   }
 
   /* the glare stays, the movement goes */
@@ -111,5 +117,28 @@
     color: var(--color-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+/*
+ * By finger. Not in a layer, so that these win over the utility classes.
+ * - Holding a finger on a card picks it up; it must not select text or open the menu
+ *   Safari offers for pictures.
+ * - Safari zooms into the page when a field with small type is tapped; from 16px on it
+ *   leaves the page alone.
+ */
+@media (hover: none) {
+  body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    -webkit-user-select: text;
+    user-select: text;
   }
 }

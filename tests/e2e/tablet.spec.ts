@@ -1,0 +1,177 @@
+import type { CDPSession, Locator, Page } from '@playwright/test'
+import { expect, test } from './fixtures'
+
+// An iPad in landscape: no mouse, fingers only, and too narrow for three columns.
+test.use({ viewport: { width: 1180, height: 820 }, hasTouch: true })
+
+let cdp: CDPSession
+
+async function centre(locator: Locator) {
+  await locator.scrollIntoViewIfNeeded()
+  const bounds = await locator.boundingBox()
+  if (!bounds) throw new Error('Element is not visible')
+  return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 }
+}
+
+const finger = (type: string, points: { x: number; y: number }[]) =>
+  cdp.send('Input.dispatchTouchEvent', {
+    type: type as 'touchStart',
+    touchPoints: points.map((point) => ({ x: Math.round(point.x), y: Math.round(point.y) })),
+  })
+
+/** Moves a finger from one point to another; `holdMs` is how long it rests before it moves. */
+async function fingerPath(
+  page: Page,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  holdMs: number,
+) {
+  await finger('touchStart', [from])
+  if (holdMs > 0) await page.waitForTimeout(holdMs)
+  const steps = 12
+  for (let step = 1; step <= steps; step++) {
+    await finger('touchMove', [
+      { x: from.x + ((to.x - from.x) * step) / steps, y: from.y + ((to.y - from.y) * step) / steps },
+    ])
+    await page.waitForTimeout(16)
+  }
+  await finger('touchEnd', [])
+}
+
+/** Holds a finger on `from` until it is picked up, then carries it to `to`. */
+async function holdAndDrag(page: Page, from: Locator, to: Locator) {
+  await fingerPath(page, await centre(from), await centre(to), 450)
+}
+
+function pocket(page: Page, pageNumber: number, position: number): Locator {
+  return page
+    .getByRole('region', { name: `Seite ${pageNumber}`, exact: true })
+    .getByTestId('pocket')
+    .nth(position - 1)
+}
+
+async function createBinder(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Neuer Binder' }).tap()
+  const dialog = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await dialog.getByLabel('Name').fill(name)
+  await dialog.getByRole('button', { name: 'Anlegen' }).tap()
+  await expect(page.getByRole('heading', { name })).toBeVisible()
+}
+
+async function searchFor(page: Page, text: string) {
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill(text)
+  await expect(page.getByTestId('card-tile').first()).toBeVisible()
+}
+
+test.beforeEach(async ({ page }) => {
+  cdp = await page.context().newCDPSession(page)
+  // what a tablet tells the page: nothing can hover, and what points is coarse
+  await cdp.send('Emulation.setEmulatedMedia', {
+    features: [
+      { name: 'hover', value: 'none' },
+      { name: 'pointer', value: 'coarse' },
+    ],
+  })
+  await page.goto('/')
+})
+
+test('the right column is folded away and comes over the binder at the push of its tab', async ({ page }) => {
+  await createBinder(page, 'Tablet')
+  const right = page.getByTestId('column-right')
+  await expect(right).toBeHidden()
+  // the binder has the room of two columns
+  const centreBox = await page.getByTestId('column-center').boundingBox()
+  expect(centreBox?.width).toBeCloseTo(1180 - 300, 0)
+
+  await pocket(page, 1, 1).tap()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('aria-pressed', 'true')
+  await expect(right).toBeHidden()
+
+  await page.getByRole('button', { name: 'Auswahl einblenden' }).tap()
+  await expect(right).toBeVisible()
+  await expect(right.getByRole('button', { name: 'Pocket leeren' })).toBeVisible()
+  const rightBox = await right.boundingBox()
+  expect(rightBox?.width).toBeCloseTo(300, 0)
+  expect((rightBox?.x ?? 0) + (rightBox?.width ?? 0)).toBeCloseTo(1180, 0)
+
+  await page.getByRole('button', { name: 'Auswahl ausblenden' }).tap()
+  await expect(right).toBeHidden()
+})
+
+test('a card is picked up by holding a finger on it and dropped into a pocket', async ({ page }) => {
+  await createBinder(page, 'Finger')
+  await searchFor(page, 'Glurak')
+  const tile = page.getByTestId('card-tile').first()
+  const cardId = await tile.getAttribute('data-card-id')
+
+  await holdAndDrag(page, tile.locator('> div'), pocket(page, 1, 5))
+  await expect(pocket(page, 1, 5)).toHaveAttribute('data-card-id', cardId ?? '')
+
+  // and on to another pocket
+  await holdAndDrag(page, pocket(page, 1, 5), pocket(page, 1, 9))
+  await expect(pocket(page, 1, 9)).toHaveAttribute('data-card-id', cardId ?? '')
+  await expect(pocket(page, 1, 5)).toHaveAttribute('data-card-id', '')
+})
+
+test('a swipe over the search results scrolls them and picks nothing up', async ({ page }) => {
+  await createBinder(page, 'Wischen')
+  await searchFor(page, 'Glurak')
+  const list = page.getByTestId('search-results')
+  const scrolled = () => list.evaluate((element) => element.scrollTop)
+  expect(await scrolled()).toBe(0)
+
+  // from a card in the lower part of the list straight up, without resting on it
+  const start = await centre(page.getByTestId('card-tile').nth(2))
+  await fingerPath(page, start, { x: start.x, y: start.y - 300 }, 0)
+
+  await expect.poll(scrolled).toBeGreaterThan(100)
+  await expect(page.locator('[data-testid="pocket"]:not([data-card-id=""])')).toHaveCount(0)
+})
+
+test('a tapped card shows the button for "missing", large enough for a finger', async ({ page }) => {
+  await createBinder(page, 'Tippen')
+  await searchFor(page, 'Glurak')
+  await holdAndDrag(page, page.getByTestId('card-tile').first().locator('> div'), pocket(page, 1, 1))
+  await holdAndDrag(page, page.getByTestId('card-tile').nth(1).locator('> div'), pocket(page, 1, 2))
+  await expect(pocket(page, 1, 2)).not.toHaveAttribute('data-card-id', '')
+
+  // the drop selected pocket 2: its button shows, the one of pocket 1 does not
+  const opacity = (position: number) =>
+    pocket(page, 1, position)
+      .getByRole('button', { name: /als fehlend|als vorhanden/i })
+      .evaluate((button) => getComputedStyle(button).opacity)
+  await expect.poll(() => opacity(2)).toBe('1')
+  expect(await opacity(1)).toBe('0')
+
+  await pocket(page, 1, 1).tap()
+  await expect.poll(() => opacity(1)).toBe('1')
+  const toggle = pocket(page, 1, 1).getByRole('button', { name: /als fehlend|als vorhanden/i })
+  const size = await toggle.boundingBox()
+  expect(size?.height).toBeGreaterThanOrEqual(28)
+
+  await toggle.tap()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'false')
+  await toggle.tap()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'true')
+})
+
+test('binders on the shelf are rearranged by finger', async ({ page }) => {
+  for (const name of ['Erster', 'Zweiter']) {
+    await createBinder(page, name)
+    await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).tap()
+  }
+  const shelf = () =>
+    page
+      .getByTestId('binder-tile')
+      .evaluateAll((tiles) => tiles.map((entry) => entry.getAttribute('data-binder-name')))
+  await page.getByRole('combobox', { name: 'Sortierung' }).selectOption({ label: 'Eigene Reihenfolge' })
+  await expect.poll(shelf).toEqual(['Zweiter', 'Erster'])
+  // without a mouse the buttons of every binder are there all the time
+  await expect(page.getByRole('button', { name: 'Erster umbenennen' })).toHaveCSS('opacity', '1')
+
+  const tile = (name: string) => page.locator(`[data-testid="binder-tile"][data-binder-name="${name}"]`)
+  await holdAndDrag(page, tile('Erster').getByTestId('binder-cover'), tile('Zweiter'))
+  await expect.poll(shelf).toEqual(['Erster', 'Zweiter'])
+  // letting go did not open the binder
+  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+})

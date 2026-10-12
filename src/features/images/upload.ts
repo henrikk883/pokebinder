@@ -1,3 +1,4 @@
+import { newId } from '../../lib/id'
 import type { Asset } from '../../types/binder'
 import { fitWithin } from './imageModel'
 
@@ -43,7 +44,7 @@ export async function fileToAsset(file: File): Promise<Asset> {
       })
     }
     return {
-      id: crypto.randomUUID(),
+      id: newId(),
       blob,
       mimeType: blob.type || file.type,
       width: size.width,

@@ -1,10 +1,7 @@
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
   pointerWithin,
-  useSensor,
-  useSensors,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
@@ -18,6 +15,7 @@ import { CardImage } from '../search/CardImage'
 import type { CardLang } from '../../types/binder'
 import { useReadyCatalog } from '../search/useCatalog'
 import { isDragSource, isDropTarget, withFallback, type DragSource } from './dragDrop'
+import { useDragSensors } from './dragSensors'
 import { useCard } from './useCard'
 
 /** A dropped card does not wait longer than this for its finish; it then lands as normal. */
@@ -47,8 +45,7 @@ function AssetPreview({ assetId }: { assetId: string }) {
 /** Makes cards and library images draggable into pockets, anywhere below it. */
 export function CardDragLayer({ children }: { children: ReactNode }) {
   const [dragging, setDragging] = useState<DragSource | null>(null)
-  // a few pixels of movement tell a drag from a click on a card
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const sensors = useDragSensors()
 
   function handleStart(event: DragStartEvent) {
     const source: unknown = event.active.data.current

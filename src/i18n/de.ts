@@ -306,6 +306,10 @@ export const de = {
     markOwnedLabel: 'Als vorhanden markieren',
     unknownCard: 'Unbekannte Karte',
   },
+  layout: {
+    showSelection: 'Auswahl einblenden',
+    hideSelection: 'Auswahl ausblenden',
+  },
   selection: {
     title: 'Auswahl',
     empty: 'Kein Pocket ausgewählt.',

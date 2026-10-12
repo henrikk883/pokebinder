@@ -1,11 +1,8 @@
 import {
   DndContext,
-  PointerSensor,
   pointerWithin,
   useDraggable,
   useDroppable,
-  useSensor,
-  useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { useEffect, useState } from 'react'
@@ -27,6 +24,7 @@ import {
   type BinderSort,
   type ShelfPrefs,
 } from './binderOrder'
+import { useDragSensors } from './dragSensors'
 import { NewBinderDialog } from './NewBinderDialog'
 
 type Listing = { status: 'loading' } | { status: 'ready'; binders: Binder[] } | { status: 'error' }
@@ -91,7 +89,7 @@ function BinderTile({ binder, movable, isFirst, isLast, onOpen, onRename, onDele
         {...(movable ? draggable.listeners : undefined)}
         aria-label={de.binderList.open(binder.name)}
         onClick={onOpen}
-        className={`group block w-full text-left ${movable ? 'cursor-grab touch-none active:cursor-grabbing' : ''}`}
+        className={`group block w-full text-left ${movable ? 'cursor-grab active:cursor-grabbing' : ''}`}
       >
         <BinderCover binder={binder} />
         <span className="mt-3 block truncate text-base font-medium group-hover:text-accent-hover">
@@ -155,7 +153,7 @@ export function BinderList() {
   const [version, setVersion] = useState(0)
   const [prefs, setPrefs] = useState(readShelfPrefs)
   const listVersion = useEditorStore((state) => state.binderListVersion)
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const sensors = useDragSensors()
 
   useEffect(() => {
     let cancelled = false

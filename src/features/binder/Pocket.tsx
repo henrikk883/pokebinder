@@ -39,9 +39,10 @@ interface PocketCardProps {
   position: SlotPosition
   cardRef: CardRef
   owned: boolean
+  selected: boolean
 }
 
-function PocketCard({ position, cardRef, owned }: PocketCardProps) {
+function PocketCard({ position, cardRef, owned, selected }: PocketCardProps) {
   const { cardId, variant, lang } = cardRef
   const card = useCard(cardId, lang)
   const catalog = useReadyCatalog(lang)
@@ -118,7 +119,11 @@ function PocketCard({ position, cardRef, owned }: PocketCardProps) {
           event.stopPropagation()
           setOwned(position, !owned)
         }}
-        className="absolute top-1 right-1 rounded-control border border-line bg-bg/90 px-1.5 py-0.5 text-[0.65rem] font-medium opacity-0 group-hover:opacity-100 hover:border-accent focus-visible:opacity-100"
+        // Under the mouse it shows on the card pointed at. A finger cannot point: there it
+        // shows on the card that was tapped, and is large enough to hit.
+        className={`absolute top-1 right-1 rounded-control border border-line bg-bg/90 px-1.5 py-0.5 text-[0.65rem] font-medium opacity-0 group-hover:opacity-100 hover:border-accent focus-visible:opacity-100 touch:px-2.5 touch:py-1.5 touch:text-xs ${
+          selected ? 'touch:opacity-100' : 'touch:pointer-events-none'
+        }`}
       >
         {owned ? de.binder.markMissing : de.binder.markOwned}
       </button>
@@ -209,6 +214,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
           position={position}
           cardRef={slot.cardRef}
           owned={slot.owned}
+          selected={selected}
         />
       ) : (
         !overImage && <EmptyPocketIcon />

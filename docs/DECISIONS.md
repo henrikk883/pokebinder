@@ -273,3 +273,10 @@ Liegt in einem Pocket ein eigenes Bild (und keine Karte), werden im PNG der Stri
 
 ## 2026-10-12 – Bilder im Binder verschieben
 Ein eingesetztes Bild wird an einem seiner Pockets gegriffen und auf einem anderen Pocket abgelegt; es verschiebt sich um genau diese Strecke, Größe und Zuschnitt bleiben. Das geht auch auf die gegenüberliegende Seite und über die Ringe. Passt es am Ziel nicht (Rand, anderes Bild), bleibt es liegen und der bekannte Hinweis erscheint. Karten bleiben in ihren Pockets; liegt in einem Pocket eine Karte, wird dort wie bisher die Karte gezogen, das Bild greift man an einem leeren Pocket. Im Sammlungsmodus wird nichts verschoben. Von Henrik gewünscht.
+
+## 2026-10-12 – Bedienung per Finger (Tablet)
+- Ziehen: mit der Maus sofort (ab 6 px Bewegung), mit dem Finger nach 250 ms Halten (dnd-kit `MouseSensor` + `TouchSensor` statt `PointerSensor`). Ohne die Wartezeit ließen sich die Listen nicht scrollen, ohne eine Karte zu greifen.
+- „Tablet“ heißt: das Gerät hat keinen Mauszeiger (`@media (hover: none)`, Tailwind-Variante `touch:`), nicht „kleiner Bildschirm“. Dort erscheint der Knopf „Fehlt / Habe ich“ auf der angetippten Karte, „Löschen“ in der Bildbibliothek und die Knöpfe im Regal sind immer sichtbar, der Holo-Effekt kippt nicht, Eingabefelder haben 16 px Schrift (sonst zoomt Safari beim Antippen in die Seite), und langes Halten markiert keinen Text.
+- Unter 1280 px Breite ist die rechte Spalte eingeklappt und schiebt sich über eine Lasche am rechten Rand über den Binder. Hochformat wird nicht eigens unterstützt.
+- IDs kommen aus `src/lib/id.ts`: `crypto.randomUUID` gibt es nur auf https/localhost, nicht, wenn die App im Heimnetz über die IP-Adresse geöffnet wird.
+- Auf dem iPad von Henrik getestet und freigegeben.
