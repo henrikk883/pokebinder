@@ -6,6 +6,7 @@ Private Web-App zum Planen von Pokémon-Karten-Bindern: Karten aus TCGdex suchen
 
 - `REQUIREMENTS.md` – alle Anforderungen, Datenmodell, Stack und die Phasen mit Definition of Done. Bei Widerspruch gilt REQUIREMENTS.md.
 - `docs/mockup.png` – verbindliche Vorlage für Layout und Optik. Vor jeder UI-Arbeit ansehen.
+- `docs/BUGS.md` – die Fehlerliste: jeder gemeldete Fehler mit Stand, bis er behoben und bestätigt ist (seit 12.10.2026; neben Henrik nutzen drei Freunde die App).
 - `docs/DECISIONS.md` – hier jede Entscheidung festhalten, die REQUIREMENTS.md offen lässt (Datum, Entscheidung, Grund, ein bis zwei Zeilen).
 
 ## Arbeitsweise
