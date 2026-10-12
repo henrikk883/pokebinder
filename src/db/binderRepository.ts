@@ -40,6 +40,11 @@ export function createBinderRepository(database: PokeBinderDatabase = db) {
       )
     },
 
+    /** Which images are stored, without reading them. */
+    async listAssetIds(): Promise<string[]> {
+      return database.assets.toCollection().primaryKeys()
+    },
+
     async deleteAsset(id: string): Promise<void> {
       await database.assets.delete(id)
     },

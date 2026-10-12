@@ -1,4 +1,5 @@
-import type { Binder } from '../../types/binder'
+import type { Asset, Binder } from '../../types/binder'
+import { referencedAssetIds } from '../export/backup'
 import { mergeWatchlists, parseWatchlists, savedCardCount, type Watchlist } from '../search/watchlist'
 import type { SyncApi } from './syncApi'
 import { planSync } from './syncPlan'
@@ -12,6 +13,12 @@ export interface SyncDeps {
     load(id: string): Promise<Binder | undefined>
     save(binder: Binder): Promise<void>
     remove(id: string): Promise<void>
+  }
+  /** The collector's own images, which binders refer to by id. */
+  assets: {
+    ids(): Promise<string[]>
+    load(ids: string[]): Promise<Asset[]>
+    save(assets: Asset[]): Promise<void>
   }
   /** Checks a binder that came from the server; throws if it cannot be used. */
   readBinder: (value: unknown) => Binder
@@ -40,6 +47,8 @@ export interface SyncResult {
   conflicts: SyncConflict[]
   /** Binders of this device that were replaced, added or removed. */
   changed: string[]
+  /** How many images this device was missing and now has. */
+  imagesFetched: number
 }
 
 /** Lists that hold nothing are not worth sending anywhere. */
@@ -92,6 +101,35 @@ async function syncLists({ api, lists, state: storage, now }: SyncDeps): Promise
 }
 
 /**
+ * Images travel with the binders that use them: what a binder of this device shows is
+ * sent if the server lacks it, and fetched if this device does. Images never change and
+ * are never deleted by a sync; one that no binder uses stays where it is.
+ */
+async function syncImages({ api, binders, assets }: SyncDeps): Promise<number> {
+  const needed = new Set((await binders.list()).flatMap(referencedAssetIds))
+  if (needed.size === 0) return 0
+  const here = new Set(await assets.ids())
+  const there = new Map((await api.listAssets()).map((record) => [record.id, record]))
+
+  let fetched = 0
+  for (const id of needed) {
+    const record = there.get(id)
+    if (here.has(id)) {
+      if (record) continue
+      // one at a time: they can be large
+      const [asset] = await assets.load([id])
+      if (asset) await api.putAsset(asset)
+    } else if (record) {
+      const asset = await api.getAsset(record)
+      if (!asset) continue
+      await assets.save([asset])
+      fetched++
+    }
+  }
+  return fetched
+}
+
+/**
  * Brings the binders and lists of this device in line with the server's, for the
  * collector who is signed in. What can be settled without asking is settled; binders
  * changed on both sides are reported and left alone until `decisions` says which to keep.
@@ -112,7 +150,7 @@ export async function runSync(deps: SyncDeps, email: string, decisions: SyncDeci
   const base = new Map(Object.entries(state.base))
   /** Deletions made here that need no more remembering. */
   const settled = new Set<string>()
-  const result: SyncResult = { conflicts: [], changed: [] }
+  const result: SyncResult = { conflicts: [], changed: [], imagesFetched: 0 }
 
   // what is the same on both sides is agreed on from now
   for (const binder of local) {
@@ -187,5 +225,6 @@ export async function runSync(deps: SyncDeps, email: string, decisions: SyncDeci
   }
 
   await syncLists(deps)
+  result.imagesFetched = await syncImages(deps)
   return result
 }

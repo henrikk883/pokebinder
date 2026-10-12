@@ -117,7 +117,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
     - Die Kopfzeile zeigt den Stand („Abgeglichen“, „Ohne Verbindung“ …); das Menü dahinter bietet „Jetzt abgleichen“ und „Abmelden“.
     - Wurde ein Binder auf zwei Geräten geändert, überschreibt die App nichts, sondern fragt, welche Fassung gelten soll. Eine Änderung gewinnt immer gegen eine Löschung auf dem anderen Gerät.
     - Merklisten, die auf zwei Geräten geändert wurden, werden zusammengeführt.
-    - Eigene Bilder gleichen sich noch nicht ab (siehe „Offen“).
+    - Eigene Bilder wandern mit den Bindern, in denen sie liegen (auch das Cover-Bild). Ein Bild, das in keinem Binder liegt, bleibt auf seinem Gerät.
 
 ### Karten ohne Bild
 
@@ -234,5 +234,4 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Mit Henrik am 12.10.2026 vereinbart, in dieser Reihenfolge:
 
-1. **Abgleich zwischen Geräten, Rest:** Binder und Merklisten gleichen sich ab (Punkt 20). Offen: die eigenen Bilder – bis dahin zeigt ein Binder auf einem zweiten Gerät an ihrer Stelle leere Pockets.
-2. **Landing Page:** eine Einstiegsseite, die sich an Handy und PC anpasst; Entwurf von Henrik unter `docs/`.
+1. **Landing Page:** eine Einstiegsseite, die sich an Handy und PC anpasst; Entwurf von Henrik unter `docs/`.

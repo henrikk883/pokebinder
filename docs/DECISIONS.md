@@ -420,3 +420,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Ein heruntergeladener Binder läuft durch dieselbe Prüfung wie ein Backup (`readBinder`); was sie nicht besteht, wird nicht übernommen. Liegt der Binder gerade offen und wurde währenddessen nicht angefasst, wird er neu geöffnet bzw. weggelegt.
 - `nextBase` aus Schritt 1 entfällt: Der Stand wird Aktion für Aktion fortgeschrieben, damit ein Abgleich, der mittendrin abbricht, das Erledigte behält.
 - Tests: die App-Seite des Abgleichs gegen den echten Server-Code mit zwei „Geräten“ (`worker/syncRoundTrip.test.ts`), dazu Playwright mit nachgestellter Schnittstelle (`tests/e2e/sync.spec.ts`).
+
+## 2026-10-12 – Abgleich zwischen Geräten, Schritt 3: eigene Bilder
+- Bilder wandern mit den Bindern: Was ein Binder dieses Geräts zeigt (Pockets und Cover), wird hochgeladen, wenn es dem Server fehlt, und geholt, wenn es dem Gerät fehlt. Nach den Bindern und Merklisten, ein Bild nach dem anderen.
+- Ein Bild, das in keinem Binder liegt, bleibt auf seinem Gerät. So kommt ein aus der Bibliothek gelöschtes Bild nicht vom Server zurück, und der Abgleich muss nie Bilder löschen. Auf dem Server bleiben nicht mehr benutzte Bilder liegen; bei wenigen Sammlern fällt das nicht ins Gewicht.
+- Bilder ändern sich unter ihrer Kennung nie, darum gibt es hier keine Konflikte.
+- Was der Server nicht annähme (anderes Format als JPEG/PNG/WebP, über 12 MB), schickt die App gar nicht erst, statt es bei jedem Abgleich erneut zu versuchen; der Binder selbst gleicht sich trotzdem ab.

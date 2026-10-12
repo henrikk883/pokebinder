@@ -6,7 +6,8 @@ import { QUICK_LIST_ID, type Watchlist } from '../src/features/search/watchlist'
 import { createSyncApi, SignedOutError, type Send } from '../src/features/sync/syncApi'
 import { runSync, type SyncDeps } from '../src/features/sync/syncRun'
 import { EMPTY_SYNC_STATE, withDeleted, withListsChanged, type SyncState } from '../src/features/sync/syncState'
-import type { Binder } from '../src/types/binder'
+import { placeImage, setCover } from '../src/features/images/imageModel'
+import type { Asset, Binder } from '../src/types/binder'
 import { handleApi } from './api'
 import { createD1Store } from './d1Store'
 import type { SyncStore } from './store'
@@ -24,6 +25,7 @@ const tick = () => new Date(Date.UTC(2026, 9, 12, 10, 0, clock++)).toISOString()
 
 interface Device {
   binders: Map<string, Binder>
+  assets: Map<string, Asset>
   lists: Watchlist[]
   state: SyncState
   deps: SyncDeps
@@ -39,6 +41,7 @@ interface Device {
 function device(user = ASH, send?: Send): Device {
   const self: Device = {
     binders: new Map(),
+    assets: new Map(),
     lists: [{ id: QUICK_LIST_ID, name: '', cards: [] }],
     state: EMPTY_SYNC_STATE,
     deps: {
@@ -50,6 +53,11 @@ function device(user = ASH, send?: Send): Device {
         load: (id) => Promise.resolve(self.binders.get(id)),
         save: (binder) => Promise.resolve(void self.binders.set(binder.id, binder)),
         remove: (id) => Promise.resolve(void self.binders.delete(id)),
+      },
+      assets: {
+        ids: () => Promise.resolve([...self.assets.keys()]),
+        load: (ids) => Promise.resolve(ids.flatMap((id) => self.assets.get(id) ?? [])),
+        save: (assets) => Promise.resolve(assets.forEach((asset) => self.assets.set(asset.id, asset))),
       },
       readBinder,
       lists: {
@@ -93,6 +101,28 @@ function device(user = ASH, send?: Send): Device {
 
 const noted = (target: Device) => target.lists.flatMap((list) => list.cards.map((card) => card.cardId)).sort()
 
+const picture = (id: string, bytes: number[], mimeType = 'image/png'): Asset => ({
+  id,
+  blob: new Blob([new Uint8Array(bytes)], { type: mimeType }),
+  mimeType,
+  width: 300,
+  height: 200,
+  createdAt: '2026-10-01T08:00:00.000Z',
+})
+
+const bytesOf = async (asset: Asset | undefined) => (asset ? [...new Uint8Array(await asset.blob.arrayBuffer())] : [])
+
+/** Puts an image of the device's library behind a pocket of a binder's first page. */
+function place(target: Device, binderId: string, asset: Asset, fromSlot = 0): void {
+  target.assets.set(asset.id, asset)
+  const binder = target.binders.get(binderId)
+  const page = binder?.pages[0]
+  if (!binder || !page) throw new Error('no page')
+  const placed = placeImage(binder, page.id, asset.id, { fromSlot, spanCols: 1, spanRows: 1 })
+  if (!placed.ok) throw new Error(placed.error)
+  target.binders.set(binderId, { ...placed.binder, updatedAt: tick() })
+}
+
 beforeEach(() => {
   server = createD1Store(createTestDatabase(), createTestBucket())
   clock = 0
@@ -107,11 +137,11 @@ describe('binders between two devices', () => {
     await pc.sync()
     const result = await phone.sync()
 
-    expect(result).toEqual({ conflicts: [], changed: [kanto.id] })
+    expect(result).toEqual({ conflicts: [], changed: [kanto.id], imagesFetched: 0 })
     expect(phone.binders.get(kanto.id)).toEqual(kanto)
     // and then there is nothing left to do on either side
-    expect(await pc.sync()).toEqual({ conflicts: [], changed: [] })
-    expect(await phone.sync()).toEqual({ conflicts: [], changed: [] })
+    expect(await pc.sync()).toEqual({ conflicts: [], changed: [], imagesFetched: 0 })
+    expect(await phone.sync()).toEqual({ conflicts: [], changed: [], imagesFetched: 0 })
   })
 
   it('carries a change from the device it was made on to the other', async () => {
@@ -197,7 +227,7 @@ describe('binders between two devices', () => {
     await pc.sync()
     expect(pc.names()).toEqual(['Vom PC'])
 
-    expect(await phone.sync({ [kanto.id]: 'local' })).toEqual({ conflicts: [], changed: [] })
+    expect(await phone.sync({ [kanto.id]: 'local' })).toEqual({ conflicts: [], changed: [], imagesFetched: 0 })
     await pc.sync()
     expect(pc.names()).toEqual(['Vom Handy'])
   })
@@ -214,9 +244,9 @@ describe('binders between two devices', () => {
 
     const result = await phone.sync({ [kanto.id]: 'remote' })
 
-    expect(result).toEqual({ conflicts: [], changed: [kanto.id] })
+    expect(result).toEqual({ conflicts: [], changed: [kanto.id], imagesFetched: 0 })
     expect(phone.names()).toEqual(['Vom PC'])
-    expect(await phone.sync()).toEqual({ conflicts: [], changed: [] })
+    expect(await phone.sync()).toEqual({ conflicts: [], changed: [], imagesFetched: 0 })
   })
 
   it('asks about a binder both devices already had before they ever synced', async () => {
@@ -265,6 +295,103 @@ describe('binders between two devices', () => {
     expect(shared.state.user).toBe('misty@example.com')
     // nothing is deleted for that: the binder on the device now belongs to both
     expect(shared.names()).toEqual(['Kanto'])
+  })
+})
+
+describe('images between two devices', () => {
+  it('brings an image along with the binder it lies in, as it was', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    place(pc, kanto.id, picture('forest', [137, 80, 78, 71, 1, 2, 3]))
+
+    await pc.sync()
+    const result = await phone.sync()
+
+    expect(result.imagesFetched).toBe(1)
+    const arrived = phone.assets.get('forest')
+    expect(arrived).toMatchObject({ id: 'forest', mimeType: 'image/png', width: 300, height: 200, createdAt: '2026-10-01T08:00:00.000Z' })
+    expect(await bytesOf(arrived)).toEqual([137, 80, 78, 71, 1, 2, 3])
+    // once is enough
+    expect((await phone.sync()).imagesFetched).toBe(0)
+  })
+
+  it('brings the picture on the cover as well', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    pc.assets.set('cover', picture('cover', [1, 2, 3], 'image/jpeg'))
+    pc.binders.set(kanto.id, { ...setCover(kanto, { title: 'Kanto', assetId: 'cover' }), updatedAt: tick() })
+
+    await pc.sync()
+    await phone.sync()
+
+    expect(await bytesOf(phone.assets.get('cover'))).toEqual([1, 2, 3])
+  })
+
+  it('leaves an image that no binder uses on the device it is on', async () => {
+    const pc = device()
+    const phone = device()
+    pc.create('Kanto')
+    pc.assets.set('unused', picture('unused', [9]))
+
+    await pc.sync()
+    await phone.sync()
+
+    expect(await server.listAssets(ASH)).toEqual([])
+    expect([...phone.assets.keys()]).toEqual([])
+  })
+
+  it('sends an image that is put into a binder later, and copes with one that is gone', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    await pc.sync()
+    await phone.sync()
+
+    place(pc, kanto.id, picture('late', [4, 5]))
+    place(pc, kanto.id, picture('lost', [6]), 1)
+    // deleted from the library by other means: the binder still names it
+    pc.assets.delete('lost')
+    await pc.sync()
+    const result = await phone.sync()
+
+    expect(result).toMatchObject({ changed: [kanto.id], imagesFetched: 1 })
+    expect([...phone.assets.keys()]).toEqual(['late'])
+  })
+
+  it('does not even send what the server would not take', async () => {
+    const pc = device()
+    const kanto = pc.create('Kanto')
+    let sent = 0
+    pc.deps.api = createSyncApi((path, init) => {
+      if (path.startsWith('/api/assets/') && init?.method === 'PUT') sent++
+      return handleApi(new Request(`https://pokebinder.example${path}`, init), ASH, server)
+    })
+    place(pc, kanto.id, picture('moving', [71, 73, 70], 'image/gif'))
+
+    await pc.sync()
+    await pc.sync()
+
+    expect(sent).toBe(0)
+    expect(await server.listAssets(ASH)).toEqual([])
+    // the binder itself is synced all the same
+    expect(await server.listBinders(ASH)).toHaveLength(1)
+  })
+
+  it('keeps the images of one collector from another', async () => {
+    const ash = device()
+    const misty = device('misty@example.com')
+    const kanto = ash.create('Kanto')
+    place(ash, kanto.id, picture('forest', [1]))
+    await ash.sync()
+    // the same binder on the other collector's device, e.g. from a backup file passed on
+    const copy = ash.binders.get(kanto.id)
+    if (copy) misty.binders.set(copy.id, copy)
+
+    await misty.sync()
+
+    expect([...misty.assets.keys()]).toEqual([])
   })
 })
 

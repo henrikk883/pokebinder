@@ -1,4 +1,4 @@
-import type { Binder } from '../../types/binder'
+import type { Asset, Binder } from '../../types/binder'
 import type { RemoteEntry } from './syncPlan'
 
 /** How a request reaches the server; replaced in tests. */
@@ -13,6 +13,20 @@ export type Session =
   /** There is no server part where the app runs (e.g. during development). */
   | { kind: 'unavailable' }
 
+/** An image the server keeps, without the picture itself. */
+export interface RemoteAsset {
+  id: string
+  mimeType: string
+  width: number
+  height: number
+  createdAt?: string
+}
+
+// What the server takes (see worker/api.ts). Asked here first: an image it would refuse
+// is not sent on every sync just to be refused again.
+const SYNCED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_SYNCED_IMAGE_BYTES = 12_000_000
+
 /** The server wants the collector to sign in (again). */
 export class SignedOutError extends Error {}
 
@@ -26,6 +40,11 @@ export interface SyncApi {
   deleteBinder(id: string, deletedAt: string, base: string | null): Promise<boolean>
   getWatchlists(): Promise<{ updatedAt: string | null; lists: unknown }>
   putWatchlists(updatedAt: string, lists: unknown, base: string | null): Promise<boolean>
+  listAssets(): Promise<RemoteAsset[]>
+  /** The picture of an image on record; `undefined` if the server has none. */
+  getAsset(record: RemoteAsset): Promise<Asset | undefined>
+  /** `false` if the server does not take the image (too large, or of a kind it does not keep). */
+  putAsset(asset: Asset): Promise<boolean>
 }
 
 // Whoever is not signed in is sent on to the sign-in page of Cloudflare Access. A request
@@ -116,5 +135,42 @@ export function createSyncApi(send: Send = sendFromBrowser): SyncApi {
     },
 
     putWatchlists: (updatedAt, lists, base) => write('/api/watchlists', 'PUT', { updatedAt, lists, base }),
+
+    async listAssets() {
+      const { assets } = await read('/api/assets')
+      if (!Array.isArray(assets)) throw new Error('sync: no list of images')
+      return (assets as unknown[]).flatMap((entry): RemoteAsset[] => {
+        if (!isRecord(entry)) return []
+        const { id, mimeType, width, height, createdAt } = entry
+        if (typeof id !== 'string' || typeof mimeType !== 'string') return []
+        if (typeof width !== 'number' || typeof height !== 'number') return []
+        return [{ id, mimeType, width, height, ...(typeof createdAt === 'string' ? { createdAt } : {}) }]
+      })
+    },
+
+    async getAsset(record) {
+      const response = await call(`/api/assets/${encodeURIComponent(record.id)}`)
+      if (response.status === 404) return undefined
+      if (!response.ok) throw new Error(`sync: image answered ${response.status}`)
+      const bytes = await response.arrayBuffer()
+      return { ...record, blob: new Blob([bytes], { type: record.mimeType }) }
+    },
+
+    async putAsset(asset) {
+      if (!SYNCED_IMAGE_TYPES.includes(asset.mimeType) || asset.blob.size > MAX_SYNCED_IMAGE_BYTES) return false
+      if (asset.width < 1 || asset.height < 1) return false
+      const query = new URLSearchParams({ width: String(asset.width), height: String(asset.height) })
+      if (asset.createdAt) query.set('createdAt', asset.createdAt)
+      const response = await call(`/api/assets/${encodeURIComponent(asset.id)}?${query.toString()}`, {
+        method: 'PUT',
+        headers: { 'content-type': asset.mimeType },
+        // as bytes: sent the same way by every browser, and readable in tests
+        body: await asset.blob.arrayBuffer(),
+      })
+      // a refusal of this one image must not keep the others from being sent
+      if (response.status >= 400 && response.status < 500) return false
+      if (!response.ok) throw new Error(`sync: image answered ${response.status}`)
+      return true
+    },
   }
 }

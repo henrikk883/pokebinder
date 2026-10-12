@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { binderRepository } from '../../db/binderRepository'
+import { assetStore } from '../../store/assetStore'
 import { binderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { useWatchlistStore } from '../../store/watchlistStore'
@@ -47,6 +48,11 @@ const deps: SyncDeps = {
     save: (binder) => binderRepository.saveBinder(binder),
     remove: (id) => binderRepository.deleteBinder(id),
   },
+  assets: {
+    ids: () => binderRepository.listAssetIds(),
+    load: (ids) => binderRepository.loadAssets(ids),
+    save: (assets) => binderRepository.saveAssets(assets),
+  },
   readBinder,
   lists: {
     get: () => useWatchlistStore.getState().lists,
@@ -84,6 +90,7 @@ async function syncOnce(decisions: SyncDecisions): Promise<void> {
   try {
     const result = await runSync(deps, email, decisions)
     if (result.changed.length > 0) await showChanges(result.changed, openBefore)
+    if (result.imagesFetched > 0) await assetStore.getState().load()
     useSyncStore.setState({ status: 'synced', conflicts: result.conflicts })
   } catch (error) {
     if (error instanceof SignedOutError) {

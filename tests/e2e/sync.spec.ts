@@ -1,5 +1,6 @@
 import type { Browser, Page, Route } from '@playwright/test'
 import { expect, test } from './fixtures'
+import { makePng, pngFile } from './png'
 
 /**
  * A stand-in for the server part, shared by the "devices" of a test: it keeps what it is
@@ -9,9 +10,10 @@ interface FakeServer {
   email: string | null
   binders: Map<string, { updatedAt: string; deleted: boolean; data: unknown }>
   lists: { updatedAt: string; lists: unknown } | null
+  images: Map<string, { record: Record<string, unknown>; body: Buffer }>
 }
 
-const newServer = (): FakeServer => ({ email: 'ash@example.com', binders: new Map(), lists: null })
+const newServer = (): FakeServer => ({ email: 'ash@example.com', binders: new Map(), lists: null, images: new Map() })
 
 /** A device with its own connection, which can be cut. */
 interface Connection {
@@ -23,9 +25,27 @@ async function connect(page: Page, server: FakeServer): Promise<Connection> {
   await page.route('**/api/**', (route: Route) => {
     if (!connection.online) return route.abort('internetdisconnected')
     const request = route.request()
-    const { pathname } = new URL(request.url())
+    const { pathname, searchParams } = new URL(request.url())
     const method = request.method()
     const [, , resource, id] = pathname.split('/')
+    if (server.email !== null && resource === 'assets') {
+      if (id === undefined) return route.fulfill({ json: { assets: [...server.images.values()].map((image) => image.record) } })
+      const image = server.images.get(id)
+      if (method === 'GET') {
+        return image
+          ? route.fulfill({ contentType: String(image.record.mimeType), body: image.body })
+          : route.fulfill({ status: 404, json: { error: 'not found' } })
+      }
+      const record = {
+        id,
+        mimeType: request.headers()['content-type'] ?? '',
+        width: Number(searchParams.get('width')),
+        height: Number(searchParams.get('height')),
+        createdAt: searchParams.get('createdAt') ?? undefined,
+      }
+      if (!image) server.images.set(id, { record, body: request.postDataBuffer() ?? Buffer.alloc(0) })
+      return route.fulfill({ json: { id } })
+    }
     const body = (method === 'PUT' || method === 'DELETE' ? request.postDataJSON() : null) as {
       binder?: { updatedAt: string }
       base?: string | null
@@ -225,5 +245,24 @@ test('what is noted on one device is on the lists of the other', async ({ page, 
   await expect
     .poll(() => phone.page.evaluate(() => localStorage.getItem('pokebinder:watchlists') ?? ''))
     .toContain('sv03.5-025')
+  await phone.close()
+})
+
+test('an own image lying in a binder is shown on the other device too', async ({ page, browser }) => {
+  const server = newServer()
+  await connect(page, server)
+  await page.goto('/')
+  await createBinder(page, 'Kanto')
+  const first = page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket').first()
+  await first.click()
+  await page.getByLabel('Bild hinzufügen').setInputFiles(pngFile('wald.png', makePng(600, 300, [20, 120, 40], [200, 230, 90])))
+  await expect(first).toHaveAttribute('data-over-image', 'true')
+  await expect.poll(() => server.images.size).toBe(1)
+  expect([...server.images.values()][0]?.record).toMatchObject({ mimeType: 'image/png', width: 600, height: 300 })
+
+  const phone = await secondDevice(browser, server)
+  await phone.page.getByRole('button', { name: 'Kanto öffnen' }).click()
+  const image = phone.page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('placed-image').locator('img').first()
+  await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
   await phone.close()
 })
