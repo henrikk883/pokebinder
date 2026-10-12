@@ -457,3 +457,7 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Der Service Worker hält jetzt auch die App selbst vor. Die Seite kommt vom Netz, wann immer sie binnen 4 s da ist, sonst die zuletzt gehaltene – so ist nach einem Update sofort die neue Fassung da und ohne Netz die alte. Skripte und Styles tragen ihren Inhalt im Namen und werden gehalten, wie sie sind; eine neue Fassung räumt die der alten weg.
 - `/api/` und `/cdn-cgi/` fasst der Service Worker nicht an: Anmeldung und Abgleich gehen immer direkt zum Server.
 - Grenze: Was erst bei Bedarf nachgeladen wird (PDF- und PNG-Export, japanische Schrift), steht ohne Netz nur bereit, wenn es vorher schon einmal benutzt wurde.
+
+## 2026-10-12 – Deck Builder in der Roadmap
+- Von Henrik gewünscht: ein Deck Builder als neuer Punkt 12 (eigene Etappe E, vor den zurückgestellten Punkten), dazu als Fernziel Punkt 13 „gegen Freunde spielen“. Beides nur aufgenommen, nichts gebaut.
+- Meine Annahmen zum Deck Builder (60 Karten, höchstens 4 gleichnamige, Gruppen Pokémon/Trainer/Energie, Abgleich mit den eigenen Bindern) stehen als Vorschlag in REQUIREMENTS.md und werden geklärt, wenn der Punkt dran ist.

@@ -249,12 +249,14 @@ Mit Henrik am 12.10.2026 vereinbart. Die Reihenfolge steht in der Roadmap darunt
 9. **Tauschabgleich mit Freunden.** Für einen geteilten Binder vergleicht die App: Welche doppelten Karten des einen fehlen dem anderen, und umgekehrt – als Liste mit Preisen, wie die Tauschliste.
 10. **Englische Oberfläche.** Die Sprache der Oberfläche ist wählbar (Deutsch, Englisch); die Sprache der Karten bleibt davon unabhängig.
 11. **Karten per Kamera abhaken.** Das Handy erkennt eine Karte, die vor die Kamera gehalten wird, und hakt sie im offenen Binder ab bzw. schlägt die passende Karte vor.
+12. **Deck Builder.** Neben den Bindern gibt es Decks zum Spielen: ein eigener Bereich (eigener Reiter oder ein zweites Regal unter „Meine Binder“ mit eigenem Symbol), in dem sich ein Deck aus der Kartensuche zusammenstellen lässt. Ein Deck ist eine Liste aus Karten mit Stückzahl, kein Raster aus Pockets; die App zählt mit (60 Karten, höchstens 4 gleichnamige außer Basis-Energien), gruppiert nach Pokémon, Trainer und Energie, zeigt den Wert und was davon schon in den eigenen Bindern liegt. Decks sind Teil von Backup und Abgleich.
+13. **Vision: gegen Freunde spielen.** Mit einem gebauten Deck gegen das Deck eines Freundes antreten. Bewusst nur als Fernziel notiert: Das wäre ein eigenes, großes Vorhaben (Spielbrett, Regeln, Züge in Echtzeit über den Server) und setzt den Deck Builder und das Teilen mit Freunden voraus.
 
 Noch von Henrik zu prüfen: Ausdruck von „Eigene Bilder drucken (PDF)“ nachmessen (63 × 88 mm bei 100 %).
 
 ## Roadmap
 
-Fünf Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher Punkt für Punkt gebaut: Plan, OK, bauen, Lint/Tests/Build, live. Zeitangaben gibt es bewusst keine; „Umfang“ sagt nur, wie groß ein Punkt im Vergleich ist.
+Sechs Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher Punkt für Punkt gebaut: Plan, OK, bauen, Lint/Tests/Build, live. Zeitangaben gibt es bewusst keine; „Umfang“ sagt nur, wie groß ein Punkt im Vergleich ist.
 
 | Etappe | Punkt | Umfang | Baut auf | Vorher zu klären |
 |---|---|---|---|---|
@@ -267,13 +269,17 @@ Fünf Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher 
 | | 7 Seiten-Vorlagen | mittel | Punkt 6 (damit Vorlagen das Layout kennen) | Mit Karten oder nur die Bilder? Vorschlag: wählbar |
 | **D – Mit Freunden** | 8 Binder teilen | groß | Abgleich und Anmeldung (vorhanden) | Wer darf den Link öffnen: jeder mit Link oder nur freigeschaltete Adressen? |
 | | 9 Tauschabgleich | mittel | Punkt 8, Tauschliste (vorhanden) | – |
-| **E – Zurückgestellt** | 10 Englische Oberfläche | mittel | – | Nur sinnvoll, wenn die App über den Freundeskreis hinausgehen soll |
+| **E – Decks** | 12 Deck Builder | groß | Kartensuche, Preise, Abgleich (vorhanden) | Eigener Reiter oder zweites Regal unter „Meine Binder“? Welche Formate (Standard, Expanded, frei)? Sollen die Deck-Regeln nur gezählt oder auch die Legalität der Karten geprüft werden? |
+| | 13 Vision: gegen Freunde spielen | sehr groß, Fernziel | Punkt 12, Punkt 8 | Erst entscheiden, wenn der Deck Builder benutzt wird; vorher nur notiert |
+| **F – Zurückgestellt** | 10 Englische Oberfläche | mittel | – | Nur sinnvoll, wenn die App über den Freundeskreis hinausgehen soll |
 | | 11 Karten per Kamera | groß, unsicher | Punkt 1 (Kamera am Handy) | Ob es einen Erkennungsdienst gibt, der gut genug und bezahlbar ist; erst eine Machbarkeitsprüfung, dann die Entscheidung |
 
 **Regeln, die sich dafür ändern müssten** (jeweils erst mit Henriks OK, wenn der Punkt dran ist):
 
 - **Punkt 8 und 9:** Bisher gehört alles auf dem Server genau einem Sammler; CLAUDE.md beschreibt den Server-Teil nur für den Abgleich der eigenen Geräte. Teilen heißt, dass andere Daten eines Sammlers lesen dürfen. Das braucht eine neue Regel und eine eigene Prüfung der Zugriffe.
+- **Punkt 12:** Das Datenmodell bekommt neben dem Binder eine zweite Art von Sammlung (Deck); CLAUDE.md beschreibt die App bisher nur als Binder-Planer. Server und Backup lernen Decks kennen.
+- **Punkt 13:** Echtzeit zwischen zwei Spielern geht über den bisherigen Server-Teil (Abgleich der eigenen Geräte) weit hinaus.
 - **Punkt 10:** „UI-Texte auf Deutsch und nur in `src/i18n/de.ts`“ wird zu „je Sprache eine Datei“.
 - **Punkt 11:** Sehr wahrscheinlich ein weiterer externer Dienst oder eine weitere Abhängigkeit; beides ist laut CLAUDE.md nur nach Rückfrage erlaubt. Kamerabilder verlassen dabei das Gerät, was zum Grundsatz „kein Tracking, alles zuerst lokal“ passen muss.
 
-**Reihenfolge:** A → B → C → D. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt und lohnt sich, sobald die Freunde die App wirklich benutzen. **E ist zurückgestellt** (Henrik, 12.10.2026): Englische Oberfläche und Karten per Kamera kommen ganz ans Ende und werden erst angefasst, wenn Henrik sie wieder aufruft.
+**Reihenfolge:** A → B → C → D → E. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt bei den Bindern und lohnt sich, sobald die Freunde die App wirklich benutzen. E (Deck Builder, von Henrik am 12.10.2026 gewünscht) ist eine größere Umstellung, weil die App damit mehr wird als ein Binder-Planer; „gegen Freunde spielen“ steht dort nur als Fernziel. **F ist zurückgestellt** (Henrik, 12.10.2026): Englische Oberfläche und Karten per Kamera kommen ganz ans Ende und werden erst angefasst, wenn Henrik sie wieder aufruft.
