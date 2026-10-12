@@ -38,13 +38,13 @@ test('a visit begins on the start page, which leads to the binders and to the ca
   await page.getByRole('button', { name: 'Startseite' }).click()
   await expect(headline(page)).toBeVisible()
 
-  await main.getByRole('button', { name: /^Meine Binder/ }).click()
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await main.getByRole('button', { name: /^Meine Karten/ }).click()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
 })
 
 test('loading the page anew stays in the binder; a new visit offers to go on with it', async ({ page, context }) => {
   await page.goto('/')
-  await page.getByRole('main').getByRole('button', { name: /^Meine Binder/ }).click()
+  await page.getByRole('main').getByRole('button', { name: /^Meine Karten/ }).click()
   await createBinder(page, 'Kanto')
   await expect(page.getByText('Lokal gespeichert')).toBeVisible()
 
@@ -62,10 +62,10 @@ test('loading the page anew stays in the binder; a new visit offers to go on wit
   await visit.getByRole('button', { name: 'Weiter mit „Kanto“' }).click()
   await expect(visit.getByRole('heading', { name: 'Kanto' })).toBeVisible()
 
-  // back on the start page, "Meine Binder" means the shelf
+  // back on the start page, "Meine Karten" means the shelf
   await visit.getByRole('button', { name: 'Startseite' }).click()
-  await visit.getByRole('main').getByRole('button', { name: /^Meine Binder/ }).click()
-  await expect(visit.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await visit.getByRole('main').getByRole('button', { name: /^Meine Karten/ }).click()
+  await expect(visit.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
   await expect(visit.getByTestId('binder-tile')).toHaveCount(1)
 })
 
@@ -75,7 +75,7 @@ test('on a phone the start page stands in one column and fits the screen', async
 
   await expect(headline(page)).toBeVisible()
   expect(await noSidewaysScroll(page)).toBe(true)
-  const binders = await page.getByRole('main').getByRole('button', { name: /^Meine Binder/ }).boundingBox()
+  const binders = await page.getByRole('main').getByRole('button', { name: /^Meine Karten/ }).boundingBox()
   const cards = await page.getByRole('main').getByRole('button', { name: /^Stöbern|^Karten stöbern/ }).boundingBox()
   if (!binders || !cards) throw new Error('The two ways in are not visible')
   expect(cards.y).toBeGreaterThan(binders.y + binders.height - 1)

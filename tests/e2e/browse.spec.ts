@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('the page "Karten" shows the search over the whole width, many cards side by side', async ({ page }) => {
-  await header(page).getByRole('button', { name: 'Karten' }).click()
+  await header(page).getByRole('button', { name: 'Karten stöbern' }).click()
   await expect(page.getByRole('heading', { name: 'Karten stöbern', exact: true })).toBeVisible()
   // the three columns make room for it
   await expect(page.getByTestId('column-left')).toBeHidden()
@@ -40,7 +40,7 @@ test('the page "Karten" shows the search over the whole width, many cards side b
 })
 
 test('on the page "Karten" a click opens the info and the star notes the card', async ({ page }) => {
-  await header(page).getByRole('button', { name: 'Karten' }).click()
+  await header(page).getByRole('button', { name: 'Karten stöbern' }).click()
   await openSet151(page)
   const tile = results(page).locator('[data-card-id="sv03.5-001"]')
 
@@ -99,7 +99,7 @@ test('what is noted on the page "Karten" waits beside the binder; the binder sta
   // the search beside the binder keeps what was typed
   await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
 
-  await header(page).getByRole('button', { name: 'Karten' }).click()
+  await header(page).getByRole('button', { name: 'Karten stöbern' }).click()
   await expect(page.getByRole('heading', { name: 'Planung' })).toBeHidden()
   await openSet151(page)
   const tile = results(page).locator('[data-card-id="sv03.5-001"]')
@@ -125,15 +125,15 @@ test('what is noted on the page "Karten" waits beside the binder; the binder sta
   await page.mouse.up()
   await expect(page.getByTestId('pocket').first()).toHaveAttribute('data-card-id', 'sv03.5-001')
 
-  // "Meine Binder" leads to the shelf, from the page "Karten" as well
-  await header(page).getByRole('button', { name: 'Karten' }).click()
-  await header(page).getByRole('button', { name: 'Meine Binder' }).click()
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  // "Meine Karten" leads to the shelf, from the page "Karten" as well
+  await header(page).getByRole('button', { name: 'Karten stöbern' }).click()
+  await header(page).getByRole('button', { name: 'Meine Karten' }).click()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Planung öffnen' })).toBeVisible()
 
   // opening a binder from there shows the binder
-  await header(page).getByRole('button', { name: 'Karten' }).click()
-  await header(page).getByRole('button', { name: 'Meine Binder' }).click()
+  await header(page).getByRole('button', { name: 'Karten stöbern' }).click()
+  await header(page).getByRole('button', { name: 'Meine Karten' }).click()
   await page.getByRole('button', { name: 'Planung öffnen' }).click()
   await expect(page.getByRole('heading', { name: 'Planung' })).toBeVisible()
 })

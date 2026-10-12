@@ -27,6 +27,7 @@ import {
 } from './binderOrder'
 import { useDragSensors } from './dragSensors'
 import { shelfTotal, useShelfValues, type StoredValue } from './shelfValue'
+import { DeckShelf } from '../decks/DeckShelf'
 import { NewBinderDialog } from './NewBinderDialog'
 
 type Listing = { status: 'loading' } | { status: 'ready'; binders: Binder[] } | { status: 'error' }
@@ -157,7 +158,7 @@ function BinderTile({ binder, worth, movable, isFirst, isLast, onOpen, onRename,
   )
 }
 
-/** "Meine Binder": every stored binder, with the way to a new one. */
+/** "Meine Karten": every stored binder with the way to a new one, and below them the decks. */
 export function BinderList() {
   const openBinder = useBinderStore((state) => state.openBinder)
   const adoptBinder = useBinderStore((state) => state.adoptBinder)
@@ -235,9 +236,10 @@ export function BinderList() {
   }
 
   return (
-    <section className="mx-auto flex h-full max-w-5xl flex-col p-5 max-md:p-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-semibold">{de.binderList.title}</h2>
+    <section className="mx-auto flex min-h-full max-w-5xl flex-col p-5 max-md:p-3">
+      <h2 className="text-2xl font-semibold">{de.binderList.title}</h2>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-xl font-semibold">{de.binderList.binders}</h3>
         <div className="flex items-center gap-3">
           <select
             aria-label={de.binderList.sort}
@@ -271,7 +273,7 @@ export function BinderList() {
         </p>
       )}
       {listing.status === 'ready' && binders.length === 0 && (
-        <div className="mt-5 flex min-h-64 flex-1 items-center justify-center rounded-panel border border-dashed border-line bg-panel">
+        <div className="mt-5 flex min-h-40 items-center justify-center rounded-panel border border-dashed border-line bg-panel">
           <p className="text-sm text-muted">{de.binderList.empty}</p>
         </div>
       )}
@@ -304,6 +306,8 @@ export function BinderList() {
           </ul>
         </DndContext>
       )}
+
+      <DeckShelf />
 
       {creating && (
         <NewBinderDialog

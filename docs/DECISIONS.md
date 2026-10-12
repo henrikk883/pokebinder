@@ -473,3 +473,12 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 
 ## 2026-10-12 – Weitere Sammelkartenspiele in der Roadmap
 - Von Henrik gewünscht: Punkt 14 „Weitere Sammelkartenspiele“ als Etappe G. Nur aufgenommen, nichts gebaut; welche Spiele und welche Datenquellen, ist offen und je Spiel zu prüfen.
+
+## 2026-10-12 – Deck Builder, Schritt 1: Decks anlegen und bauen
+- Von Henrik vorgezogen. Seine Vorgaben: zweites Regal unter den Bindern, der Bereich heißt „Meine Karten“; das Deck steht als flache Deckbox im Regal und kann wie ein Binder ein eigenes Bild tragen; die Deck-Ansicht ist ein Kartenraster wie „Karten stöbern“. Sein Bild einer Deckbox ist nicht angekommen – die Box ist vorerst selbst gezeichnet (Deckel mit Griffmulde, Bild oder Name auf der Front, Füllstand unten rechts).
+- Ein Deck ist eine Liste (Karte, Sprache, Stückzahl), kein Raster aus Pockets; Varianten spielen keine Rolle. Es speichert wie ein Binder nur Verweise. Eigene Tabelle `decks` in der Datenbank des Browsers (Version 3), eigener Typ `Deck` (`src/types/deck.ts`), Logik in `src/features/decks/deckModel.ts`. Das Feld `format` gibt es schon (Standard), gewählt wird es erst in Schritt 2.
+- Ansicht: zwei Reiter, „Deck“ (Karten nach Pokémon, Trainer, Energie, jede Karte einmal mit „×n“ und −/+) und „Karten hinzufügen“ (die Suche von „Karten stöbern“; ein Klick legt eine Kopie ins Deck, das Bild zeigt, wie oft sie schon drin ist). Jede Karte einmal mit Zahl statt jede Kopie einzeln: 20 Energien wären sonst 20 gleiche Bilder.
+- Regeln in Schritt 1: 60 Karten; höchstens 4 mit gleichem Namen, über Drucke hinweg; Basis-Energie beliebig oft. Die App weist darauf hin, verbietet aber nichts – ein Deck im Bau ist meist ungültig.
+- Art der Karte und Basis-Energie kommen aus der Einzelkarten-Antwort von TCGdex (`getPlayInfo`, dieselbe Antwort wie für den Preis). Solange sie fehlt, steht die Karte unter „Weitere Karten“. Für japanische und koreanische Karten kennt die App die Wörter für die Kartenart nicht; sie bleiben dort stehen.
+- Noch nicht: Formatwahl und Erlaubtheit, Wert, Backup und Abgleich. Ein Bild auf der Deckbox liegt in der Bilder-Bibliothek; „Bild löschen“ dort weiß noch nichts von Decks.
+- Die Tests der Decks nutzen Karten, deren Antworten schon aufgezeichnet sind; zusätzliche Aufzeichnungen hätten die Preis-Tests verändert, die auf genau drei Preisen beruhen.

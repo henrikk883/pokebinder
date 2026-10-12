@@ -39,6 +39,9 @@ src/
     binder/     Doppelseite, Pockets, Drag & Drop, Miniaturen, Zoom
     images/     Upload, Spannweite, Zuschnitt
     masterset/  Assistent, Set-Auswahl, Seitengenerierung
+    decks/      Decks zum Spielen: Regal, Deck-Ansicht, Regeln (seit 12.10.2026, von Henrik gewünscht)
+    sync/       Anmelden und Abgleich zwischen Geräten
+    landing/    Startseite
     export/     JSON-Backup, PDF-Fehlliste, später PNG
   store/        Zustand-Stores
   db/           Dexie-Schema und Zugriff

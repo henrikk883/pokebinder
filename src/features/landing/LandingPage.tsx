@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { de } from '../../i18n/de'
 import { cardImageAt, cardImageUrl } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
+import { useDeckStore } from '../../store/deckStore'
 import { useEditorStore } from '../../store/editorStore'
 
 /** A card by its place at TCGdex: series, set, number. */
@@ -127,6 +128,7 @@ export function LandingPage() {
                 onClick={() => {
                   // to the shelf, also when the binder of last time lies open
                   closeBinder()
+                  useDeckStore.getState().closeDeck()
                   showView('binders')
                 }}
                 className="rounded-panel bg-accent p-5 text-left text-white hover:bg-accent-hover"

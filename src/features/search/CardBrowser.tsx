@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { useEditorStore } from '../../store/editorStore'
 import { useWatchlistStore } from '../../store/watchlistStore'
+import type { CardSummary } from '../../lib/tcgdex'
 import type { CardLang } from '../../types/binder'
 import { FilterSelect } from './FilterSelect'
 import { LanguageSelect } from './LanguageSelect'
@@ -19,7 +20,16 @@ const WIDE_GRID =
  * The search of one language over the whole page. Names, sets, rarities and types differ
  * between languages, so it starts afresh when the language changes (see the `key` below).
  */
-function WideSearch({ lang }: { lang: CardLang }) {
+interface WideSearchProps {
+  lang: CardLang
+  /** Tells the tiles of this search from those of another that is mounted as well. */
+  dragIdPrefix?: string
+  /** For a deck: a click on a card picks it, and its picture says how often it was picked. */
+  onPick?: (card: CardSummary, lang: CardLang) => void
+  countOf?: (cardId: string, lang: CardLang) => number
+}
+
+export function WideSearch({ lang, dragIdPrefix = 'browse', onPick, countOf }: WideSearchProps) {
   const form = useCardSearchForm(lang)
   const setSearchLang = useEditorStore((state) => state.setSearchLang)
 
@@ -53,7 +63,7 @@ function WideSearch({ lang }: { lang: CardLang }) {
         <FilterSelect label={de.search.type} value={form.type} options={form.types} onChange={form.setType} />
         <LanguageSelect label={de.search.language} value={lang} onChange={setSearchLang} />
       </div>
-      <div className="mt-5" data-testid="browse-results">
+      <div className="mt-5" data-testid={onPick ? 'pick-results' : 'browse-results'}>
         <SearchResults
           search={form.search}
           sets={form.sets}
@@ -61,8 +71,10 @@ function WideSearch({ lang }: { lang: CardLang }) {
           lang={lang}
           draggable={false}
           gridClass={WIDE_GRID}
-          dragIdPrefix="browse"
-          browsing
+          dragIdPrefix={dragIdPrefix}
+          browsing={!onPick}
+          {...(onPick ? { onPick } : {})}
+          {...(countOf ? { countOf } : {})}
         />
       </div>
     </>

@@ -34,7 +34,7 @@ async function drag(page: Page, from: Locator, to: Locator) {
 
 const tile = (page: Page, cardId: string) =>
   page.locator(`[data-testid="card-tile"][data-card-id="${cardId}"] > div`)
-const toList = (page: Page) => page.getByRole('banner').getByRole('button', { name: 'Meine Binder' })
+const toList = (page: Page) => page.getByRole('banner').getByRole('button', { name: 'Meine Karten' })
 const saved = (page: Page) => expect(page.getByRole('banner').getByRole('status')).toHaveText('Lokal gespeichert')
 
 async function wipeEverything(page: Page) {

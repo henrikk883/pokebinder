@@ -1,6 +1,8 @@
 import type { CardLang, CardVariant } from '../../types/binder'
+import type { PlayInfo } from './play'
 import type { Price } from './prices'
 
+export type { CardCategory, PlayInfo } from './play'
 export type { Price } from './prices'
 
 /** A card as it appears in lists: enough to show a tile, nothing more. */
@@ -81,6 +83,11 @@ export interface TcgdexClient {
    * request per card, so ask only for the cards that are really wanted.
    */
   getPrice(cardId: string, variant: CardVariant): Promise<Price | undefined>
+  /**
+   * Kind of a card and where it may be played, for decks; `undefined` when TCGdex does not
+   * know the card. A request per card, like the price.
+   */
+  getPlayInfo(cardId: string): Promise<PlayInfo | undefined>
   /** One page of cards matching the query; pages start at 1. */
   queryCards(query: CardQuery, page: number): Promise<CardPage>
   getRarities(): Promise<string[]>

@@ -158,7 +158,7 @@ test('a tapped card shows the button for "missing", large enough for a finger', 
 test('binders on the shelf are rearranged by finger', async ({ page }) => {
   for (const name of ['Erster', 'Zweiter']) {
     await createBinder(page, name)
-    await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).tap()
+    await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).tap()
   }
   const shelf = () =>
     page
@@ -173,7 +173,7 @@ test('binders on the shelf are rearranged by finger', async ({ page }) => {
   await holdAndDrag(page, tile('Erster').getByTestId('binder-cover'), tile('Zweiter'))
   await expect.poll(shelf).toEqual(['Erster', 'Zweiter'])
   // letting go did not open the binder
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
 })
 
 test('the search folds away too, and the binder then has the whole width', async ({ page }) => {
@@ -222,7 +222,7 @@ test('the zoom adapts so that the whole binder is in view, until one is picked b
   expect(await zoom()).toBe(fitted + 5)
 
   // another binder starts fitted again; a higher screen gives it more room
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).tap()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).tap()
   await page.getByRole('button', { name: 'Passend öffnen' }).tap()
   await expect(value).toHaveText(`${fitted} %`)
   await page.setViewportSize({ width: 1180, height: 1100 })

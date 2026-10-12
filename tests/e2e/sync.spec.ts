@@ -117,8 +117,8 @@ async function createBinder(page: Page, name: string) {
 }
 
 async function toShelf(page: Page) {
-  await page.getByRole('button', { name: 'Meine Binder' }).click()
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await page.getByRole('button', { name: 'Meine Karten' }).click()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
 }
 
 async function renameOnShelf(page: Page, from: string, to: string) {
@@ -137,7 +137,7 @@ async function syncNow(page: Page) {
 test('where there is no server part, nothing about sync is shown', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Anmelden' })).toHaveCount(0)
   await expect(status(page)).toHaveCount(0)
 })
@@ -180,7 +180,7 @@ test('a binder made on one device appears on the other; deleted there, it goes h
 
   // the binder lies open on the first device: it is put away
   await syncNow(page)
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
   await expect.poll(() => shelf(page)).toEqual([])
   await phone.close()
 })

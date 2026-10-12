@@ -30,7 +30,7 @@ test.beforeEach(async ({ page }) => {
 
 test('a phone shows binder, search and selection one at a time, switched by a bar at the bottom', async ({ page }) => {
   // the shelf first; the bar is there from the start
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
   await expect(bar(page).getByRole('button')).toHaveText(['Binder', 'Suche', 'Auswahl'])
   expect(await noSidewaysScroll(page)).toBe(true)
 
@@ -137,7 +137,7 @@ test('on a phone the menus come up from the bottom and close at a tap beside the
 test('on a phone the shelf and the page "Karten" stand in two columns', async ({ page }) => {
   for (const name of ['Erster', 'Zweiter', 'Dritter']) {
     await createBinder(page, name)
-    await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).tap()
+    await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).tap()
   }
   const tiles = page.getByTestId('binder-tile')
   await expect(tiles).toHaveCount(3)
@@ -159,7 +159,7 @@ test('on a phone the shelf and the page "Karten" stand in two columns', async ({
   expect(await page.getByTestId('page').evaluate((main) => main.scrollWidth <= main.clientWidth)).toBe(true)
 
   // back to the shelf, the bar is there again
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).tap()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).tap()
   await expect(bar(page)).toBeVisible()
 })
 

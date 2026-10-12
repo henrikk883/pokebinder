@@ -1,0 +1,201 @@
+import { useRef, useState, type ChangeEvent } from 'react'
+import { de } from '../../i18n/de'
+import { setIdOfCard } from '../../lib/tcgdex'
+import { useDeckStore } from '../../store/deckStore'
+import { promptDialog } from '../../store/dialogStore'
+import { useEditorStore } from '../../store/editorStore'
+import type { Deck, DeckCard } from '../../types/deck'
+import { useCard } from '../binder/useCard'
+import { ACCEPTED_IMAGE_TYPES } from '../images/upload'
+import { uploadErrorText, uploadImages } from '../images/uploadActions'
+import { WideSearch } from '../search/CardBrowser'
+import { CardImage } from '../search/CardImage'
+import { useReadyCatalog } from '../search/useCatalog'
+import { addCard, checkDeck, countInDeck, DECK_SIZE, groupDeck, renameDeck, setDeckCover } from './deckModel'
+import { useDeckInfo } from './useDeckInfo'
+
+const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-x-4 gap-y-6 max-md:grid-cols-3 max-md:gap-x-2'
+const buttonClass = 'h-10 rounded-control border border-line bg-raised px-4 text-sm hover:border-accent'
+const stepClass =
+  'flex size-8 items-center justify-center rounded-control border border-line bg-raised text-base hover:border-accent'
+
+/** One card of the deck: its picture, how often it is in, and the two buttons that change that. */
+function DeckCardTile({ card, name }: { card: DeckCard; name: string | undefined }) {
+  const change = useDeckStore((state) => state.change)
+  const summary = useCard(card.cardId, card.lang)
+  const catalog = useReadyCatalog(card.lang)
+  const shownName = name ?? summary?.name ?? card.cardId
+
+  return (
+    <li data-testid="deck-card" data-card-id={card.cardId} data-count={card.count} className="min-w-0">
+      <div className="relative">
+        {summary ? (
+          <CardImage card={summary} set={catalog?.setsById.get(setIdOfCard(summary))} size="small" />
+        ) : (
+          <div className="aspect-[63/88] w-full rounded-pocket bg-raised" />
+        )}
+        <span className="absolute right-1 bottom-1 rounded-control bg-bg/90 px-2 py-0.5 text-sm font-semibold">
+          {de.decks.copies(card.count)}
+        </span>
+      </div>
+      <p className="mt-1.5 truncate text-sm font-medium" title={shownName}>
+        {shownName}
+      </p>
+      <div className="mt-1 flex items-center gap-2">
+        <button
+          type="button"
+          aria-label={de.decks.fewer(shownName)}
+          onClick={() => change((deck) => addCard(deck, card.cardId, card.lang, -1))}
+          className={stepClass}
+        >
+          <span aria-hidden="true">−</span>
+        </button>
+        <button
+          type="button"
+          aria-label={de.decks.more(shownName)}
+          onClick={() => change((deck) => addCard(deck, card.cardId, card.lang, 1))}
+          className={stepClass}
+        >
+          <span aria-hidden="true">+</span>
+        </button>
+      </div>
+    </li>
+  )
+}
+
+type Tab = 'deck' | 'add'
+const tabClass = 'border-b-2 px-4 pb-2 text-sm font-medium whitespace-nowrap'
+
+/**
+ * An open deck. Like the page "Karten stöbern" it shows cards in large, side by side: the
+ * ones in the deck by kind, each with how often it is in, and under "Karten hinzufügen"
+ * the card search, where a click on a card puts a copy into the deck.
+ */
+export function DeckEditor({ deck }: { deck: Deck }) {
+  const change = useDeckStore((state) => state.change)
+  const searchLang = useEditorStore((state) => state.searchLang)
+  // a new deck has nothing to show yet: it starts where cards are found
+  const [tab, setTab] = useState<Tab>(deck.cards.length === 0 ? 'add' : 'deck')
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInput = useRef<HTMLInputElement>(null)
+  const infoOf = useDeckInfo(deck.cards)
+  const check = checkDeck(deck, infoOf)
+  const groups = groupDeck(deck, infoOf)
+
+  async function handleRename() {
+    const name = await promptDialog({
+      title: de.decks.rename,
+      label: de.decks.name,
+      value: deck.name,
+      confirmLabel: de.decks.renameConfirm,
+    })
+    if (name !== null) change((current) => renameDeck(current, name))
+  }
+
+  async function handleCover(event: ChangeEvent<HTMLInputElement>) {
+    const files = [...(event.target.files ?? [])]
+    event.target.value = ''
+    if (files.length === 0) return
+    setUploadError(null)
+    try {
+      const [asset] = await uploadImages(files.slice(0, 1))
+      if (asset) change((current) => setDeckCover(current, asset.id))
+    } catch (error) {
+      setUploadError(uploadErrorText(error))
+    }
+  }
+
+  return (
+    <section className="mx-auto flex min-h-full max-w-[110rem] flex-col p-5 max-md:p-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="mr-auto min-w-0 truncate text-2xl font-semibold" title={deck.name}>
+          {deck.name}
+        </h2>
+        <button type="button" onClick={handleRename} className={buttonClass}>
+          {de.decks.rename}
+        </button>
+        <button type="button" onClick={() => fileInput.current?.click()} className={buttonClass}>
+          {deck.coverAssetId === undefined ? de.decks.coverAdd : de.decks.coverChange}
+        </button>
+        {deck.coverAssetId !== undefined && (
+          <button type="button" onClick={() => change((current) => setDeckCover(current, undefined))} className={buttonClass}>
+            {de.decks.coverRemove}
+          </button>
+        )}
+        <input
+          ref={fileInput}
+          type="file"
+          accept={ACCEPTED_IMAGE_TYPES.join(',')}
+          aria-label={de.decks.coverInput}
+          onChange={handleCover}
+          className="hidden"
+        />
+      </div>
+      {uploadError && (
+        <p role="alert" className="mt-2 text-sm text-muted">
+          {uploadError}
+        </p>
+      )}
+
+      <p data-testid="deck-check" data-valid={check.valid} className="mt-3 text-sm text-muted">
+        <span className="font-medium text-text">{de.decks.size(check.size, DECK_SIZE)}</span>
+        {' · '}
+        {check.missing > 0
+          ? de.decks.missing(check.missing)
+          : check.missing < 0
+            ? de.decks.surplus(-check.missing)
+            : de.decks.full}
+      </p>
+      {check.tooMany.length > 0 && (
+        <p data-testid="deck-too-many" role="status" className="mt-1 text-sm text-muted">
+          {de.decks.tooMany(check.tooMany)}
+        </p>
+      )}
+
+      <div role="tablist" aria-label={deck.name} className="mt-4 flex border-b border-line">
+        {(['deck', 'add'] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            role="tab"
+            aria-selected={tab === option}
+            onClick={() => setTab(option)}
+            className={`${tabClass} ${
+              tab === option ? 'border-accent text-accent-hover' : 'border-transparent text-muted hover:text-text'
+            }`}
+          >
+            {de.decks.tabs[option]}
+            {option === 'deck' && check.size > 0 && <span className="ml-1 text-xs text-muted">{check.size}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* both stay mounted, so the search keeps its results while the deck is looked at */}
+      <div className={tab === 'deck' ? 'mt-5' : 'hidden'} data-testid="deck-cards">
+        {groups.length === 0 && <p className="text-sm text-muted">{de.decks.emptyDeck}</p>}
+        {groups.map((group) => (
+          <div key={group.category} className="mb-8" data-testid="deck-group" data-category={group.category}>
+            <h3 className="mb-3 text-lg font-semibold">
+              {de.decks.categories[group.category]} <span className="text-sm font-normal text-muted">{group.count}</span>
+            </h3>
+            <ul className={GRID}>
+              {group.cards.map((card) => (
+                <DeckCardTile key={`${card.lang}:${card.cardId}`} card={card} name={infoOf(card)?.name} />
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div className={tab === 'add' ? 'mt-5' : 'hidden'}>
+        <p className="mb-3 text-sm text-muted">{de.decks.addHint}</p>
+        <WideSearch
+          key={searchLang}
+          lang={searchLang}
+          dragIdPrefix="deck"
+          onPick={(card, lang) => change((current) => addCard(current, card.id, lang, 1))}
+          countOf={(cardId, lang) => countInDeck(deck, cardId, lang)}
+        />
+      </div>
+    </section>
+  )
+}

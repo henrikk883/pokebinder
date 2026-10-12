@@ -25,6 +25,13 @@ interface CardTileProps {
    * its info, which beside the binder the info button does.
    */
   browsing?: boolean
+  /**
+   * Where the cards are picked for something (a deck): a click on the card hands it over
+   * instead of dragging it anywhere.
+   */
+  onPick?: (card: CardSummary, lang: CardLang) => void
+  /** How often the card was picked already; shown on its picture. */
+  picked?: number
 }
 
 // Buttons on the picture: under the mouse on the card pointed at, by finger always there.
@@ -45,7 +52,16 @@ function Star({ filled }: { filled: boolean }) {
   )
 }
 
-export function CardTile({ card, set, lang, draggable, dragIdPrefix = 'search', browsing = false }: CardTileProps) {
+export function CardTile({
+  card,
+  set,
+  lang,
+  draggable,
+  dragIdPrefix = 'search',
+  browsing = false,
+  onPick,
+  picked = 0,
+}: CardTileProps) {
   const [showingInfo, setShowingInfo] = useState(false)
   // the star notes into the quick list; the info window offers the others
   const listCount = useWatchlistStore((state) => listsWith(state.lists, card.id, lang).length)
@@ -72,6 +88,23 @@ export function CardTile({ card, set, lang, draggable, dragIdPrefix = 'search', 
           className="block w-full rounded-pocket transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <CardImage card={card} set={set} size="small" />
+        </button>
+      ) : onPick ? (
+        <button
+          type="button"
+          aria-label={de.decks.add(card.name)}
+          onClick={() => onPick(card, lang)}
+          className="relative block w-full rounded-pocket transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          <CardImage card={card} set={set} size="small" />
+          {picked > 0 && (
+            <span
+              data-testid="picked-count"
+              className="absolute right-1 bottom-1 rounded-control bg-accent px-2 py-0.5 text-sm font-semibold text-white"
+            >
+              {de.decks.copies(picked)}
+            </span>
+          )}
         </button>
       ) : (
         <div

@@ -2,6 +2,7 @@ import { BackupMenu } from '../features/export/BackupMenu'
 import { SyncButton } from '../features/sync/SyncButton'
 import { de } from '../i18n/de'
 import { useBinderStore } from '../store/binderStore'
+import { useDeckStore } from '../store/deckStore'
 import { useEditorStore } from '../store/editorStore'
 import { SaveStatusBadge } from './SaveStatusBadge'
 
@@ -16,8 +17,16 @@ const cardsLabel = (
 )
 
 export function AppHeader() {
-  const binderName = useBinderStore((state) => state.binder?.name)
+  const openBinderName = useBinderStore((state) => state.binder?.name)
+  const deckName = useDeckStore((state) => state.deck?.name)
+  // what lies open: a binder or a deck, never both
+  const binderName = openBinderName ?? deckName
   const closeBinder = useBinderStore((state) => state.closeBinder)
+  const closeDeck = () => {
+    useDeckStore.getState().closeDeck()
+    // the shelf shows the deck as it now is
+    useEditorStore.getState().refreshBinderList()
+  }
   const view = useEditorStore((state) => state.view)
   const showView = useEditorStore((state) => state.showView)
   const onShelf = view === 'binders' && binderName === undefined
@@ -47,8 +56,9 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => {
-              // to the shelf, from the open binder as well as from another page
+              // to the shelf, from the open binder or deck as well as from another page
               closeBinder()
+              closeDeck()
               showView('binders')
             }}
             className={linkClass}

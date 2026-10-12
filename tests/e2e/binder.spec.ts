@@ -448,14 +448,14 @@ test('mixed opening follows the pattern of bought binders on right and left page
   expect(await sidesOn(3)).toEqual(rows(['right', 'right', 'left']))
 })
 
-test('"Meine Binder" lists the binders; they can be opened and deleted', async ({ page }) => {
+test('"Meine Karten" lists the binders; they can be opened and deleted', async ({ page }) => {
   await expect(page.getByText('Noch kein Binder angelegt.')).toBeVisible()
   await createBinder(page, 'Erster Binder')
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
   await createBinder(page, 'Zweiter Binder', '2 × 2')
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Zweiter Binder öffnen' })).toContainText('2 × 2 · 1 Seite · 0 Karten')
   // without an open binder there is nothing to drag cards into
   await expect(page.getByText('Karten in einen Pocket ziehen')).toBeHidden()
@@ -465,7 +465,7 @@ test('"Meine Binder" lists the binders; they can be opened and deleted', async (
   await expect(page.getByTestId('pocket')).toHaveCount(9)
   await expect(page.getByText('Karten in einen Pocket ziehen')).toBeVisible()
 
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
   const question = page.getByRole('alertdialog', { name: 'Binder „Erster Binder“ löschen?' })
   await page.getByRole('button', { name: 'Erster Binder löschen' }).click()
   await question.getByRole('button', { name: 'Abbrechen' }).click()
@@ -478,7 +478,7 @@ test('"Meine Binder" lists the binders; they can be opened and deleted', async (
 })
 
 test('the shelf is ordered by last change, by name or by hand; the choice is remembered', async ({ page }) => {
-  const toList = () => page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  const toList = () => page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
   const tile = (name: string) => page.locator(`[data-testid="binder-tile"][data-binder-name="${name}"]`)
   const shelf = () =>
     page
@@ -500,7 +500,7 @@ test('the shelf is ordered by last change, by name or by hand; the choice is rem
   // only the own order can be changed by dragging
   await drag(page, tile('Zebra').getByTestId('binder-cover'), tile('Apfel'))
   await expect.poll(shelf).toEqual(['Apfel', 'Mitte', 'Zebra'])
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
 
   // the own order starts from "changed last" and is changed by dragging a binder onto another
   await sort.selectOption({ label: 'Eigene Reihenfolge' })
@@ -508,7 +508,7 @@ test('the shelf is ordered by last change, by name or by hand; the choice is rem
   await drag(page, tile('Zebra').getByTestId('binder-cover'), tile('Mitte'))
   await expect.poll(shelf).toEqual(['Zebra', 'Mitte', 'Apfel'])
   // dragging does not open the binder
-  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meine Karten' })).toBeVisible()
 
   // by keyboard: one place at a time. For 50 ms after a drag, dnd-kit swallows clicks, so
   // that letting go does not count as one; nobody is that fast, but this test is.
@@ -571,7 +571,7 @@ test('a binder is renamed in the editor and in the list; undo takes the name bac
   await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
 
   // in the list, without opening the binder
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
   await page.getByRole('button', { name: 'Kanto Collection umbenennen' }).click()
   await prompt.getByLabel('Name').fill('Erste Generation')
   await prompt.getByLabel('Name').press('Enter')

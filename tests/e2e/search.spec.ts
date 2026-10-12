@@ -426,7 +426,7 @@ test('a list adds up what its cards would cost, beside the binder and on the pag
   expect(euros((await worth.getByTestId('list-value').textContent()) ?? '')).toBeLessThanOrEqual(total)
 
   // the same on the page "Karten", beside the number of cards
-  await page.getByRole('banner').getByRole('button', { name: 'Karten' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Karten stöbern' }).click()
   await page.getByTestId('page').getByRole('tab', { name: /^Merkliste/ }).click()
   const wide = page.getByTestId('browse-watchlist')
   await wide.getByRole('button', { name: 'Wert berechnen' }).click()

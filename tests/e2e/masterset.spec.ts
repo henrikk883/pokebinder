@@ -243,7 +243,7 @@ test('cancelling the change leaves the master set as it is, and empty binders ha
   await settings.getByRole('button', { name: 'Abbrechen' }).click()
   await expect(page.getByTestId('progress')).toContainText('0 / 207 Karten gesammelt')
 
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
   await page.getByRole('button', { name: 'Neuer Binder' }).click()
   await page.getByRole('dialog').getByLabel('Name').fill('Leer')
   await page.getByRole('dialog').getByRole('button', { name: 'Anlegen' }).click()

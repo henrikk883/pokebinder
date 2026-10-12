@@ -1,5 +1,5 @@
 import { de } from '../../i18n/de'
-import { setIdOfCard, type SetSummary } from '../../lib/tcgdex'
+import { setIdOfCard, type CardSummary, type SetSummary } from '../../lib/tcgdex'
 import type { CardLang } from '../../types/binder'
 import { CardTile } from './CardTile'
 import type { useCardSearch } from './useCardSearch'
@@ -17,6 +17,9 @@ interface SearchResultsProps {
   dragIdPrefix: string
   /** On the page "Karten" a click on a card opens its info; beside the binder cards are dragged. */
   browsing?: boolean
+  /** Where cards are picked at a click (for a deck), and how often each was picked already. */
+  onPick?: (card: CardSummary, lang: CardLang) => void
+  countOf?: (cardId: string, lang: CardLang) => number
 }
 
 /** What a card search found, or why there is nothing to show. */
@@ -29,6 +32,8 @@ export function SearchResults({
   gridClass,
   dragIdPrefix,
   browsing = false,
+  onPick,
+  countOf,
 }: SearchResultsProps) {
   return (
     <>
@@ -61,6 +66,7 @@ export function SearchResults({
                 draggable={draggable}
                 dragIdPrefix={dragIdPrefix}
                 browsing={browsing}
+                {...(onPick ? { onPick, picked: countOf?.(card.id, lang) ?? 0 } : {})}
               />
             ))}
           </ul>

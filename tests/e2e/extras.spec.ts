@@ -259,7 +259,7 @@ test.describe('shopping list', () => {
   })
 
   test('a "Merkliste" has its shopping list too', async ({ page }) => {
-    await page.getByRole('banner').getByRole('button', { name: 'Karten' }).click()
+    await page.getByRole('banner').getByRole('button', { name: 'Karten stöbern' }).click()
     await page.getByTestId('page').getByRole('button', { name: 'Set', exact: true }).click()
     await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
     const results = page.getByTestId('browse-results')
@@ -376,7 +376,7 @@ test.describe('the worth of the collection on the shelf', () => {
     const owned = /Wert: ([0-9.,]+ €) vorhanden/.exec(inBinder)?.[1]
     expect(owned).toBeDefined()
 
-    await page.getByRole('button', { name: 'Meine Binder' }).click()
+    await page.getByRole('button', { name: 'Meine Karten' }).click()
 
     const tile = page.getByTestId('binder-tile').getByTestId('binder-worth')
     await expect(tile).toHaveText(`1 / 207 vorhanden · ${owned}`)
@@ -389,7 +389,7 @@ test.describe('the worth of the collection on the shelf', () => {
     await dialog.getByLabel('Name').fill('Leer')
     await dialog.getByRole('button', { name: 'Anlegen' }).click()
     await expect(page.getByRole('heading', { name: 'Leer' })).toBeVisible()
-    await page.getByRole('button', { name: 'Meine Binder' }).click()
+    await page.getByRole('button', { name: 'Meine Karten' }).click()
     await expect(page.getByTestId('binder-tile')).toHaveCount(2)
     await expect(page.getByTestId('binder-worth')).toHaveCount(1)
     await expect(page.getByTestId('shelf-total')).toHaveText(`Sammlungswert: ${owned} · 1 von 207 Karten vorhanden`)

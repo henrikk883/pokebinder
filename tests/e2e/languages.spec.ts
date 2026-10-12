@@ -230,7 +230,7 @@ test('the checklist prints Japanese names; the font for them is only loaded for 
 
   // A Japanese one carries the font that can write its names. (The recorded TCGdex answers
   // hold no details of single Japanese cards, so here it is the binder's name that needs it.)
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
   await createBinder(page, '日本のバインダー', 'ja')
   await placeFirstAsMissing('リザードン')
   const japanese = await checklist()

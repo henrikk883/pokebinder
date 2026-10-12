@@ -1,3 +1,4 @@
+import { playInfoOf, type RawPlayCard } from './play'
 import TCGdex, { Query } from '@tcgdex/sdk'
 import type { CardLang } from '../../types/binder'
 import type { ResponseCache } from './cache'
@@ -314,6 +315,17 @@ export function createTcgdexClient({
         card = await request<RawPricedCard>(lang, ['cards', cardId]).catch(() => undefined)
       }
       return card ? cardmarketPrice(card, variant) : undefined
+    },
+
+    async getPlayInfo(cardId) {
+      // The kinds are told by their English names, which western cards have in the English
+      // data (same ids); that is also the answer the price comes from, so it is at hand.
+      const infoLang: CardLang = lang === 'ja' || lang === 'ko' ? lang : 'en'
+      let card = await request<RawPlayCard>(infoLang, ['cards', cardId]).catch(() => undefined)
+      if (!card && infoLang !== lang) {
+        card = await request<RawPlayCard>(lang, ['cards', cardId]).catch(() => undefined)
+      }
+      return card ? playInfoOf(card) : undefined
     },
 
     async getCardDetail(cardId) {

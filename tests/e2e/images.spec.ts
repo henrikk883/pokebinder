@@ -431,12 +431,12 @@ test('the cover gets its own title and picture', async ({ page }) => {
   await expect(cover).toContainText('Meine ersten 151')
   await loaded(cover.getByTestId('cover-image'))
 
-  // on the shelf of "Meine Binder" the binder shows that picture, others their cover title
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  // on the shelf of "Meine Karten" the binder shows that picture, others their cover title
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
   await page.getByRole('button', { name: 'Neuer Binder' }).click()
   await page.getByRole('dialog').getByLabel('Name').fill('Ohne Cover')
   await page.getByRole('button', { name: 'Anlegen' }).click()
-  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
   const withPicture = page.getByRole('button', { name: 'Kanto Collection öffnen' })
   await loaded(withPicture.getByTestId('binder-cover-image'))
   const plain = page.getByRole('button', { name: 'Ohne Cover öffnen' })
