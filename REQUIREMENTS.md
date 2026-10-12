@@ -61,6 +61,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
    - Name ohne Set durchsucht alle Sets (ab zwei Buchstaben); Name mit Set nur dieses Set; eine Nummer wie „188/125“ findet genau diese Karte; jedes Set ist als komplette Liste in Nummernreihenfolge durchblätterbar.
    - Karten aus „Pokémon TCG Pocket“ sind ausgeblendet.
    - Ein Info-Knopf auf jeder Karte öffnet eine Vorschau: großes Bild, Seltenheit, verfügbare Sprachen und alle Varianten mit Preistrend – bevor die Karte in den Binder kommt.
+   - **Merkliste:** Im Info-Fenster lässt sich eine Karte merken. Gemerkte Karten stehen in einem eigenen Reiter neben „Karten“ und „Eigene Bilder“ und lassen sich von dort in den Binder ziehen.
 7. **Karten platzieren.** Karte per Drag & Drop in einen Pocket ziehen.
    - Die Karte landet in ihrer Grundvariante (eine Karte, die es nur als Holo gibt, als Holo).
    - Karten zwischen Pockets und Seiten verschieben; belegte Pockets tauschen beim Drop.
@@ -173,7 +174,7 @@ Die App speichert nur Verweise auf Karten (Karten-ID + Sprache + Variante), nie 
 
 Welche Varianten eine Karte hat, liest die App aus den TCGdex-Kartendaten; daraus entstehen beim Master Set die Holo-Pockets.
 
-Nicht im Binder gespeichert, sondern nur im Browser des Geräts: Sortierung und eigene Reihenfolge des Regals, eingeklappte Spalten, Zeitpunkt der letzten Gesamtsicherung.
+Nicht im Binder gespeichert, sondern nur im Browser des Geräts: Sortierung und eigene Reihenfolge des Regals, Merkliste, eingeklappte Spalten, Zeitpunkt der letzten Gesamtsicherung.
 
 ## Tech-Stack
 
@@ -217,13 +218,12 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Merkliste:** Karten aus der Vorschau merken und in einem eigenen Tab neben „Karten“ und „Eigene Bilder“ wiederfinden.
-2. **Geräte abgleichen:** Import, der erkennt, welche Fassung eines Binders neuer ist, und vor dem Ersetzen fragt.
-3. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
-4. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
-5. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
-6. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
-7. **Fortschritt pro Set** in gemischten Bindern.
-8. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-9. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-10. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Geräte abgleichen:** Import, der erkennt, welche Fassung eines Binders neuer ist, und vor dem Ersetzen fragt.
+2. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
+3. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
+4. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
+5. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
+6. **Fortschritt pro Set** in gemischten Bindern.
+7. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+8. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+9. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

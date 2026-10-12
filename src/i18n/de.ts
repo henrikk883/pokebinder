@@ -187,6 +187,7 @@ export const de = {
     tabs: {
       cards: 'Karten',
       images: 'Eigene Bilder',
+      saved: 'Merkliste',
     },
     placeholder: 'Name, Set oder Nummer',
     setFilter: 'Set',
@@ -313,6 +314,13 @@ export const de = {
     markOwned: 'Vorhanden',
     markOwnedLabel: 'Als vorhanden markieren',
     unknownCard: 'Unbekannte Karte',
+  },
+  watchlist: {
+    save: 'Merken',
+    saved: 'Gemerkt',
+    empty: 'Noch nichts gemerkt. Über den Info-Knopf einer Karte kommt sie auf die Merkliste.',
+    count: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} gemerkt`,
+    marker: 'Auf der Merkliste',
   },
   cardInfo: {
     open: (name: string) => `Infos zu ${name}`,

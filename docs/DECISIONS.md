@@ -313,3 +313,8 @@ Im Modus „Sammlung“ wird nichts hineingezogen, deshalb ist die Suche dort ei
 - In der rechten Spalte gibt es für die Seite des gewählten Pockets vier Knöpfe: „Nach vorn“, „Nach hinten“, „Duplizieren“ (Kopie direkt dahinter, mit Karten, Besitz-Markierungen, Bildern und Öffnung) und „Leere Seite davor“. Die Ansicht folgt der Seite, das Pocket bleibt gewählt.
 - Weil Seiten dabei die Seite des Binders wechseln, werden Bilder über zwei Seiten wie beim Löschen einer Seite auf ihre eigene Seite gekürzt.
 - Im Modus „Sammlung“ ist das Umordnen gesperrt. Alles lässt sich rückgängig machen.
+
+## 2026-10-12 – Merkliste
+- Im Info-Fenster einer Karte gibt es den Knopf „Merken“ / „Gemerkt“. Gemerkte Karten stehen im dritten Reiter „Merkliste“ der linken Spalte (mit Anzahl), die zuletzt gemerkte zuerst, und lassen sich von dort wie Suchergebnisse in den Binder ziehen. In der Suche trägt eine gemerkte Karte einen violetten Punkt vor dem Namen.
+- Die Liste gilt für alle Binder. Eine Karte bleibt gemerkt, auch wenn sie in einen Binder gelegt wurde; entfernt wird sie über denselben Knopf.
+- Gemerkt wird Karte + Sprache. Gespeichert im `localStorage` dieses Browsers (`pokebinder:watchlist`), nicht im Backup – wie die Reihenfolge des Regals.

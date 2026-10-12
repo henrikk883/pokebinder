@@ -6,6 +6,8 @@ import type { CardLang } from '../../types/binder'
 import type { DragSource } from '../binder/dragDrop'
 import { CardImage } from './CardImage'
 import { CardInfoDialog } from './CardInfoDialog'
+import { useWatchlistStore } from '../../store/watchlistStore'
+import { isSaved } from './watchlist'
 
 interface CardTileProps {
   card: CardSummary
@@ -14,14 +16,17 @@ interface CardTileProps {
   lang: CardLang
   /** Cards can be dragged into a pocket while a binder is open. */
   draggable: boolean
+  /** Tells the tiles of one list from those of another when both show the same card. */
+  dragIdPrefix?: string
 }
 
-export function CardTile({ card, set, lang, draggable }: CardTileProps) {
+export function CardTile({ card, set, lang, draggable, dragIdPrefix = 'search' }: CardTileProps) {
   const [showingInfo, setShowingInfo] = useState(false)
+  const saved = useWatchlistStore((state) => isSaved(state.cards, card.id, lang))
   const number = set ? `${card.localId}/${set.cardCount.official}` : card.localId
   const source: DragSource = { kind: 'search', card, lang }
   const { setNodeRef, listeners, isDragging } = useDraggable({
-    id: `search:${card.id}`,
+    id: `${dragIdPrefix}:${card.id}`,
     data: source,
     disabled: !draggable,
   })
@@ -44,8 +49,16 @@ export function CardTile({ card, set, lang, draggable }: CardTileProps) {
       >
         <span aria-hidden="true">i</span>
       </button>
-      <p className="mt-1.5 truncate text-sm font-medium" title={card.name}>
-        {card.name}
+      <p className="mt-1.5 flex items-center gap-1.5 text-sm font-medium" title={card.name}>
+        {saved && (
+          <span
+            role="img"
+            aria-label={de.watchlist.marker}
+            title={de.watchlist.marker}
+            className="size-2 shrink-0 rounded-full bg-accent"
+          />
+        )}
+        <span className="truncate">{card.name}</span>
       </p>
       <p className="truncate text-xs text-muted">
         {set ? `${set.name} · ${number}` : number}

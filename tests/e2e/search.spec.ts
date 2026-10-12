@@ -228,3 +228,68 @@ test('the info button on a card opens a closer look: picture, languages, finishe
   await page.mouse.up()
   await expect(page.getByTestId('pocket').first()).toHaveAttribute('data-card-id', 'sv03.5-001')
 })
+
+test('cards are noted from their info and wait on the "Merkliste" to be dragged into a binder', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  await page.getByRole('dialog').getByLabel('Name').fill('Merken')
+  await page.getByRole('button', { name: 'Anlegen' }).click()
+  const savedTab = page.getByRole('tab', { name: /^Merkliste/ })
+  const list = page.getByTestId('watchlist')
+
+  // nothing noted yet
+  await savedTab.click()
+  await expect(list).toContainText('Noch nichts gemerkt.')
+  await expect(page.getByTestId('saved-count')).toHaveCount(0)
+
+  // note the first card of "151" from its info
+  await page.getByRole('tab', { name: 'Karten' }).click()
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const found = page.getByTestId('search-results').locator('[data-card-id="sv03.5-001"]')
+  await expect(found).toBeVisible()
+  await expect(found.getByRole('img', { name: 'Auf der Merkliste' })).toHaveCount(0)
+  await found.hover()
+  await found.getByRole('button', { name: 'Infos zu Bisasam' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Bisasam' })
+  await dialog.getByRole('button', { name: 'Merken' }).click()
+  await expect(dialog.getByRole('button', { name: 'Gemerkt' })).toHaveAttribute('aria-pressed', 'true')
+  await dialog.getByRole('button', { name: 'Schließen' }).click()
+
+  // the search result is marked, the tab counts
+  await expect(found.getByRole('img', { name: 'Auf der Merkliste' })).toBeVisible()
+  await expect(page.getByTestId('saved-count')).toHaveText('1')
+
+  // on the list it can be dragged into the binder like a search result
+  await savedTab.click()
+  const noted = list.locator('[data-testid="card-tile"][data-card-id="sv03.5-001"]')
+  await expect(list).toContainText('1 Karte gemerkt')
+  await expect(noted).toContainText('151 · 001/165')
+  const from = await noted.locator('img').boundingBox()
+  const to = await page.getByTestId('pocket').first().boundingBox()
+  if (!from || !to) throw new Error('Card or pocket is not visible')
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(from.x + from.width / 2 + 12, from.y + from.height / 2 + 12, { steps: 3 })
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 12 })
+  await page.mouse.up()
+  await expect(page.getByTestId('pocket').first()).toHaveAttribute('data-card-id', 'sv03.5-001')
+  // placing it does not take it off the list
+  await expect(noted).toBeVisible()
+
+  // the list outlives a reload
+  await page.reload()
+  await expect(page.getByTestId('spread-label')).toBeVisible()
+  await expect(page.getByTestId('saved-count')).toHaveText('1')
+  await savedTab.click()
+  await expect(noted).toBeVisible()
+
+  // taken off the list again from the same button
+  await noted.hover()
+  await noted.getByRole('button', { name: 'Infos zu Bisasam' }).click()
+  await dialog.getByRole('button', { name: 'Gemerkt' }).click()
+  // the card leaves the list, and its info, opened from there, goes with it
+  await expect(dialog).toBeHidden()
+  await expect(list).toContainText('Noch nichts gemerkt.')
+  await expect(page.getByTestId('saved-count')).toHaveCount(0)
+})

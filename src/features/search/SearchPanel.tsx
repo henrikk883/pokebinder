@@ -13,11 +13,13 @@ import { useCardSearch } from './useCardSearch'
 import { useCatalog } from './useCatalog'
 import { useDebouncedValue } from './useDebouncedValue'
 import { useLoaded } from './useLoaded'
+import { WatchlistPanel } from './WatchlistPanel'
+import { useWatchlistStore } from '../../store/watchlistStore'
 
 /** Results follow the typing after this pause. */
 const SEARCH_DELAY_MS = 300
 
-const tabClass = 'border-b-2 px-4 pb-2 text-sm font-medium'
+const tabClass = 'border-b-2 px-2.5 pb-2 text-sm font-medium whitespace-nowrap'
 
 /**
  * Search in the cards of one language. Names, sets, rarities and types all differ between
@@ -151,19 +153,20 @@ function CardSearch({ lang }: { lang: CardLang }) {
   )
 }
 
-type Tab = 'cards' | 'images'
+type Tab = 'cards' | 'images' | 'saved'
 
-/** Left column: card search and the library of uploaded images. */
+/** Left column: card search, the library of uploaded images, and the cards noted for later. */
 export function SearchPanel() {
   const [tab, setTab] = useState<Tab>('cards')
   const searchLang = useEditorStore((state) => state.searchLang)
+  const savedCount = useWatchlistStore((state) => state.cards.length)
 
   return (
     <section className="flex h-full flex-col">
       <div className="shrink-0 space-y-3 p-4 pb-3">
         <h2 className="text-lg font-semibold">{de.search.title}</h2>
         <div role="tablist" className="flex border-b border-line">
-          {(['cards', 'images'] as const).map((option) => (
+          {(['cards', 'images', 'saved'] as const).map((option) => (
             <button
               key={option}
               type="button"
@@ -177,17 +180,25 @@ export function SearchPanel() {
               }`}
             >
               {de.search.tabs[option]}
+              {option === 'saved' && savedCount > 0 && (
+                <span data-testid="saved-count" className="ml-1 text-xs text-muted">
+                  {savedCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* both stay mounted, so the search keeps its results while images are shown */}
+      {/* all stay mounted, so the search keeps its results while another tab is shown */}
       <div className={tab === 'cards' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
         <CardSearch key={searchLang} lang={searchLang} />
       </div>
       <div className={tab === 'images' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
         <ImageLibrary />
+      </div>
+      <div className={tab === 'saved' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
+        <WatchlistPanel />
       </div>
     </section>
   )

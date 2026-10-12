@@ -1,8 +1,10 @@
 import { de } from '../../i18n/de'
 import type { CardSummary, SetSummary } from '../../lib/tcgdex'
 import { compareVariants, type CardLang, type CardVariant } from '../../types/binder'
+import { useWatchlistStore } from '../../store/watchlistStore'
 import { useCardDetail, useCardLangs, usePrice } from '../binder/useCard'
 import { CardImage } from './CardImage'
+import { isSaved } from './watchlist'
 
 interface CardInfoDialogProps {
   card: CardSummary
@@ -31,6 +33,8 @@ function VariantPrice({ cardId, variant, lang }: { cardId: string; variant: Card
 export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps) {
   const detail = useCardDetail(card.id, lang)
   const langs = useCardLangs(card.id, lang)
+  const saved = useWatchlistStore((state) => isSaved(state.cards, card.id, lang))
+  const toggleSaved = useWatchlistStore((state) => state.toggle)
   // nothing is listed until TCGdex has said which finishes the card really exists in
   const variants = [...(detail?.variants ?? [])].sort(compareVariants)
   const number = set ? `${card.localId}/${set.cardCount.official}` : card.localId
@@ -90,7 +94,19 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
             </div>
           </dl>
 
-          <div className="mt-auto flex justify-end">
+          <div className="mt-auto flex justify-end gap-3">
+            <button
+              type="button"
+              aria-pressed={saved}
+              onClick={() => toggleSaved(card.id, lang)}
+              className={`h-10 rounded-control px-4 text-sm font-medium ${
+                saved
+                  ? 'bg-accent text-white hover:bg-accent-hover'
+                  : 'border border-line bg-raised hover:border-accent'
+              }`}
+            >
+              {saved ? de.watchlist.saved : de.watchlist.save}
+            </button>
             <button
               type="button"
               autoFocus
