@@ -99,7 +99,9 @@ export function DeckShelf() {
                 <span className="mt-3 block truncate text-base font-medium group-hover:text-accent-hover">
                   {deck.name}
                 </span>
-                <span className="block text-xs text-muted">{de.decks.kinds(deck.cards.length)}</span>
+                <span className="block text-xs text-muted">
+                  {de.decks.formats[deck.format]} · {de.decks.kinds(deck.cards.length)}
+                </span>
               </button>
               <div className="shelf-actions mt-2 grid grid-cols-2 gap-2">
                 <button

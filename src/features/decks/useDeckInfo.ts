@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { tcgdexFor } from '../../lib/tcgdex'
+import { baseVariant, tcgdexFor } from '../../lib/tcgdex'
 import type { DeckCard } from '../../types/deck'
 import type { DeckCardInfo, InfoOf } from './deckModel'
 
@@ -16,9 +16,25 @@ async function lookUp(card: DeckCard): Promise<void> {
   asked.add(key)
   try {
     const client = tcgdexFor(card.lang)
-    const [summary, play] = await Promise.all([client.getCard(card.cardId), client.getPlayInfo(card.cardId)])
+    const [summary, play, price] = await Promise.all([
+      client.getCard(card.cardId),
+      client.getPlayInfo(card.cardId),
+      // a deck does not say in which finish a card is: the one every copy of it has
+      client
+        .getCardDetail(card.cardId)
+        .catch(() => undefined)
+        .then((detail) => client.getPrice(card.cardId, detail ? baseVariant(detail.variants) : 'normal'))
+        .catch(() => undefined),
+    ])
     if (!summary) throw new Error('unknown card')
-    known.set(key, { name: summary.name, category: play?.category ?? 'unknown', basicEnergy: play?.basicEnergy ?? false })
+    const info: DeckCardInfo = {
+      name: summary.name,
+      category: play?.category ?? 'unknown',
+      basicEnergy: play?.basicEnergy ?? false,
+    }
+    if (play?.legal) info.legal = play.legal
+    if (price) info.price = price.amount
+    known.set(key, info)
     for (const listener of listeners) listener()
   } catch {
     // may be asked again the next time a deck shows the card
@@ -27,8 +43,8 @@ async function lookUp(card: DeckCard): Promise<void> {
 }
 
 /**
- * Name and kind of the cards of a deck, which the deck itself does not store. Until a
- * card is looked up the returned function knows nothing about it.
+ * What the deck itself does not store about its cards: name, kind, price and where they
+ * may be played. Until a card is looked up the returned function knows nothing about it.
  */
 export function useDeckInfo(cards: readonly DeckCard[]): InfoOf {
   const [, setFound] = useState(0)

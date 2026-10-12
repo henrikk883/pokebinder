@@ -1,17 +1,28 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { binderRepository } from '../../db/binderRepository'
 import { de } from '../../i18n/de'
 import { setIdOfCard } from '../../lib/tcgdex'
 import { useDeckStore } from '../../store/deckStore'
 import { promptDialog } from '../../store/dialogStore'
 import { useEditorStore } from '../../store/editorStore'
-import type { Deck, DeckCard } from '../../types/deck'
+import { DECK_FORMATS, type Deck, type DeckCard } from '../../types/deck'
 import { useCard } from '../binder/useCard'
 import { ACCEPTED_IMAGE_TYPES } from '../images/upload'
 import { uploadErrorText, uploadImages } from '../images/uploadActions'
 import { WideSearch } from '../search/CardBrowser'
 import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
-import { addCard, checkDeck, countInDeck, DECK_SIZE, groupDeck, renameDeck, setDeckCover } from './deckModel'
+import { copiesAtHand, deckCoverage, deckWorth, ownedCopies, type OwnedCopies } from './deckCollection'
+import {
+  addCard,
+  checkDeck,
+  countInDeck,
+  DECK_SIZE,
+  groupDeck,
+  renameDeck,
+  setDeckCover,
+  setFormat,
+} from './deckModel'
 import { useDeckInfo } from './useDeckInfo'
 
 const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-x-4 gap-y-6 max-md:grid-cols-3 max-md:gap-x-2'
@@ -20,14 +31,29 @@ const stepClass =
   'flex size-8 items-center justify-center rounded-control border border-line bg-raised text-base hover:border-accent'
 
 /** One card of the deck: its picture, how often it is in, and the two buttons that change that. */
-function DeckCardTile({ card, name }: { card: DeckCard; name: string | undefined }) {
+interface DeckCardTileProps {
+  card: DeckCard
+  name: string | undefined
+  /** How many of the wanted copies lie in the binders. */
+  atHand: number
+  /** Known not to be playable in the format of the deck. */
+  notAllowed: boolean
+}
+
+function DeckCardTile({ card, name, atHand, notAllowed }: DeckCardTileProps) {
   const change = useDeckStore((state) => state.change)
   const summary = useCard(card.cardId, card.lang)
   const catalog = useReadyCatalog(card.lang)
   const shownName = name ?? summary?.name ?? card.cardId
 
   return (
-    <li data-testid="deck-card" data-card-id={card.cardId} data-count={card.count} className="min-w-0">
+    <li
+      data-testid="deck-card"
+      data-card-id={card.cardId}
+      data-count={card.count}
+      data-allowed={!notAllowed}
+      className="min-w-0"
+    >
       <div className="relative">
         {summary ? (
           <CardImage card={summary} set={catalog?.setsById.get(setIdOfCard(summary))} size="small" />
@@ -37,9 +63,17 @@ function DeckCardTile({ card, name }: { card: DeckCard; name: string | undefined
         <span className="absolute right-1 bottom-1 rounded-control bg-bg/90 px-2 py-0.5 text-sm font-semibold">
           {de.decks.copies(card.count)}
         </span>
+        {notAllowed && (
+          <span className="absolute top-1 left-1 rounded-control border border-line bg-bg/90 px-2 py-0.5 text-xs font-semibold">
+            {de.decks.notAllowedBadge}
+          </span>
+        )}
       </div>
       <p className="mt-1.5 truncate text-sm font-medium" title={shownName}>
         {shownName}
+      </p>
+      <p data-testid="deck-card-owned" className="truncate text-xs text-muted">
+        {de.decks.atHand(atHand, card.count)}
       </p>
       <div className="mt-1 flex items-center gap-2">
         <button
@@ -63,6 +97,29 @@ function DeckCardTile({ card, name }: { card: DeckCard; name: string | undefined
   )
 }
 
+// the same map every time, as long as the binders are not read yet
+const NOTHING_OWNED: OwnedCopies = new Map()
+
+/** What lies in the binders, to tell which cards of a deck are there already. */
+function useOwnedCopies(): OwnedCopies {
+  const [owned, setOwned] = useState<OwnedCopies>(NOTHING_OWNED)
+
+  useEffect(() => {
+    let cancelled = false
+    binderRepository.listBinders().then(
+      (binders) => {
+        if (!cancelled) setOwned(ownedCopies(binders))
+      },
+      () => undefined,
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return owned
+}
+
 type Tab = 'deck' | 'add'
 const tabClass = 'border-b-2 px-4 pb-2 text-sm font-medium whitespace-nowrap'
 
@@ -79,8 +136,12 @@ export function DeckEditor({ deck }: { deck: Deck }) {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const infoOf = useDeckInfo(deck.cards)
+  const owned = useOwnedCopies()
   const check = checkDeck(deck, infoOf)
   const groups = groupDeck(deck, infoOf)
+  const coverage = deckCoverage(deck, owned)
+  const worth = deckWorth(deck, infoOf, owned)
+  const notAllowedNames = new Set(check.notAllowed.map((entry) => entry.name))
 
   async function handleRename() {
     const name = await promptDialog({
@@ -111,6 +172,22 @@ export function DeckEditor({ deck }: { deck: Deck }) {
         <h2 className="mr-auto min-w-0 truncate text-2xl font-semibold" title={deck.name}>
           {deck.name}
         </h2>
+        <select
+          aria-label={de.decks.format}
+          title={de.decks.formatHint}
+          value={deck.format}
+          onChange={(event) => {
+            const format = DECK_FORMATS.find((known) => known === event.target.value)
+            if (format) change((current) => setFormat(current, format))
+          }}
+          className="h-10 rounded-control border border-line bg-raised px-3 text-sm focus:border-accent focus:outline-none"
+        >
+          {DECK_FORMATS.map((format) => (
+            <option key={format} value={format}>
+              {de.decks.formats[format]}
+            </option>
+          ))}
+        </select>
         <button type="button" onClick={handleRename} className={buttonClass}>
           {de.decks.rename}
         </button>
@@ -146,6 +223,19 @@ export function DeckEditor({ deck }: { deck: Deck }) {
             ? de.decks.surplus(-check.missing)
             : de.decks.full}
       </p>
+      {check.size > 0 && (
+        <p data-testid="deck-worth" title={de.price.label} className="mt-1 text-sm text-muted">
+          {de.decks.worth(worth.worth)}
+          {worth.unpriced > 0 && ` (${de.price.unpriced(worth.unpriced)})`}
+          {' · '}
+          {coverage.missing === 0 ? de.decks.allAtHand : de.decks.coverage(coverage.have, coverage.missing, worth.missingWorth)}
+        </p>
+      )}
+      {check.notAllowed.length > 0 && (
+        <p data-testid="deck-not-allowed" role="status" className="mt-1 text-sm text-muted">
+          {de.decks.notAllowed(de.decks.formats[deck.format], check.notAllowed)}
+        </p>
+      )}
       {check.tooMany.length > 0 && (
         <p data-testid="deck-too-many" role="status" className="mt-1 text-sm text-muted">
           {de.decks.tooMany(check.tooMany)}
@@ -180,7 +270,13 @@ export function DeckEditor({ deck }: { deck: Deck }) {
             </h3>
             <ul className={GRID}>
               {group.cards.map((card) => (
-                <DeckCardTile key={`${card.lang}:${card.cardId}`} card={card} name={infoOf(card)?.name} />
+                <DeckCardTile
+                  key={`${card.lang}:${card.cardId}`}
+                  card={card}
+                  name={infoOf(card)?.name}
+                  atHand={copiesAtHand(card, owned)}
+                  notAllowed={notAllowedNames.has(infoOf(card)?.name ?? card.cardId)}
+                />
               ))}
             </ul>
           </div>

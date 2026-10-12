@@ -1,5 +1,5 @@
 import type { CardLang } from '../../types/binder'
-import type { Deck, DeckCard } from '../../types/deck'
+import type { Deck, DeckCard, DeckFormat } from '../../types/deck'
 import { defaultContext, type ModelContext } from '../binder/binderModel'
 
 /** A deck is played with exactly this many cards. */
@@ -17,6 +17,10 @@ export interface DeckCardInfo {
   category: DeckCategory
   /** Basic energy may be in a deck as often as one likes. */
   basicEnergy: boolean
+  /** Whether the card may be played in the tournament formats; missing where that is not known. */
+  legal?: { standard: boolean; expanded: boolean }
+  /** Cardmarket price trend of the card in its usual finish, in euros; missing where there is none. */
+  price?: number
 }
 
 /** Looks a card of the deck up; `undefined` while nothing is known about it. */
@@ -72,6 +76,20 @@ export function renameDeck(deck: Deck, name: string, ctx: ModelContext = default
   return { ...deck, name: trimmed, updatedAt: ctx.now() }
 }
 
+/** Says which cards the deck may hold from now on; the cards in it stay as they are. */
+export function setFormat(deck: Deck, format: DeckFormat, ctx: ModelContext = defaultContext): Deck {
+  return format === deck.format ? deck : { ...deck, format, updatedAt: ctx.now() }
+}
+
+/**
+ * Whether a card may be played in a format. `undefined` where that is not known – a card
+ * is only objected to when it is known not to be allowed.
+ */
+export function isAllowed(info: DeckCardInfo | undefined, format: DeckFormat): boolean | undefined {
+  if (format === 'free') return true
+  return info?.legal?.[format]
+}
+
 /** Puts a picture on the deck box, or takes it off (`undefined`). */
 export function setDeckCover(deck: Deck, assetId: string | undefined, ctx: ModelContext = defaultContext): Deck {
   if (assetId === deck.coverAssetId) return deck
@@ -107,7 +125,9 @@ export interface DeckCheck {
   missing: number
   /** Names the deck holds more often than allowed, with how often. */
   tooMany: { name: string; count: number }[]
-  /** Nothing to object to: the right size and no name too often. */
+  /** Names of cards that may not be played in the format of the deck, with how many copies. */
+  notAllowed: { name: string; count: number }[]
+  /** Nothing to object to: the right size, no name too often, every card allowed. */
   valid: boolean
 }
 
@@ -117,8 +137,15 @@ export interface DeckCheck {
  */
 export function checkDeck(deck: Deck, infoOf: InfoOf): DeckCheck {
   const byName = new Map<string, { name: string; count: number }>()
+  const notAllowed: { name: string; count: number }[] = []
   for (const card of deck.cards) {
     const info = infoOf(card)
+    if (isAllowed(info, deck.format) === false) {
+      const name = info?.name ?? card.cardId
+      const listed = notAllowed.find((entry) => entry.name === name)
+      if (listed) listed.count += card.count
+      else notAllowed.push({ name, count: card.count })
+    }
     if (info?.basicEnergy) continue
     const key = info ? `name:${info.name}` : `card:${card.lang}:${card.cardId}`
     const entry = byName.get(key) ?? { name: info?.name ?? card.cardId, count: 0 }
@@ -127,5 +154,11 @@ export function checkDeck(deck: Deck, infoOf: InfoOf): DeckCheck {
   }
   const size = deckSize(deck)
   const tooMany = [...byName.values()].filter((entry) => entry.count > MAX_SAME_NAME)
-  return { size, missing: DECK_SIZE - size, tooMany, valid: size === DECK_SIZE && tooMany.length === 0 }
+  return {
+    size,
+    missing: DECK_SIZE - size,
+    tooMany,
+    notAllowed,
+    valid: size === DECK_SIZE && tooMany.length === 0 && notAllowed.length === 0,
+  }
 }

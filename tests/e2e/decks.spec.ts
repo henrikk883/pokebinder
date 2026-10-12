@@ -127,3 +127,49 @@ test('a deck is renamed and deleted on the shelf, and its box can carry a pictur
   await page.getByRole('alertdialog').getByRole('button', { name: 'Löschen', exact: true }).click()
   await expect(page.getByTestId('deck-tile')).toHaveCount(0)
 })
+
+test('the format says which cards are allowed; the deck says what it costs and what of it lies in the binders', async ({
+  page,
+}) => {
+  // a binder of "151" in which Bisasam is there
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  const wizard = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await wizard.getByText('Master Set', { exact: true }).click()
+  await wizard.getByRole('button', { name: 'Set', exact: true }).click()
+  await wizard.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  await expect(wizard.getByTestId('master-set-summary')).toBeVisible()
+  await wizard.getByRole('button', { name: 'Anlegen' }).click()
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  const first = page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket').first()
+  await first.click()
+  await expect(first).toHaveAttribute('data-owned', 'true')
+  await expect(page.getByText('Lokal gespeichert')).toBeVisible()
+  await toShelf(page)
+
+  await createDeck(page, 'Pflanze')
+  await showSet151(page)
+  await pick(page, 'sv03.5-001').click()
+  await pick(page, 'sv03.5-001').click()
+  await pick(page, 'sv03.5-002').click()
+
+  // "151" is no longer part of Standard
+  await expect(page.getByRole('combobox', { name: 'Format' })).toHaveValue('standard')
+  await expect(page.getByTestId('deck-not-allowed')).toHaveText('In Standard nicht erlaubt: Bisasam (2), Bisaknosp (1)')
+  await expect(page.getByTestId('deck-worth')).toHaveText(
+    /^Wert: [0-9.,]+ € · 1 Karte liegt in deinen Bindern, 2 fehlen noch [(][0-9.,]+ €[)]$/,
+  )
+  await page.getByRole('tab', { name: /^Deck/ }).click()
+  const bisasam = page.locator('[data-testid="deck-card"][data-card-id="sv03.5-001"]')
+  await expect(bisasam).toHaveAttribute('data-allowed', 'false')
+  await expect(bisasam).toContainText('Nicht erlaubt')
+  await expect(bisasam.getByTestId('deck-card-owned')).toHaveText('1 von 2 im Binder')
+  await expect(check(page)).toHaveAttribute('data-valid', 'false')
+
+  await page.getByRole('combobox', { name: 'Format' }).selectOption('expanded')
+  await expect(page.getByTestId('deck-not-allowed')).toHaveCount(0)
+  await expect(bisasam).toHaveAttribute('data-allowed', 'true')
+
+  // the format is part of the deck: the shelf names it
+  await toShelf(page)
+  await expect(page.getByTestId('deck-tile')).toContainText('Expanded · 2 verschiedene Karten')
+})

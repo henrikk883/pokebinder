@@ -315,6 +315,21 @@ export const de = {
     more: (name: string) => `${name}: eine mehr`,
     fewer: (name: string) => `${name}: eine weniger`,
     copies: (count: number) => `×${count}`,
+    format: 'Format',
+    formatHint: 'Legt fest, aus welchen Sets das Deck Karten enthalten darf',
+    formats: {
+      standard: 'Standard',
+      expanded: 'Expanded',
+      free: 'Frei',
+    },
+    notAllowed: (format: string, cards: readonly { name: string; count: number }[]) =>
+      `In ${format} nicht erlaubt: ${cards.map((card) => `${card.name} (${card.count})`).join(', ')}`,
+    notAllowedBadge: 'Nicht erlaubt',
+    worth: (amount: number) => `Wert: ${formatEuro(amount)} €`,
+    coverage: (have: number, missing: number, missingWorth: number) =>
+      `${have} ${have === 1 ? 'Karte liegt' : 'Karten liegen'} in deinen Bindern, ${missing} ${missing === 1 ? 'fehlt' : 'fehlen'} noch (${formatEuro(missingWorth)} €)`,
+    allAtHand: 'alle Karten liegen in deinen Bindern',
+    atHand: (have: number, wanted: number) => `${have} von ${wanted} im Binder`,
     coverAdd: 'Bild für die Deckbox',
     coverChange: 'Bild der Deckbox ändern',
     coverRemove: 'Bild entfernen',

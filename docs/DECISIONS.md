@@ -482,3 +482,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Art der Karte und Basis-Energie kommen aus der Einzelkarten-Antwort von TCGdex (`getPlayInfo`, dieselbe Antwort wie für den Preis). Solange sie fehlt, steht die Karte unter „Weitere Karten“. Für japanische und koreanische Karten kennt die App die Wörter für die Kartenart nicht; sie bleiben dort stehen.
 - Noch nicht: Formatwahl und Erlaubtheit, Wert, Backup und Abgleich. Ein Bild auf der Deckbox liegt in der Bilder-Bibliothek; „Bild löschen“ dort weiß noch nichts von Decks.
 - Die Tests der Decks nutzen Karten, deren Antworten schon aufgezeichnet sind; zusätzliche Aufzeichnungen hätten die Preis-Tests verändert, die auf genau drei Preisen beruhen.
+
+## 2026-10-12 – Deck Builder, Schritt 2: Format, Wert, „schon im Binder“
+- Format je Deck wählbar und jederzeit änderbar: Standard (voreingestellt), Expanded, Frei. Ob eine Karte erlaubt ist, sagt TCGdex je Karte (`legal.standard`, `legal.expanded`). Beanstandet wird nur, was sicher nicht erlaubt ist; fehlt die Angabe, gilt die Karte nicht als verboten. Die Rotation pflegt damit TCGdex, nicht die App.
+- Ein Deck ist „gültig“, wenn es 60 Karten hat, keinen Namen öfter als viermal und keine nicht erlaubte Karte. Verboten wird weiterhin nichts, nur angezeigt.
+- Wert: Cardmarket-Preistrend der üblichen Ausführung jeder Karte (ein Deck kennt keine Varianten) mal Stückzahl. Er steht ohne Knopfdruck da: Der Preis kommt aus derselben Einzelkarten-Antwort wie die Kartenart.
+- „Im Binder“: gezählt wird, was in irgendeinem Binder als vorhanden markiert ist, mit Stückzahl und unabhängig von der Variante – aber genau diese Karte in dieser Sprache. Ein anderer Druck desselben Pokémon zählt nicht, obwohl er im Spiel gleichwertig wäre; das wäre eine eigene Erweiterung.
+- Nicht erlaubte Karten tragen ein neutrales Schildchen, kein rotes: Rot bleibt dem Löschen vorbehalten.

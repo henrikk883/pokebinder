@@ -8,9 +8,11 @@ import {
   createDeck,
   deckSize,
   groupDeck,
+  isAllowed,
   renameDeck,
   setCardCount,
   setDeckCover,
+  setFormat,
   type DeckCardInfo,
 } from './deckModel'
 
@@ -98,7 +100,7 @@ describe('what the rules say', () => {
       ['research', 4],
       ['lightning', 48],
     ])
-    expect(checkDeck(full, infoOf)).toEqual({ size: 60, missing: 0, tooMany: [], valid: true })
+    expect(checkDeck(full, infoOf)).toEqual({ size: 60, missing: 0, tooMany: [], notAllowed: [], valid: true })
     expect(checkDeck(addCard(full, 'special', 'de'), infoOf)).toMatchObject({ size: 61, missing: -1, valid: false })
   })
 
@@ -128,6 +130,58 @@ describe('what the rules say', () => {
     ])
 
     expect(checkDeck(deck, infoOf).tooMany).toEqual([{ name: 'mystery', count: 5 }])
+  })
+})
+
+describe('the format of a deck', () => {
+  const rotated: DeckCardInfo = { name: 'Qurtel V', category: 'pokemon', basicEnergy: false, legal: { standard: false, expanded: true } }
+  const current: DeckCardInfo = { name: 'Pikachu-ex', category: 'pokemon', basicEnergy: false, legal: { standard: true, expanded: true } }
+  const unsure: DeckCardInfo = { name: 'Rätsel', category: 'pokemon', basicEnergy: false }
+  const infos: Record<string, DeckCardInfo> = { rotated, 'rotated-art': rotated, current, unsure }
+  const lookUp = (card: DeckCard) => infos[card.cardId]
+
+  it('says for each format whether a card may be played, as far as that is known', () => {
+    expect(isAllowed(rotated, 'standard')).toBe(false)
+    expect(isAllowed(rotated, 'expanded')).toBe(true)
+    expect(isAllowed(rotated, 'free')).toBe(true)
+    expect(isAllowed(unsure, 'standard')).toBeUndefined()
+    expect(isAllowed(undefined, 'standard')).toBeUndefined()
+    expect(isAllowed(undefined, 'free')).toBe(true)
+  })
+
+  it('objects to the cards that are known not to be allowed, by name', () => {
+    let deck = createDeck('Format')
+    for (const [cardId, count] of [
+      ['rotated', 2],
+      ['current', 4],
+      ['rotated-art', 1],
+      ['unsure', 1],
+      ['never heard of', 1],
+    ] as const) {
+      deck = addCard(deck, cardId, 'de', count)
+    }
+
+    expect(checkDeck(deck, lookUp).notAllowed).toEqual([{ name: 'Qurtel V', count: 3 }])
+    expect(checkDeck(setFormat(deck, 'expanded'), lookUp).notAllowed).toEqual([])
+    expect(checkDeck(setFormat(deck, 'free'), lookUp).notAllowed).toEqual([])
+  })
+
+  it('makes a deck of the right size invalid as long as a card is not allowed', () => {
+    let deck = addCard(createDeck('Format'), 'rotated', 'de', 4)
+    deck = addCard(deck, 'lightning', 'de', 56)
+    const info = (card: DeckCard) => (card.cardId === 'rotated' ? rotated : INFO[card.cardId])
+
+    expect(checkDeck(deck, info).valid).toBe(false)
+    expect(checkDeck(setFormat(deck, 'expanded'), info).valid).toBe(true)
+  })
+
+  it('changes the format and nothing else', () => {
+    const deck = addCard(createDeck('Format'), 'rotated', 'de', 2)
+
+    expect(setFormat(deck, 'standard')).toBe(deck)
+    const free = setFormat(deck, 'free')
+    expect(free.format).toBe('free')
+    expect(free.cards).toBe(deck.cards)
   })
 })
 
