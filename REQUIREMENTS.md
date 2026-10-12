@@ -212,6 +212,19 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 - **Sonder-Reverse:** TCGdex nennt Typ und Muster jeder Variante (Pokéball, Meisterball, Kosmos, Stempel). Eine manuelle Ergänzung ist nicht nötig.
 - **Promos:** hängen nur am Promo-Set der Serie (z. B. `svp`), eine Zuordnung zu einem Hauptset gibt es nicht. Der Assistent bietet deshalb die Promos der Serie als Ganzes an.
 
-## Offen
+## Offen (To-do-Liste)
 
-- **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
+
+1. **Eigene Bilder maßstabsgetreu drucken:** PDF, in dem jedes Bild genau so groß ist wie die Pockets, die es belegt (63 × 88 mm je Pocket), mit Schnittmarken.
+2. **Seiten umsortieren und kopieren:** Seiten in der Miniaturleiste verschieben, eine Seite duplizieren, eine leere Seite mittendrin einfügen.
+3. **Merkliste:** Karten aus der Vorschau merken und in einem eigenen Tab neben „Karten“ und „Eigene Bilder“ wiederfinden.
+4. **Geräte abgleichen:** Import, der erkennt, welche Fassung eines Binders neuer ist, und vor dem Ersetzen fragt.
+5. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
+6. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
+7. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
+8. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
+9. **Fortschritt pro Set** in gemischten Bindern.
+10. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+11. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+12. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
