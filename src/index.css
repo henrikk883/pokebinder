@@ -27,6 +27,62 @@
   --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/*
+ * Holo effect: a foil card in the binder tips towards the mouse and shows a glare where it
+ * points. The component sets --holo-x / --holo-y (pointer position) and the two tilt angles.
+ */
+@layer components {
+  .holo-card {
+    transition: transform 150ms ease-out;
+  }
+
+  .holo-card:hover {
+    transform: perspective(600px) rotateX(var(--holo-tilt-x, 0deg)) rotateY(var(--holo-tilt-y, 0deg));
+  }
+
+  .holo-shine {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-pocket);
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: color-dodge;
+    transition: opacity 200ms ease-out;
+    background-image:
+      radial-gradient(
+        circle at var(--holo-x, 50%) var(--holo-y, 50%),
+        rgb(255 255 255 / 0.5),
+        transparent 55%
+      ),
+      linear-gradient(
+        115deg,
+        transparent 20%,
+        rgb(255 90 180 / 0.35) 40%,
+        rgb(90 220 255 / 0.35) 60%,
+        transparent 80%
+      );
+    background-size:
+      100% 100%,
+      220% 220%;
+    background-position:
+      0 0,
+      var(--holo-x, 50%) var(--holo-y, 50%);
+  }
+
+  .holo-card:hover .holo-shine {
+    opacity: 1;
+  }
+
+  /* the glare stays, the movement goes */
+  @media (prefers-reduced-motion: reduce) {
+    .holo-card,
+    .holo-card:hover {
+      transform: none;
+      transition: none;
+    }
+  }
+}
+
 @layer base {
   html,
   body,

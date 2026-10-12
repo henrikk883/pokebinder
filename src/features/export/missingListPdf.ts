@@ -1,6 +1,6 @@
 import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from 'pdf-lib'
 import type { CardLang } from '../../types/binder'
-import { hasSeveralLanguages, type MissingRow } from './missingList'
+import { hasSeveralLanguages, totalPrice, type MissingRow } from './missingList'
 
 export interface MissingListPdfInput {
   title: string
@@ -12,6 +12,10 @@ export interface MissingListPdfInput {
   rows: readonly MissingRow[]
   variantLabel: (variant: string) => string
   languageLabel: (lang: CardLang) => string
+  /** Text for a price in euros, e.g. "0,63 €". */
+  priceLabel: (amount: number) => string
+  /** Line under the table with the sum of the prices; `unpriced` rows have none. */
+  totalLabel: (amount: number, unpriced: number) => string
   pageLabel: (page: number, pageCount: number) => string
 }
 
@@ -21,7 +25,7 @@ const ROW_HEIGHT = 18
 const BOX = 10
 const FONT_SIZE = 9
 
-type ColumnKey = 'set' | 'lang' | 'number' | 'name' | 'variant' | 'rarity'
+type ColumnKey = 'set' | 'lang' | 'number' | 'name' | 'variant' | 'rarity' | 'price'
 interface Column {
   key: ColumnKey
   x: number
@@ -30,21 +34,23 @@ interface Column {
 
 /** Columns after the checkbox: x position and width in points. */
 const COLUMNS: readonly Column[] = [
-  { key: 'set', x: 60, width: 130 },
-  { key: 'number', x: 195, width: 55 },
-  { key: 'name', x: 255, width: 140 },
-  { key: 'variant', x: 400, width: 70 },
-  { key: 'rarity', x: 475, width: 80 },
+  { key: 'set', x: 60, width: 105 },
+  { key: 'number', x: 170, width: 50 },
+  { key: 'name', x: 225, width: 130 },
+  { key: 'variant', x: 360, width: 65 },
+  { key: 'rarity', x: 430, width: 75 },
+  { key: 'price', x: 510, width: 45 },
 ]
 
 /** With a column for the language, for binders that mix languages. */
 const COLUMNS_WITH_LANGUAGE: readonly Column[] = [
-  { key: 'set', x: 60, width: 112 },
-  { key: 'lang', x: 177, width: 24 },
-  { key: 'number', x: 206, width: 52 },
-  { key: 'name', x: 263, width: 134 },
-  { key: 'variant', x: 402, width: 68 },
-  { key: 'rarity', x: 475, width: 80 },
+  { key: 'set', x: 60, width: 92 },
+  { key: 'lang', x: 157, width: 22 },
+  { key: 'number', x: 184, width: 48 },
+  { key: 'name', x: 237, width: 122 },
+  { key: 'variant', x: 364, width: 62 },
+  { key: 'rarity', x: 431, width: 74 },
+  { key: 'price', x: 510, width: 45 },
 ]
 
 /** Name of the checkbox of a row; lets a filled-in list be matched to its cards again. */
@@ -161,6 +167,7 @@ export async function createMissingListPdf(input: MissingListPdfInput): Promise<
       name: readable(row.name, row.cardId, font),
       variant: input.variantLabel(row.variant),
       rarity: row.rarity,
+      price: row.price === undefined ? '' : input.priceLabel(row.price),
     }
     for (const column of columns) {
       page.drawText(fitted(cells[column.key], font, FONT_SIZE, column.width), {
@@ -173,6 +180,18 @@ export async function createMissingListPdf(input: MissingListPdfInput): Promise<
     }
     y = top
   })
+
+  if (input.rows.some((row) => row.price !== undefined)) {
+    if (y - ROW_HEIGHT * 1.5 < PAGE.margin + 20) ({ page, y } = addPage())
+    const { total, unpriced } = totalPrice(input.rows)
+    page.drawText(printable(input.totalLabel(total, unpriced), bold), {
+      x: PAGE.margin,
+      y: y - ROW_HEIGHT,
+      size: 10,
+      font: bold,
+      color: ink,
+    })
+  }
 
   pages.forEach((entry, index) => {
     const label = printable(input.pageLabel(index + 1, pages.length), font)

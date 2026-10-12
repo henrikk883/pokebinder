@@ -4,9 +4,17 @@ import { describe, expect, it } from 'vitest'
 import { createTestContext } from '../../test/modelContext'
 import type { Binder } from '../../types/binder'
 import { addPage, createBinder, setCard, setCardLang, setOwned } from '../binder/binderModel'
-import { buildMissingList, hasSeveralLanguages, type CardInfo, type MissingRow } from './missingList'
+import {
+  buildMissingList,
+  hasSeveralLanguages,
+  missingListCsv,
+  totalPrice,
+  type CardInfo,
+  type CsvLabels,
+  type MissingRow,
+} from './missingList'
 import { checkboxName, createMissingListPdf, type MissingListPdfInput } from './missingListPdf'
-import { missingListFileName } from './missingListTransfer'
+import { missingListFileName, proxyFileName } from './missingListTransfer'
 
 const infos: Record<string, CardInfo> = {
   'sv03.5-025': { name: 'Pikachu', localId: '025', setId: 'sv03.5', setName: '151', officialCount: 165, rarity: 'Häufig' },
@@ -116,10 +124,20 @@ describe('createMissingListPdf', () => {
     title: 'Fehlliste – Kanto Collection',
     subtitle: `${rows.length} fehlende Karten · Stand 12.10.2026`,
     emptyText: 'Es fehlt keine Karte.',
-    columns: { set: 'Set', lang: 'Spr.', number: 'Nummer', name: 'Name', variant: 'Variante', rarity: 'Seltenheit' },
+    columns: {
+      set: 'Set',
+      lang: 'Spr.',
+      number: 'Nummer',
+      name: 'Name',
+      variant: 'Variante',
+      rarity: 'Seltenheit',
+      price: 'Preis',
+    },
     rows,
     variantLabel: (variant) => variant,
     languageLabel: (lang) => lang.toUpperCase(),
+    priceLabel: (amount) => `${amount.toFixed(2)} €`,
+    totalLabel: (amount, unpriced) => `Summe: ${amount.toFixed(2)} € (${unpriced} ohne Preis)`,
     pageLabel: (page, pageCount) => `Seite ${page} von ${pageCount}`,
   })
 
@@ -236,6 +254,133 @@ describe('createMissingListPdf', () => {
     const pdf = await PDFDocument.load(bytes)
     expect(pdf.getPageCount()).toBe(1)
     expect(pdf.getForm().getFields()).toEqual([])
+  })
+})
+
+describe('prices in the list', () => {
+  const prices: Record<string, number> = {
+    'sv03.5-025/reverse': 0.63,
+    'sv03.5-006/holo': 12.5,
+    'svp-050/holo': 1.99,
+  }
+  const priceOf = (cardId: string, variant: string) => prices[`${cardId}/${variant}`]
+
+  it('gives each missing card the price of its own finish', () => {
+    const rows = buildMissingList(buildBinder(), lookup, priceOf)
+
+    expect(rows.map((row) => row.price)).toEqual([0.63, 12.5, 1.99, undefined])
+    // without a price there is no such field at all
+    expect(rows[3]).not.toHaveProperty('price')
+  })
+
+  it('adds the prices up and counts the cards without one', () => {
+    const rows = buildMissingList(buildBinder(), lookup, priceOf)
+
+    expect(totalPrice(rows)).toEqual({ total: 15.12, unpriced: 1 })
+    expect(totalPrice([])).toEqual({ total: 0, unpriced: 0 })
+  })
+
+  it('does not drift when many small amounts are added', () => {
+    const rows = Array.from({ length: 1000 }, () => ({ price: 0.1 }))
+
+    expect(totalPrice(rows).total).toBe(100)
+  })
+
+  it('puts price column and sum into the PDF without disturbing the boxes', async () => {
+    const rows = buildMissingList(buildBinder(), lookup, priceOf)
+    const columns = { set: 'Set', lang: 'Spr.', number: 'Nummer', name: 'Name', variant: 'Variante', rarity: 'Seltenheit', price: 'Preis' }
+    const labels: string[] = []
+
+    const bytes = await createMissingListPdf({
+      title: 'Fehlliste',
+      subtitle: '',
+      emptyText: '',
+      columns,
+      rows,
+      variantLabel: (variant) => variant,
+      languageLabel: (lang) => lang,
+      priceLabel: (amount) => {
+        labels.push(amount.toFixed(2))
+        return `${amount.toFixed(2)} €`
+      },
+      totalLabel: (amount, unpriced) => {
+        labels.push(`total ${amount.toFixed(2)} / ${unpriced}`)
+        return `Summe: ${amount.toFixed(2)} €`
+      },
+      pageLabel: () => '',
+    })
+
+    expect(labels).toEqual(['0.63', '12.50', '1.99', 'total 15.12 / 1'])
+    expect((await PDFDocument.load(bytes)).getForm().getFields()).toHaveLength(4)
+  })
+})
+
+describe('missingListCsv', () => {
+  const labels: CsvLabels = {
+    columns: {
+      set: 'Set',
+      number: 'Nummer',
+      name: 'Name',
+      variant: 'Variante',
+      rarity: 'Seltenheit',
+      lang: 'Sprache',
+      page: 'Binder-Seite',
+      price: 'Preis (EUR)',
+    },
+    total: 'Summe',
+    variantLabel: (variant) => (variant === 'reverse' ? 'Reverse Holo' : variant),
+    languageLabel: (lang) => (lang === 'de' ? 'Deutsch' : lang),
+  }
+  const priceOf = (cardId: string) => (cardId === 'sv03.5-006' ? 1234.5 : cardId === 'sv03.5-025' ? 0.63 : undefined)
+
+  it('writes one line per missing card, in a form a German Excel opens by double click', () => {
+    const csv = missingListCsv(buildMissingList(buildBinder(), lookup, priceOf), labels)
+
+    // byte order mark first, so that umlauts survive; Windows line ends; semicolons
+    expect(csv.charCodeAt(0)).toBe(0xfeff)
+    const lines = csv.slice(1).split('\r\n')
+    expect(lines).toEqual([
+      'Set;Nummer;Name;Variante;Seltenheit;Sprache;Binder-Seite;Preis (EUR)',
+      '151;"=""025/165""";Pikachu;Reverse Holo;Häufig;Deutsch;1;0,63',
+      '151;"=""006/165""";Glurak-ex;holo;Doppelselten;Deutsch;1;1234,50',
+      ';"=""050""";Simsala-ex;holo;Promo;Deutsch;2;',
+      ';;mystery-7;normal;;Deutsch;2;',
+      'Summe;;;;;;;1235,13',
+      '',
+    ])
+  })
+
+  it('keeps numbers like 025/165 as text, so Excel does not read a date into them', () => {
+    const csv = missingListCsv(buildMissingList(buildBinder(), lookup), labels)
+
+    expect(csv).toContain('"=""025/165"""')
+    // without any price there is no line for the sum
+    expect(csv).not.toContain('Summe')
+  })
+
+  it('quotes fields that contain semicolons, quotes or line breaks', () => {
+    const rows = buildMissingList(buildBinder(), () => ({ name: 'Pikachu; "der Starke"', localId: '1', setName: 'Zeile\nzwei' }))
+
+    const csv = missingListCsv(rows.slice(0, 1), labels)
+
+    expect(csv).toContain('"Zeile\nzwei";"=""1""";"Pikachu; ""der Starke"""')
+  })
+
+  it('consists of the header alone when nothing is missing', () => {
+    expect(missingListCsv([], labels).slice(1)).toBe(
+      'Set;Nummer;Name;Variante;Seltenheit;Sprache;Binder-Seite;Preis (EUR)\r\n',
+    )
+  })
+})
+
+describe('file names', () => {
+  it('names the table and the placeholders after binder and date too', () => {
+    expect(missingListFileName('Kanto Collection', '2026-10-12T10:00:00.000Z', 'csv')).toBe(
+      'fehlliste-kanto-collection-2026-10-12.csv',
+    )
+    expect(proxyFileName('Kanto Collection', '2026-10-12T10:00:00.000Z')).toBe(
+      'platzhalter-kanto-collection-2026-10-12.pdf',
+    )
   })
 })
 

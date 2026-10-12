@@ -2,6 +2,7 @@ import TCGdex, { Query } from '@tcgdex/sdk'
 import type { CardLang } from '../../types/binder'
 import type { ResponseCache } from './cache'
 import { matchesNumber, setIdOfCard, setIdOfCardId, sortByNumber } from './cardIds'
+import { cardmarketPrice, type RawPricedCard } from './prices'
 import { variantsOf, type RawVariant } from './variants'
 import type {
   CardDetail,
@@ -300,6 +301,18 @@ export function createTcgdexClient({
     getCatalog,
     getSetCards,
     getSetDetails,
+
+    async getPrice(cardId, variant) {
+      // The finishes are matched by their English names, which western cards have in the
+      // English data only (same ids), Japanese cards in their own.
+      const priceLang: CardLang = lang === 'ja' || lang === 'ko' ? lang : 'en'
+      let card = await request<RawPricedCard>(priceLang, ['cards', cardId]).catch(() => undefined)
+      // a card without English counterpart still has the price of its main print
+      if (!card && priceLang !== lang) {
+        card = await request<RawPricedCard>(lang, ['cards', cardId]).catch(() => undefined)
+      }
+      return card ? cardmarketPrice(card, variant) : undefined
+    },
 
     async getCardDetail(cardId) {
       const { setsById } = await getCatalog()

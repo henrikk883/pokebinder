@@ -10,6 +10,8 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}`,
     trace: 'retain-on-failure',
+    // a worker left over from the built app would answer image requests past the test doubles
+    serviceWorkers: 'block',
   },
   projects: [
     {

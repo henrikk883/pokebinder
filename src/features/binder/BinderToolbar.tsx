@@ -4,6 +4,7 @@ import { chronologicalSetIds, tcgdexFor } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { LAYOUTS, type Binder, type Layout } from '../../types/binder'
+import { MissingListMenu } from '../export/MissingListMenu'
 import { PngMenu } from '../export/PngMenu'
 import { MasterSetSettingsDialog } from '../masterset/MasterSetSettingsDialog'
 import { cardLangs, countCards } from './binderModel'
@@ -95,26 +96,10 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
 
   const replaceContent = useBinderStore((state) => state.replaceContent)
   const [adjusting, setAdjusting] = useState(false)
-  const [exporting, setExporting] = useState(false)
-  const [exportFailed, setExportFailed] = useState(false)
   const canUndo = useBinderStore((state) => state.canUndo)
   const canRedo = useBinderStore((state) => state.canRedo)
   const undo = useBinderStore((state) => state.undo)
   const redo = useBinderStore((state) => state.redo)
-
-  async function handleMissingList() {
-    setExporting(true)
-    setExportFailed(false)
-    try {
-      // the PDF library is large and only needed here, so it is loaded on demand
-      const { downloadMissingList } = await import('../export/missingListTransfer')
-      await downloadMissingList(binder)
-    } catch {
-      setExportFailed(true)
-    } finally {
-      setExporting(false)
-    }
-  }
 
   function handleLayout(layout: Layout) {
     if (countCards(binder) === 0 || window.confirm(de.binder.confirmLayout)) changeLayout(layout)
@@ -158,16 +143,7 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
           }}
         />
       )}
-      <div className="relative">
-        <button type="button" disabled={exporting} onClick={handleMissingList} className={buttonClass}>
-          {de.binder.missingListPdf}
-        </button>
-        {exportFailed && (
-          <p role="alert" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-3 text-sm text-muted shadow-lg">
-            {de.missingList.failed}
-          </p>
-        )}
-      </div>
+      <MissingListMenu binder={binder} buttonClass={buttonClass} />
       <PngMenu binderName={binder.name} pages={pageNumbersOf(spread)} buttonClass={buttonClass} />
       <div className="flex">
         <button

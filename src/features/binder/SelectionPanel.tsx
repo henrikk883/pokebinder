@@ -17,7 +17,7 @@ import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
 import { LanguageSelect } from '../search/LanguageSelect'
 import { useReadyCatalog } from '../search/useCatalog'
-import { useCard, useCardDetail, useCardLangs } from './useCard'
+import { useCard, useCardDetail, useCardLangs, usePrice } from './useCard'
 
 const fieldClass =
   'flex h-10 items-center rounded-control border border-line bg-raised px-3 text-sm'
@@ -35,6 +35,7 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
   const setCardLang = useBinderStore((state) => state.setCardLang)
   const detail = useCardDetail(slot.cardRef?.cardId, lang)
   const langs = useCardLangs(slot.cardRef?.cardId, lang)
+  const price = usePrice(slot.cardRef?.cardId, slot.cardRef?.variant, lang)
   // offer the finishes the card exists in; the current one stays selectable in any case
   const variants = [
     ...new Set([...(detail?.variants ?? BASE_VARIANTS), ...(slot.cardRef ? [slot.cardRef.variant] : [])]),
@@ -101,6 +102,13 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
           </dd>
         </div>
       </dl>
+
+      <p className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="text-muted">{de.price.label}</span>
+        <span data-testid="selected-price" className="font-medium">
+          {price === undefined ? de.price.loading : price === null ? de.price.none : de.price.amount(price)}
+        </span>
+      </p>
 
       <div role="group" aria-label={de.selection.ownedState} className="flex rounded-control bg-raised p-0.5 text-sm">
         {[true, false].map((owned) => (

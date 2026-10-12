@@ -24,6 +24,10 @@ const requests = [
   // "006/165": both sets with 165 official cards
   'de/cards?localId=6&set.id=eq:sv03.5&pagination:page=1&pagination:itemsPerPage=1000',
   'de/cards?localId=6&set.id=eq:ecard1&pagination:page=1&pagination:itemsPerPage=1000',
+  // Cardmarket prices come with the single card, read from the English data
+  'en/cards/sv03.5-001',
+  'en/cards/sv03.5-002',
+  'en/cards/sv03.5-003',
   // English and Japanese cards
   'en/series',
   'en/rarities',

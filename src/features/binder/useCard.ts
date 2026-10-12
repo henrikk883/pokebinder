@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { tcgdexFor, type CardDetail, type CardSummary } from '../../lib/tcgdex'
-import { OFFERED_LANGS, type CardLang } from '../../types/binder'
+import { OFFERED_LANGS, type CardLang, type CardVariant } from '../../types/binder'
 
 /** `null`: TCGdex does not know the card, or it could not be loaded. */
 type Resolved = CardSummary | null
@@ -70,6 +70,39 @@ export function useCardDetail(cardId: string | undefined, lang: CardLang): CardD
   }, [cardId, lang, key])
 
   return loaded && loaded.key === key ? loaded.detail : undefined
+}
+
+/**
+ * Cardmarket price of a card in one finish, in euros.
+ * `undefined` while loading, `null` when there is no price.
+ */
+export function usePrice(
+  cardId: string | undefined,
+  variant: CardVariant | undefined,
+  lang: CardLang,
+): number | null | undefined {
+  const [loaded, setLoaded] = useState<{ key: string; price: number | null }>()
+  const key = cardId === undefined || variant === undefined ? undefined : `${keyOf(cardId, lang)}:${variant}`
+
+  useEffect(() => {
+    if (cardId === undefined || variant === undefined || key === undefined) return
+    let cancelled = false
+    tcgdexFor(lang)
+      .getPrice(cardId, variant)
+      .then(
+        (price) => {
+          if (!cancelled) setLoaded({ key, price: price?.amount ?? null })
+        },
+        () => {
+          if (!cancelled) setLoaded({ key, price: null })
+        },
+      )
+    return () => {
+      cancelled = true
+    }
+  }, [cardId, variant, lang, key])
+
+  return loaded && loaded.key === key ? loaded.price : undefined
 }
 
 /**

@@ -1,4 +1,5 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
+import type { PointerEvent } from 'react'
 import { de } from '../../i18n/de'
 import { setIdOfCard } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
@@ -54,6 +55,20 @@ function PocketCard({ position, cardRef, owned }: PocketCardProps) {
   })
   // normal and holo are what the picture shows anyway; the other finishes need a word
   const showsVariant = variant !== 'normal' && variant !== 'holo'
+  // foil cards one owns shimmer under the mouse; a missing card has nothing to shine with
+  const holo = owned && variant !== 'normal'
+
+  /** Moves the glare to the pointer and tips the card towards it (see `.holo-card` in index.css). */
+  function followPointer(event: PointerEvent<HTMLDivElement>) {
+    const box = event.currentTarget.getBoundingClientRect()
+    const x = (event.clientX - box.left) / box.width
+    const y = (event.clientY - box.top) / box.height
+    const { style } = event.currentTarget
+    style.setProperty('--holo-x', `${x * 100}%`)
+    style.setProperty('--holo-y', `${y * 100}%`)
+    style.setProperty('--holo-tilt-x', `${(0.5 - y) * 12}deg`)
+    style.setProperty('--holo-tilt-y', `${(x - 0.5) * 12}deg`)
+  }
 
   return (
     <div
@@ -72,12 +87,19 @@ function PocketCard({ position, cardRef, owned }: PocketCardProps) {
         </span>
       )}
       {card ? (
-        <CardImage
-          card={card}
-          set={catalog?.setsById.get(setIdOfCard(card))}
-          size="large"
-          missing={!owned}
-        />
+        <div
+          data-holo={holo}
+          onPointerMove={holo ? followPointer : undefined}
+          className={holo ? 'holo-card relative' : 'relative'}
+        >
+          <CardImage
+            card={card}
+            set={catalog?.setsById.get(setIdOfCard(card))}
+            size="large"
+            missing={!owned}
+          />
+          {holo && <span aria-hidden="true" data-export-hide className="holo-shine" />}
+        </div>
       ) : (
         <div className="flex aspect-[63/88] w-full items-center justify-center rounded-pocket bg-raised p-1 text-center text-[0.65rem] text-muted">
           {card === null ? de.binder.unknownCard : ''}

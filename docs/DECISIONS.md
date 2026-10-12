@@ -208,5 +208,23 @@ Ein Pocket merkte sich, dass ein englisches Ersatzbild nicht ladbar war, und zei
 ## 2026-10-12 – Undo/Redo: 100 Schritte, nicht gespeichert
 „Rückgängig“ und „Wiederholen“ (Strg+Z, Strg+Y oder Strg+Umschalt+Z) gelten für jede Änderung am geöffneten Binder. Der Verlauf beginnt neu, wenn ein Binder geöffnet, geschlossen oder die Seite neu geladen wird; der zurückgenommene Stand wird sofort gespeichert. Abgelehnte Aktionen und solche ohne Wirkung zählen nicht als Schritt. In Textfeldern gilt Strg+Z weiter für den Text. Von Henrik freigegeben.
 
+## 2026-10-12 – Lokal statt gehostet, Start per Doppelklick
+Henrik möchte die App vorerst nicht veröffentlichen. `PokeBinder starten.cmd` baut die App, liefert sie mit `npm run start` unter `http://localhost:5173/` aus und öffnet den Browser; läuft sie schon, wird nur der Browser geöffnet. Der Port ist derselbe wie bei `npm run dev`, damit die gespeicherten Binder dieselben bleiben. Eine Desktop-Verknüpfung „PokeBinder“ zeigt auf das Skript; das Symbol erzeugt `node scripts/make-icon.mjs`.
+
+## 2026-10-12 – Service Worker nur für Bilder
+`public/sw.js` hält Kartenbilder und Set-Logos von TCGdex dauerhaft auf dem Gerät, damit einmal gesehene Karten ohne Verbindung erscheinen. Die App selbst kommt vom lokalen Server, die Kartendaten liegen in IndexedDB; beides braucht keinen Worker. Er wird nur in der gebauten App angemeldet und ist in den Playwright-Tests gesperrt. Selbst geschrieben, ohne weiteres Paket.
+
+## 2026-10-12 – Fehlliste als CSV statt Excel-Datei
+Semikolon-getrennt, mit Dezimalkomma und Byte Order Mark, sodass ein deutsches Excel sie per Doppelklick richtig öffnet; Nummern wie 025/165 stehen als Text. Eine echte `.xlsx`-Datei hätte ein weiteres Paket gebraucht. Von Henrik entschieden.
+
+## 2026-10-12 – Preise von Cardmarket über TCGdex
+Angezeigt wird der Preistrend, ersatzweise der Durchschnitt, je Variante: die normale Karte mit den einfachen Werten, jede Folien-Variante mit den Holo-Werten; Sondermuster sind bei Cardmarket eigene Produkte. Der Preis gilt für die Karte über alle Sprachen. Er steht rechts bei der gewählten Karte und als Spalte mit Summe in der Fehlliste (PDF und CSV). Den Wert des ganzen Binders rechnet „Wert berechnen“ auf Wunsch aus, getrennt nach vorhanden und fehlend; nach einer Änderung am Binder muss neu gerechnet werden. Preise brauchen eine Abfrage pro Karte (höchstens acht gleichzeitig) und liegen 24 Stunden im Cache. Von Henrik freigegeben.
+
+## 2026-10-12 – Proxy-Druck
+„Platzhalter drucken (PDF)“ im Menü „Fehlliste“: je A4-Blatt 3 × 3 Karten zu exakt 63 × 88 mm, mittig, mit Schnittmarken, in Binder-Reihenfolge, schwarz-weiß. Fehlt das Bild in der Kartensprache, wird das englische genommen; gibt es keines, steht ein Rahmen mit Name und Nummer. Eine Karte und ihre weiteren Varianten teilen sich ein Bild in der Datei. Die Option „ganze Binder-Seite 1:1 drucken“ ist nicht umgesetzt.
+
+## 2026-10-12 – Holo-Effekt
+Vorhandene Karten in einer Folien-Variante (alles außer „normal“) kippen im Binder leicht zur Maus und zeigen dort einen Glanz. Fehlende Karten bleiben ruhig. Bei „reduzierte Bewegung“ im System entfällt das Kippen. Im PNG-Export erscheint der Glanz nicht.
+
 ## 2026-10-12 – Fehler beim Speichern oder Import ohne Rot
 Meldungen erscheinen in neutraler Textfarbe, weil Rot dem Löschen vorbehalten ist.

@@ -1,3 +1,6 @@
+const euro = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const formatEuro = (amount: number) => euro.format(amount)
+
 const VARIANT_LABELS: Record<string, string> = {
   normal: 'Normal',
   holo: 'Holo',
@@ -45,9 +48,46 @@ export const de = {
       name: 'Name',
       variant: 'Variante',
       rarity: 'Seltenheit',
+      price: 'Preis',
     },
+    csvColumns: {
+      set: 'Set',
+      number: 'Nummer',
+      name: 'Name',
+      variant: 'Variante',
+      rarity: 'Seltenheit',
+      lang: 'Sprache',
+      page: 'Binder-Seite',
+      price: 'Preis (EUR)',
+    },
+    csvTotal: 'Summe',
+    total: (amount: number, unpriced: number) =>
+      `Summe (Cardmarket-Preistrend): ${formatEuro(amount)} €` +
+      (unpriced > 0 ? ` · ${unpriced} ${unpriced === 1 ? 'Karte' : 'Karten'} ohne Preis` : ''),
     page: (page: number, pageCount: number) => `Seite ${page} von ${pageCount}`,
-    failed: 'Die Fehlliste konnte nicht erstellt werden.',
+    failed: 'Die Datei konnte nicht erstellt werden. Besteht eine Internetverbindung?',
+    menu: 'Fehlliste',
+    asPdf: 'Fehlliste als PDF',
+    asCsv: 'Fehlliste als CSV (Excel)',
+    proxies: 'Platzhalter drucken (PDF)',
+    working: (done: number, total: number) => (total > 0 ? `Lädt … ${done} / ${total}` : 'Lädt …'),
+  },
+  proxies: {
+    title: (binderName: string) => `Platzhalter – ${binderName}`,
+    footer: (sheet: number, sheetCount: number) =>
+      `Blatt ${sheet} von ${sheetCount} · Mit 100 % Skalierung („Tatsächliche Größe“) drucken: jede Karte misst dann 63 × 88 mm.`,
+  },
+  price: {
+    label: 'Cardmarket-Preistrend',
+    amount: (amount: number) => `${formatEuro(amount)} €`,
+    none: 'kein Preis',
+    loading: '…',
+    calculate: 'Wert berechnen',
+    calculating: (done: number, total: number) => `Preise werden geladen … ${done} / ${total}`,
+    value: (owned: number, missing: number) =>
+      `Wert: ${formatEuro(owned)} € vorhanden · ${formatEuro(missing)} € fehlen noch`,
+    unpriced: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} ohne Preis`,
+    failed: 'Die Preise konnten nicht geladen werden.',
   },
   png: {
     button: 'Als PNG',
@@ -195,7 +235,6 @@ export const de = {
     sortPage: (page: number) => `Seite ${page} sortieren`,
     sortBinder: 'Ganzen Binder sortieren',
     sortFailed: 'Sortieren braucht die Set-Liste von TCGdex. Besteht eine Internetverbindung?',
-    missingListPdf: 'Fehlliste als PDF',
     addPage: 'Seite',
     addPageLabel: 'Seite hinzufügen',
     mode: 'Modus',
