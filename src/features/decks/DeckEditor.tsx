@@ -6,6 +6,7 @@ import { useDeckStore } from '../../store/deckStore'
 import { promptDialog } from '../../store/dialogStore'
 import { useEditorStore } from '../../store/editorStore'
 import { DECK_FORMATS, type Deck, type DeckCard } from '../../types/deck'
+import { normalizeText } from '../binder/cardFinder'
 import { useCard } from '../binder/useCard'
 import { ACCEPTED_IMAGE_TYPES } from '../images/upload'
 import { uploadErrorText, uploadImages } from '../images/uploadActions'
@@ -134,6 +135,8 @@ export function DeckEditor({ deck }: { deck: Deck }) {
   // a new deck has nothing to show yet: it starts where cards are found
   const [tab, setTab] = useState<Tab>(deck.cards.length === 0 ? 'add' : 'deck')
   const [uploadError, setUploadError] = useState<string | null>(null)
+  // narrows the cards shown under "Deck" to those with this in their name or number
+  const [filter, setFilter] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
   const infoOf = useDeckInfo(deck.cards)
   const owned = useOwnedCopies()
@@ -142,6 +145,15 @@ export function DeckEditor({ deck }: { deck: Deck }) {
   const coverage = deckCoverage(deck, owned)
   const worth = deckWorth(deck, infoOf, owned)
   const notAllowedNames = new Set(check.notAllowed.map((entry) => entry.name))
+  const wanted = normalizeText(filter)
+  const shown = (card: DeckCard) =>
+    wanted === '' ||
+    normalizeText(infoOf(card)?.name ?? '').includes(wanted) ||
+    // the number is the last part of the id, e.g. "sv03.5-025"
+    normalizeText(card.cardId.split('-').at(-1) ?? '').replace(/^0+(?=.)/, '') === wanted.replace(/^0+(?=.)/, '')
+  const shownGroups = groups
+    .map((group) => ({ ...group, cards: group.cards.filter(shown) }))
+    .filter((group) => group.cards.length > 0)
 
   async function handleRename() {
     const name = await promptDialog({
@@ -263,7 +275,18 @@ export function DeckEditor({ deck }: { deck: Deck }) {
       {/* both stay mounted, so the search keeps its results while the deck is looked at */}
       <div className={tab === 'deck' ? 'mt-5' : 'hidden'} data-testid="deck-cards">
         {groups.length === 0 && <p className="text-sm text-muted">{de.decks.emptyDeck}</p>}
-        {groups.map((group) => (
+        {groups.length > 0 && (
+          <input
+            type="search"
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+            placeholder={de.find.inDeck}
+            aria-label={de.find.inDeck}
+            className="mb-5 h-10 w-full max-w-sm rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
+          />
+        )}
+        {groups.length > 0 && shownGroups.length === 0 && <p className="text-sm text-muted">{de.find.none}</p>}
+        {shownGroups.map((group) => (
           <div key={group.category} className="mb-8" data-testid="deck-group" data-category={group.category}>
             <h3 className="mb-3 text-lg font-semibold">
               {de.decks.categories[group.category]} <span className="text-sm font-normal text-muted">{group.count}</span>

@@ -240,7 +240,7 @@ Mit Henrik am 12.10.2026 vereinbart. Die Reihenfolge steht in der Roadmap darunt
 
 1. **Installierbar als App – erledigt.** PokéBinder lässt sich auf Handy, iPad und PC „zum Startbildschirm hinzufügen“: eigenes Symbol, eigener Name, Start ohne Browserleiste. Einmal gesehene Karten und die App selbst öffnen sich auch ohne Netz.
 2. **Sammlungswert im Regal – erledigt.** Jeder Binder zeigt im Regal seinen Fortschritt (vorhanden / gesamt) und den Wert der vorhandenen Karten; über dem Regal steht die Summe über alle Binder. Preise wie überall: Cardmarket-Preistrend, Karten ohne Preis werden genannt.
-3. **Karte im Binder finden.** Ein Suchfeld im offenen Binder (Name oder Nummer) zeigt die Treffer und springt zur Seite, auf der die Karte liegt; das Pocket ist danach ausgewählt.
+3. **Karte im Binder finden – erledigt, auch für Decks.** Im Deck grenzt ein Suchfeld die gezeigten Karten ein. Im Binder: Ein Suchfeld im offenen Binder (Name oder Nummer) zeigt die Treffer und springt zur Seite, auf der die Karte liegt; das Pocket ist danach ausgewählt.
 4. **Preisverlauf.** Die App hält den Wert jedes Binders fest (höchstens einmal am Tag) und zeigt, wie er sich über Wochen und Monate entwickelt hat – je Binder und für die ganze Sammlung. Der Verlauf gleicht sich zwischen den Geräten ab.
 5. **Preisalarm auf der Merkliste.** Zu einer gemerkten Karte lässt sich ein Wunschpreis festlegen; liegt der Preistrend darunter, hebt die Merkliste die Karte hervor und nennt die Zahl solcher Karten am Reiter. Geprüft wird beim Öffnen der App, eine Benachrichtigung von außen gibt es nicht.
 6. **Mehr Layouts.** Zusätzlich zu 2 × 2, 3 × 3 und 4 × 4 auch 3 × 4 und 4 × 3, im Assistenten, beim Layoutwechsel, im PNG-Export und im Bilddruck.
@@ -263,7 +263,7 @@ Sieben Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher
 |---|---|---|---|---|
 | **A – Alltag** | 1 Installierbar als App | klein | Service Worker (vorhanden) | erledigt (Symbol: das bestehende Logo) |
 | | 2 Sammlungswert im Regal | klein | Preise, Fortschritt (vorhanden) | erledigt |
-| | 3 Karte im Binder finden | klein | – | – |
+| | 3 Karte im Binder finden | klein | – | erledigt (auch im Deck) |
 | **B – Preise** | 4 Preisverlauf | mittel | Punkt 2 | Wie lange zurück? Vorschlag: täglich für 90 Tage, danach wöchentlich |
 | | 5 Preisalarm auf der Merkliste | klein | Merklisten (vorhanden) | – |
 | **C – Gestalten** | 6 Mehr Layouts | mittel | – | Welche Formate hast du wirklich? 3 × 4 und 4 × 3 sind der Vorschlag |
@@ -285,4 +285,4 @@ Sieben Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher
 - **Punkt 10:** „UI-Texte auf Deutsch und nur in `src/i18n/de.ts`“ wird zu „je Sprache eine Datei“.
 - **Punkt 11:** Sehr wahrscheinlich ein weiterer externer Dienst oder eine weitere Abhängigkeit; beides ist laut CLAUDE.md nur nach Rückfrage erlaubt. Kamerabilder verlassen dabei das Gerät, was zum Grundsatz „kein Tracking, alles zuerst lokal“ passen muss.
 
-**Reihenfolge:** Der Deck Builder (E, Punkt 12) wurde auf Henriks Wunsch vorgezogen und ist fertig; als Nächstes steht aus A „Karte im Binder finden“ an. Sonst gilt A → B → C → D → E. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt bei den Bindern und lohnt sich, sobald die Freunde die App wirklich benutzen. E (Deck Builder, von Henrik am 12.10.2026 gewünscht) ist eine größere Umstellung, weil die App damit mehr wird als ein Binder-Planer; „gegen Freunde spielen“ steht dort nur als Fernziel. **F ist zurückgestellt** (Henrik, 12.10.2026): Englische Oberfläche und Karten per Kamera werden erst angefasst, wenn Henrik sie wieder aufruft. **G** (weitere Sammelkartenspiele, von Henrik am 12.10.2026 gewünscht) steht als Ausblick am Ende: Es baut am besten auf einem fertigen Deck Builder auf und verändert, was die App im Kern ist.
+**Reihenfolge:** Der Deck Builder (E, Punkt 12) wurde auf Henriks Wunsch vorgezogen und ist fertig; Etappe A ist damit abgeschlossen; als Nächstes steht B (Preisverlauf, Preisalarm) an. Sonst gilt A → B → C → D → E. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt bei den Bindern und lohnt sich, sobald die Freunde die App wirklich benutzen. E (Deck Builder, von Henrik am 12.10.2026 gewünscht) ist eine größere Umstellung, weil die App damit mehr wird als ein Binder-Planer; „gegen Freunde spielen“ steht dort nur als Fernziel. **F ist zurückgestellt** (Henrik, 12.10.2026): Englische Oberfläche und Karten per Kamera werden erst angefasst, wenn Henrik sie wieder aufruft. **G** (weitere Sammelkartenspiele, von Henrik am 12.10.2026 gewünscht) steht als Ausblick am Ende: Es baut am besten auf einem fertigen Deck Builder auf und verändert, was die App im Kern ist.

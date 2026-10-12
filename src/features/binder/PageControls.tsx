@@ -1,5 +1,7 @@
 import { de } from '../../i18n/de'
 import { useEditorStore } from '../../store/editorStore'
+import type { Binder } from '../../types/binder'
+import { BinderFind } from './BinderFind'
 import { MAX_ZOOM, MIN_ZOOM, pageNumbersOf, ZOOM_STEP, type Spread } from './spreads'
 
 const squareClass =
@@ -19,11 +21,12 @@ function Chevron({ direction }: { direction: 'left' | 'right' }) {
 }
 
 interface PageControlsProps {
+  binder: Binder
   spread: Spread
   spreadCount: number
 }
 
-export function PageControls({ spread, spreadCount }: PageControlsProps) {
+export function PageControls({ binder, spread, spreadCount }: PageControlsProps) {
   const zoom = useEditorStore((state) => state.zoom)
   const setZoom = useEditorStore((state) => state.setZoom)
   const showSpread = useEditorStore((state) => state.showSpread)
@@ -65,6 +68,8 @@ export function PageControls({ spread, spreadCount }: PageControlsProps) {
       )}
 
       <div className="flex items-center gap-3">
+        {/* beside the arrows: both are ways to another page */}
+        <BinderFind binder={binder} buttonClass={squareClass} />
         <button
           type="button"
           aria-label={de.binder.previous}

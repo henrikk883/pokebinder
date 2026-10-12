@@ -137,7 +137,7 @@ export function BinderEditor({ binder }: { binder: Binder }) {
   return (
     <section className="flex h-full flex-col gap-4 p-5 max-md:h-auto max-md:gap-3 max-md:p-3">
       <BinderToolbar binder={binder} spread={spread} />
-      <PageControls spread={spread} spreadCount={spreads.length} />
+      <PageControls binder={binder} spread={spread} spreadCount={spreads.length} />
       {collecting && (
         <p data-testid="collection-hint" className="text-sm text-muted">
           {de.binder.collectionHint}

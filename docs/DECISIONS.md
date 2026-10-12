@@ -496,3 +496,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Konflikte: Der Dialog nennt jetzt, ob es um einen Binder oder ein Deck geht; die Kopfzeile sagt „1 Konflikt klären“.
 - Das Bild einer Deckbox wandert beim Abgleich mit, und die Bilder-Bibliothek weigert sich, ein Bild zu löschen, das noch auf einer Deckbox liegt.
 - Heruntergeladene Decks laufen durch `readDeck` (Format, Karten, Stückzahlen); was die Prüfung nicht besteht, wird nicht übernommen.
+
+## 2026-10-12 – Karte finden, im Binder und im Deck
+- Binder: Lupe neben den Blätter-Pfeilen. Gesucht wird nach einem Teil des Namens (ohne Rücksicht auf Groß-/Kleinschreibung und Akzente) oder nach der Nummer – allein („25“, „025“) oder wie aufgedruckt („025/165“). Die Treffer nennen Seite und Pocket in der Reihenfolge des Binders; ein Klick (oder Enter für den ersten) blättert hin und wählt das Pocket aus.
+- Die Namen stehen nicht im Binder (er speichert nur Verweise); sie werden beim Öffnen der Suche nachgeschlagen, eine Abfrage je Set, aus dem Vorrat der App.
+- Deck: Henrik wollte die Suche auch in den „Deck Boxen“. Dort ist es ein Feld über den Karten, das die gezeigten Karten eingrenzt – ein Deck hat keine Seiten, zu denen man springen könnte.
+- Die reine Logik liegt in `cardFinder.ts` (nicht `binderFind.ts`: der Name hätte sich unter Windows mit `BinderFind.tsx` nur in der Schreibweise unterschieden).

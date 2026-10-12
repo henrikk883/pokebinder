@@ -279,6 +279,14 @@ export const de = {
     substituteImage: (name: string) => `${name} (englisches Bild)`,
     substituteHint: 'Kein deutsches Bild vorhanden, gezeigt wird die englische Karte.',
   },
+  find: {
+    button: 'Karte im Binder finden',
+    placeholder: 'Name oder Nummer',
+    loading: 'Karten werden nachgeschlagen …',
+    none: 'Keine passende Karte.',
+    place: (page: number, pocket: number) => `Seite ${page} · Pocket ${pocket}`,
+    inDeck: 'Im Deck suchen (Name oder Nummer)',
+  },
   decks: {
     title: 'Decks',
     empty: 'Noch kein Deck angelegt.',
