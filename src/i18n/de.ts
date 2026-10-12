@@ -220,6 +220,15 @@ export const de = {
     summary: (layout: string, pageCount: number, cardCount: number) =>
       `${layout.replace('x', ' × ')} · ${pageCount} ${pageCount === 1 ? 'Seite' : 'Seiten'} · ${cardCount} ${cardCount === 1 ? 'Karte' : 'Karten'}`,
     loadFailed: 'Die Binder konnten nicht geladen werden.',
+    sort: 'Sortierung',
+    sorts: {
+      updated: 'Zuletzt geändert',
+      name: 'Alphabetisch',
+      custom: 'Eigene Reihenfolge',
+    },
+    customHint: 'Binder ziehen, um sie umzustellen.',
+    moveEarlier: (name: string) => `${name} nach vorn`,
+    moveLater: (name: string) => `${name} nach hinten`,
   },
   newBinder: {
     title: 'Neuer Binder',

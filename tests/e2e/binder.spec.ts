@@ -476,6 +476,71 @@ test('"Meine Binder" lists the binders; they can be opened and deleted', async (
   await expect(page.getByRole('button', { name: 'Zweiter Binder öffnen' })).toBeVisible()
 })
 
+test('the shelf is ordered by last change, by name or by hand; the choice is remembered', async ({ page }) => {
+  const toList = () => page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  const tile = (name: string) => page.locator(`[data-testid="binder-tile"][data-binder-name="${name}"]`)
+  const shelf = () =>
+    page
+      .getByTestId('binder-tile')
+      .evaluateAll((tiles) => tiles.map((entry) => entry.getAttribute('data-binder-name')))
+  for (const name of ['Zebra', 'Apfel', 'Mitte']) {
+    await createBinder(page, name)
+    await toList()
+  }
+  const sort = page.getByRole('combobox', { name: 'Sortierung' })
+
+  // as before: the binder changed last stands in front
+  await expect(sort).toHaveValue('updated')
+  await expect.poll(shelf).toEqual(['Mitte', 'Apfel', 'Zebra'])
+  await expect(page.getByRole('button', { name: 'Zebra nach vorn' })).toHaveCount(0)
+
+  await sort.selectOption({ label: 'Alphabetisch' })
+  await expect.poll(shelf).toEqual(['Apfel', 'Mitte', 'Zebra'])
+  // only the own order can be changed by dragging
+  await drag(page, tile('Zebra').getByTestId('binder-cover'), tile('Apfel'))
+  await expect.poll(shelf).toEqual(['Apfel', 'Mitte', 'Zebra'])
+  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+
+  // the own order starts from "changed last" and is changed by dragging a binder onto another
+  await sort.selectOption({ label: 'Eigene Reihenfolge' })
+  await expect.poll(shelf).toEqual(['Mitte', 'Apfel', 'Zebra'])
+  await drag(page, tile('Zebra').getByTestId('binder-cover'), tile('Mitte'))
+  await expect.poll(shelf).toEqual(['Zebra', 'Mitte', 'Apfel'])
+  // dragging does not open the binder
+  await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
+
+  // by keyboard: one place at a time. For 50 ms after a drag, dnd-kit swallows clicks, so
+  // that letting go does not count as one; nobody is that fast, but this test is.
+  await page.waitForTimeout(150)
+  await expect(page.getByRole('button', { name: 'Zebra nach vorn' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Apfel nach hinten' })).toBeDisabled()
+  await page.getByRole('button', { name: 'Apfel nach vorn' }).click()
+  await expect.poll(shelf).toEqual(['Zebra', 'Apfel', 'Mitte'])
+
+  // remembered after a reload, and a click still opens a binder
+  await page.reload()
+  // the app comes back with the binder that was open last
+  if (!(await sort.isVisible())) await toList()
+  await expect(sort).toHaveValue('custom')
+  await expect.poll(shelf).toEqual(['Zebra', 'Apfel', 'Mitte'])
+
+  // a new binder stands in front; a deleted one leaves the others in place
+  await createBinder(page, 'Neu')
+  await toList()
+  await expect.poll(shelf).toEqual(['Neu', 'Zebra', 'Apfel', 'Mitte'])
+  await page.getByRole('button', { name: 'Apfel löschen' }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Löschen', exact: true }).click()
+  await expect.poll(shelf).toEqual(['Neu', 'Zebra', 'Mitte'])
+  await tile('Mitte').getByTestId('binder-cover').click()
+  await expect(page.getByRole('heading', { name: 'Mitte' })).toBeVisible()
+
+  // changing a binder does not disturb the own order
+  await toList()
+  await expect.poll(shelf).toEqual(['Neu', 'Zebra', 'Mitte'])
+  await sort.selectOption({ label: 'Zuletzt geändert' })
+  await expect.poll(shelf).toEqual(['Neu', 'Mitte', 'Zebra'])
+})
+
 test('a binder is renamed in the editor and in the list; undo takes the name back', async ({ page }) => {
   await createBinder(page, 'Kanto')
   await expect(page.getByRole('region', { name: 'Cover-Innenseite' })).toContainText('Kanto')
