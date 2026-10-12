@@ -379,3 +379,6 @@ Menü „Mehr“ → „Varianten prüfen“ sucht im offenen Binder Karten, die
 
 ## 2026-10-12 – Bild mit Pfeilen verschieben
 Im Abschnitt „Bild“ der rechten Spalte stehen vier Pfeile, die das Bild hinter dem gewählten Pocket um ein Pocket nach links, oben, unten oder rechts rücken, auch über die Ringe auf die gegenüberliegende Seite. Das geht auch dann, wenn auf jedem Pocket des Bildes eine Karte liegt und es sich deshalb nicht greifen lässt. Die Auswahl wandert mit, sodass mehrere Schritte hintereinander gehen. Passt das Bild am Ziel nicht (Rand, anderes Bild), bleibt es liegen und der bekannte Hinweis erscheint; am Rand des Binders ist der Pfeil ausgegraut. Karten bleiben, wo sie sind.
+
+## 2026-10-12 – Menüs schließen bei Klick daneben
+Alle aufklappbaren Menüs (Sortieren, Fehlliste, Als PNG, Mehr, Backup, Set-Auswahl) schließen sich, wenn man irgendwo außerhalb klickt oder tippt; bisher ging das nur mit Esc oder durch die Wahl eines Eintrags. Dadurch ist nie mehr als ein Menü offen. Der Klick wirkt zusätzlich normal weiter (ein Pocket wird z. B. trotzdem gewählt). Von Henrik gemeldet.

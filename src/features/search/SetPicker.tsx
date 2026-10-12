@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { setLogoUrl, type Catalog, type SetSummary } from '../../lib/tcgdex'
+import { useDismiss } from '../../lib/useDismiss'
 
 interface SetPickerProps {
   catalog: Catalog | undefined
@@ -55,6 +56,7 @@ function SetRow({ set, selected, onSelect }: { set: SetSummary; selected: boolea
 /** Set selection grouped by series, with logo and card count. */
 export function SetPicker({ catalog, unavailableText, value, onChange }: SetPickerProps) {
   const [open, setOpen] = useState(false)
+  const menu = useDismiss<HTMLDivElement>(open, () => setOpen(false))
   const [filter, setFilter] = useState('')
 
   const selected = value ? catalog?.setsById.get(value) : undefined
@@ -78,6 +80,7 @@ export function SetPicker({ catalog, unavailableText, value, onChange }: SetPick
 
   return (
     <div
+      ref={menu}
       onKeyDown={(event) => {
         if (event.key === 'Escape') setOpen(false)
       }}

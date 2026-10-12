@@ -3,6 +3,7 @@ import { de } from '../../i18n/de'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
 import { spreadOfPage } from '../binder/spreads'
+import { useDismiss } from '../../lib/useDismiss'
 
 interface PngMenuProps {
   /** For printing its own images in true size; pages are exported as they are shown. */
@@ -113,6 +114,7 @@ function PageChoiceDialog({ pageCount, preselected, onExport, onCancel }: PageCh
  */
 export function PngMenu({ binder, binderName, pageCount, openPages, buttonClass }: PngMenuProps) {
   const [open, setOpen] = useState(false)
+  const menu = useDismiss<HTMLDivElement>(open, () => setOpen(false))
   const [choosing, setChoosing] = useState(false)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [printing, setPrinting] = useState<{ done: number; total: number } | null>(null)
@@ -161,6 +163,7 @@ export function PngMenu({ binder, binderName, pageCount, openPages, buttonClass 
 
   return (
     <div
+      ref={menu}
       className="relative"
       onKeyDown={(event) => {
         if (event.key === 'Escape') setOpen(false)

@@ -14,6 +14,7 @@ import {
 } from './backupTransfer'
 import { ImportDialog } from './ImportDialog'
 import { replacesSomething, suggestedImport } from './importPlan'
+import { useDismiss } from '../../lib/useDismiss'
 
 const itemClass =
   'block w-full rounded-control px-3 py-2 text-left text-sm hover:bg-raised disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent'
@@ -50,6 +51,7 @@ function useBackupReminder(lastBackup: string | null): BackupReminder {
 export function BackupMenu() {
   const binder = useBinderStore((state) => state.binder)
   const [open, setOpen] = useState(false)
+  const menu = useDismiss<HTMLDivElement>(open, () => setOpen(false))
   const [error, setError] = useState<string | null>(null)
   const [lastBackup, setLastBackup] = useState(lastFullBackup)
   const [pending, setPending] = useState<PendingImport | null>(null)
@@ -115,6 +117,7 @@ export function BackupMenu() {
 
   return (
     <div
+      ref={menu}
       className="relative flex items-center gap-3"
       onKeyDown={(event) => {
         if (event.key === 'Escape') setOpen(false)

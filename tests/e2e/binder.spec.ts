@@ -948,3 +948,43 @@ test('"Varianten prüfen" puts cards right that lie in the binder in a finish th
   await page.reload()
   await expect(pocket(page, 1, 1)).toHaveAttribute('data-variant', 'holo')
 })
+
+test('a menu closes when something else on the page is clicked', async ({ page }) => {
+  await createBinder(page, 'Menüs')
+  const menu = page.getByRole('menu')
+  const elsewhere = page.getByRole('heading', { name: 'Menüs' })
+
+  // every menu of the toolbar and the header
+  for (const name of ['Sortieren', 'Fehlliste', 'Als PNG', 'Mehr', 'Backup']) {
+    await page.getByRole('button', { name, exact: true }).click()
+    await expect(menu).toBeVisible()
+    await elsewhere.click()
+    await expect(menu).toHaveCount(0)
+  }
+
+  // opening another menu closes the one that was open: there is never more than one
+  await page.getByRole('button', { name: 'Sortieren', exact: true }).click()
+  await expect(menu).toHaveCount(1)
+  await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+  await expect(menu).toHaveCount(1)
+  await expect(page.getByRole('menuitem', { name: 'Fehlliste als PDF' })).toBeVisible()
+
+  // a click on a pocket closes it and still selects the pocket (the last one: the menu lies over the first)
+  await pocket(page, 1, 9).click()
+  await expect(menu).toHaveCount(0)
+  await expect(pocket(page, 1, 9)).toHaveAttribute('aria-pressed', 'true')
+
+  // the button of a menu still closes its own menu, and a click inside does not
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await expect(menu).toBeVisible()
+  await menu.getByText('Layout', { exact: true }).click()
+  await expect(menu).toBeVisible()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await expect(menu).toHaveCount(0)
+
+  // the list of sets in the search closes the same way
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await expect(page.getByRole('listbox', { name: 'Set' })).toBeVisible()
+  await elsewhere.click()
+  await expect(page.getByRole('listbox', { name: 'Set' })).toHaveCount(0)
+})

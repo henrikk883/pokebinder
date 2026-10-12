@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { de } from '../../i18n/de'
 import type { Binder } from '../../types/binder'
 import { ShoppingDialog } from './ShoppingDialog'
+import { useDismiss } from '../../lib/useDismiss'
 
 type Progress = (done: number, total: number) => void
 type Exporter = 'downloadMissingList' | 'downloadMissingListCsv' | 'downloadProxies'
@@ -17,6 +18,7 @@ const ENTRIES: readonly { exporter: Exporter; label: string }[] = [
 /** "Fehlliste": the missing cards as PDF checklist, as table for Excel, or as placeholders to print. */
 export function MissingListMenu({ binder, buttonClass }: { binder: Binder; buttonClass: string }) {
   const [open, setOpen] = useState(false)
+  const menu = useDismiss<HTMLDivElement>(open, () => setOpen(false))
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [failed, setFailed] = useState(false)
   const [shopping, setShopping] = useState<Binder | null>(null)
@@ -40,6 +42,7 @@ export function MissingListMenu({ binder, buttonClass }: { binder: Binder; butto
 
   return (
     <div
+      ref={menu}
       className="relative"
       onKeyDown={(event) => {
         if (event.key === 'Escape') setOpen(false)

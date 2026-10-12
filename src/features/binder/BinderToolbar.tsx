@@ -12,6 +12,7 @@ import { cardLangs, countCards } from './binderModel'
 import { createCardComparator, createDexComparator, type CardComparator } from './sorting'
 import { applyVariantFixes, loadVariantFixes } from './variantFix'
 import { buildSpreads, pageNumbersOf, type Spread } from './spreads'
+import { useDismiss } from '../../lib/useDismiss'
 
 const buttonClass =
   'flex h-10 items-center gap-2 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
@@ -50,6 +51,7 @@ async function dexComparator(binder: Binder): Promise<CardComparator> {
 function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
   const sortCardsBy = useBinderStore((state) => state.sortCardsBy)
   const [open, setOpen] = useState(false)
+  const menu = useDismiss<HTMLDivElement>(open, () => setOpen(false))
   const [failed, setFailed] = useState(false)
 
   async function sort(order: SortOrder, pageId?: string) {
@@ -85,6 +87,7 @@ function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
 
   return (
     <div
+      ref={menu}
       className="relative"
       onKeyDown={(event) => {
         if (event.key === 'Escape') setOpen(false)
@@ -122,6 +125,7 @@ function MoreMenu({ binder }: { binder: Binder }) {
   const changeLayout = useBinderStore((state) => state.changeLayout)
   const replaceContent = useBinderStore((state) => state.replaceContent)
   const [open, setOpen] = useState(false)
+  const menu = useDismiss<HTMLDivElement>(open, () => setOpen(false))
   const [adjusting, setAdjusting] = useState(false)
   const [checking, setChecking] = useState(false)
 
@@ -177,6 +181,7 @@ function MoreMenu({ binder }: { binder: Binder }) {
 
   return (
     <div
+      ref={menu}
       className="relative"
       onKeyDown={(event) => {
         if (event.key === 'Escape') setOpen(false)
