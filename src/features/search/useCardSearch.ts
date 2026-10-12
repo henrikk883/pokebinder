@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { tcgdex, type CardSummary } from '../../lib/tcgdex'
+import { tcgdexFor, type CardSummary } from '../../lib/tcgdex'
+import type { CardLang } from '../../types/binder'
 import { planSearch, runSearch, type SearchPlan } from './searchLogic'
 
 export type CardSearchStatus = 'idle' | 'needsContext' | 'loading' | 'ready' | 'error'
@@ -23,6 +24,7 @@ interface Result {
 const NO_CARDS: CardSummary[] = []
 
 export function useCardSearch(
+  lang: CardLang,
   text: string,
   setId: string | undefined,
   rarity: string | undefined,
@@ -32,7 +34,7 @@ export function useCardSearch(
     () => planSearch({ text, setId, rarity, type }),
     [text, setId, rarity, type],
   )
-  const key = JSON.stringify(plan)
+  const key = `${lang}:${JSON.stringify(plan)}`
   const active = plan.kind === 'set' || plan.kind === 'query'
 
   const [requested, setRequested] = useState({ key, page: 1 })
@@ -42,7 +44,7 @@ export function useCardSearch(
   useEffect(() => {
     if (!active) return
     let cancelled = false
-    runSearch(tcgdex, plan, page).then(
+    runSearch(tcgdexFor(lang), plan, page).then(
       ({ cards, hasMore }) => {
         if (cancelled) return
         setResult((previous) => ({
@@ -60,7 +62,7 @@ export function useCardSearch(
     return () => {
       cancelled = true
     }
-  }, [active, key, page, plan])
+  }, [active, key, lang, page, plan])
 
   const current = result?.key === key ? result : null
   const loadingMore = current !== null && current.page < page

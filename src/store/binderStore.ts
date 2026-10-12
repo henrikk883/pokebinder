@@ -9,6 +9,7 @@ import {
   moveCard,
   removePage,
   setCard,
+  setCardLang,
   setOpeningSide,
   setOwned,
   setVariant,
@@ -40,9 +41,6 @@ import type {
   SlotPosition,
 } from '../types/binder'
 
-/** The MVP works with German cards only. */
-const CARD_LANG: CardLang = 'de'
-
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export interface BinderState {
@@ -58,6 +56,7 @@ export interface BinderState {
   /** Takes over a reworked version of the open binder, e.g. a rebuilt master set. */
   replaceContent: (binder: Binder) => void
   setVariant: (position: SlotPosition, variant: CardVariant) => void
+  setCardLang: (position: SlotPosition, lang: CardLang) => void
   addPage: () => void
   removePage: (pageId: string) => void
   setCard: (position: SlotPosition, cardRef: CardRef, owned?: boolean) => void
@@ -153,6 +152,7 @@ export function createBinderStore(deps: BinderStoreDeps) {
       replaceContent: (next) =>
         change((binder) => (next.id === binder.id ? normalizeImages(next) : binder)),
       setVariant: (position, variant) => change((binder) => setVariant(binder, position, variant)),
+      setCardLang: (position, lang) => change((binder) => setCardLang(binder, position, lang)),
       addPage: () => change((binder) => addPage(binder)),
       // pages behind the removed one change sides, which may cut off images spanning two pages
       removePage: (pageId) => change((binder) => normalizeImages(removePage(binder, pageId))),
@@ -168,7 +168,7 @@ export function createBinderStore(deps: BinderStoreDeps) {
           const { pageId, slotIndex: fromSlot } = target.position
           return get().placeImage(pageId, source.assetId, { fromSlot, spanCols: 1, spanRows: 1 })
         }
-        change((binder) => applyDrop(binder, source, target, CARD_LANG))
+        change((binder) => applyDrop(binder, source, target))
         return null
       },
       placeImage: (pageId, assetId, placement) =>

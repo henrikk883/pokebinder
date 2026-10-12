@@ -3,15 +3,15 @@ import { PDFDocument } from 'pdf-lib'
 import { describe, expect, it } from 'vitest'
 import { createTestContext } from '../../test/modelContext'
 import type { Binder } from '../../types/binder'
-import { addPage, createBinder, setCard, setOwned } from '../binder/binderModel'
-import { buildMissingList, type CardInfo, type MissingRow } from './missingList'
+import { addPage, createBinder, setCard, setCardLang, setOwned } from '../binder/binderModel'
+import { buildMissingList, hasSeveralLanguages, type CardInfo, type MissingRow } from './missingList'
 import { checkboxName, createMissingListPdf, type MissingListPdfInput } from './missingListPdf'
 import { missingListFileName } from './missingListTransfer'
 
 const infos: Record<string, CardInfo> = {
-  'sv03.5-025': { name: 'Pikachu', localId: '025', setName: '151', officialCount: 165, rarity: 'Häufig' },
-  'sv03.5-006': { name: 'Glurak-ex', localId: '006', setName: '151', officialCount: 165, rarity: 'Doppelselten' },
-  'sv03.5-173': { name: 'Pikachu', localId: '173', setName: '151', officialCount: 165 },
+  'sv03.5-025': { name: 'Pikachu', localId: '025', setId: 'sv03.5', setName: '151', officialCount: 165, rarity: 'Häufig' },
+  'sv03.5-006': { name: 'Glurak-ex', localId: '006', setId: 'sv03.5', setName: '151', officialCount: 165, rarity: 'Doppelselten' },
+  'sv03.5-173': { name: 'Pikachu', localId: '173', setId: 'sv03.5', setName: '151', officialCount: 165 },
   'svp-050': { name: 'Simsala-ex', localId: '050', rarity: 'Promo' },
 }
 const lookup = (cardId: string) => infos[cardId]
@@ -51,6 +51,8 @@ describe('buildMissingList', () => {
     expect(pikachu).toEqual({
       cardId: 'sv03.5-025',
       variant: 'reverse',
+      lang: 'de',
+      setId: 'sv03.5',
       setName: '151',
       number: '025/165',
       name: 'Pikachu',
@@ -66,6 +68,8 @@ describe('buildMissingList', () => {
     expect(rows[2]).toEqual({
       cardId: 'svp-050',
       variant: 'holo',
+      lang: 'de',
+      setId: '',
       setName: '',
       number: '050',
       name: 'Simsala-ex',
@@ -112,9 +116,10 @@ describe('createMissingListPdf', () => {
     title: 'Fehlliste – Kanto Collection',
     subtitle: `${rows.length} fehlende Karten · Stand 12.10.2026`,
     emptyText: 'Es fehlt keine Karte.',
-    columns: { set: 'Set', number: 'Nummer', name: 'Name', variant: 'Variante', rarity: 'Seltenheit' },
+    columns: { set: 'Set', lang: 'Spr.', number: 'Nummer', name: 'Name', variant: 'Variante', rarity: 'Seltenheit' },
     rows,
     variantLabel: (variant) => variant,
+    languageLabel: (lang) => lang.toUpperCase(),
     pageLabel: (page, pageCount) => `Seite ${page} von ${pageCount}`,
   })
 
@@ -162,15 +167,67 @@ describe('createMissingListPdf', () => {
   })
 
   it('writes names with letters the PDF font does not have, and very long ones', async () => {
-    const rows: MissingRow[] = [
-      { cardId: 'base1-29', variant: 'normal', setName: 'Grundset', number: '29/102', name: 'Nidoran♀', rarity: 'Häufig', page: 1 },
-      { cardId: 'x-1', variant: 'normal', setName: 'ポケモン', number: '1', name: 'Pokémon δ – Größe', rarity: '', page: 1 },
-      { cardId: 'x-2', variant: 'normal', setName: 'S'.repeat(200), number: '2', name: 'N'.repeat(200), rarity: 'R'.repeat(200), page: 1 },
+    const row = (cardId: string, values: Partial<MissingRow>): MissingRow => ({
+      cardId,
+      variant: 'normal',
+      lang: 'de',
+      setId: 'x',
+      setName: 'Set',
+      number: '1',
+      name: 'Name',
+      rarity: '',
+      page: 1,
+      ...values,
+    })
+    const rows = [
+      row('base1-29', { setName: 'Grundset', number: '29/102', name: 'Nidoran♀', rarity: 'Häufig' }),
+      row('x-1', { name: 'Pokémon δ – Größe' }),
+      row('x-2', { setName: 'S'.repeat(200), name: 'N'.repeat(200), rarity: 'R'.repeat(200) }),
     ]
 
     const bytes = await createMissingListPdf(pdfInput(rows))
 
     expect(await fieldNames(bytes)).toHaveLength(3)
+  })
+
+  it('lists cards of several languages, Japanese ones by their ids', async () => {
+    const binder = buildBinder()
+    const first = binder.pages[0]
+    if (!first) throw new Error('Expected a page')
+    const mixed = setCard(binder, { pageId: first.id, slotIndex: 7 }, { cardId: 'SV2a-006', lang: 'ja', variant: 'holo' }, false)
+    const rows = buildMissingList(mixed, (cardId, lang) =>
+      lang === 'ja'
+        ? { name: 'リザードンex', localId: '006', setId: 'SV2a', setName: 'ポケモンカード151', officialCount: 165 }
+        : lookup(cardId),
+    )
+
+    expect(hasSeveralLanguages(rows)).toBe(true)
+    expect(hasSeveralLanguages(rows.filter((entry) => entry.lang === 'de'))).toBe(false)
+    expect(rows.find((entry) => entry.lang === 'ja')).toMatchObject({
+      cardId: 'SV2a-006',
+      setId: 'SV2a',
+      name: 'リザードンex',
+      number: '006/165',
+    })
+
+    const bytes = await createMissingListPdf(pdfInput(rows))
+
+    expect(await fieldNames(bytes)).toContain('fehlt_3_SV2a-006_holo')
+  })
+
+  it('asks for each card in its own language', () => {
+    const binder = buildBinder()
+    const first = binder.pages[0]
+    if (!first) throw new Error('Expected a page')
+    const english = setCardLang(binder, { pageId: first.id, slotIndex: 1 }, 'en')
+    const asked: string[] = []
+
+    buildMissingList(english, (cardId, lang) => {
+      asked.push(`${lang}:${cardId}`)
+      return undefined
+    })
+
+    expect(asked).toEqual(['en:sv03.5-025', 'de:sv03.5-006', 'de:svp-050', 'de:mystery-7'])
   })
 
   it('says so when nothing is missing', async () => {

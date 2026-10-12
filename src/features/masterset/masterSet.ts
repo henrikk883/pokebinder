@@ -92,6 +92,7 @@ export function pagesNeeded(cardCount: number, layout: Layout): number {
 export interface MasterSetBinderInput {
   name: string
   layout: Layout
+  lang: CardLang
   defaultOpeningSide: OpeningSide
   setId: string
   options: MasterSetOptions
@@ -107,6 +108,7 @@ export function createMasterSetBinder(
     {
       name: input.name,
       layout: input.layout,
+      lang: input.lang,
       defaultOpeningSide: input.defaultOpeningSide,
       mode: 'masterSet',
       setId: input.setId,
@@ -214,6 +216,8 @@ export function rebuildMasterSet(
 export function promoSetIdOf(catalog: Catalog, setId: string): string | undefined {
   const set = catalog.setsById.get(setId)
   if (!set) return undefined
-  const promoSetId = `${set.seriesId}p`
-  return promoSetId !== setId && catalog.setsById.has(promoSetId) ? promoSetId : undefined
+  // western series name it like `svp`, Japanese ones like `SV-P`
+  return [`${set.seriesId}p`, `${set.seriesId}-P`].find(
+    (promoSetId) => promoSetId !== setId && catalog.setsById.has(promoSetId),
+  )
 }

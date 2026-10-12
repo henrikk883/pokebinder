@@ -6,6 +6,7 @@ import { useEditorStore } from '../../store/editorStore'
 import {
   BASE_VARIANTS,
   compareVariants,
+  DEFAULT_LANG,
   OPENING_SIDES,
   type OpeningSide,
   type Page,
@@ -14,8 +15,9 @@ import {
 import { CoverDialog } from '../images/CoverDialog'
 import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
-import { useCatalog } from '../search/useCatalog'
-import { useCard, useCardDetail } from './useCard'
+import { LanguageSelect } from '../search/LanguageSelect'
+import { useReadyCatalog } from '../search/useCatalog'
+import { useCard, useCardDetail, useCardLangs } from './useCard'
 
 const fieldClass =
   'flex h-10 items-center rounded-control border border-line bg-raised px-3 text-sm'
@@ -24,13 +26,15 @@ const outlineButtonClass =
 
 function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
   const setOwned = useBinderStore((state) => state.setOwned)
-  const card = useCard(slot.cardRef?.cardId)
-  const catalog = useCatalog()
-  const set =
-    card && catalog.status === 'ready' ? catalog.data.setsById.get(setIdOfCard(card)) : undefined
+  const lang = slot.cardRef?.lang ?? DEFAULT_LANG
+  const card = useCard(slot.cardRef?.cardId, lang)
+  const catalog = useReadyCatalog(lang)
+  const set = card ? catalog?.setsById.get(setIdOfCard(card)) : undefined
   const position = { pageId: page.id, slotIndex: slot.index }
   const setVariant = useBinderStore((state) => state.setVariant)
-  const detail = useCardDetail(slot.cardRef?.cardId)
+  const setCardLang = useBinderStore((state) => state.setCardLang)
+  const detail = useCardDetail(slot.cardRef?.cardId, lang)
+  const langs = useCardLangs(slot.cardRef?.cardId, lang)
   // offer the finishes the card exists in; the current one stays selectable in any case
   const variants = [
     ...new Set([...(detail?.variants ?? BASE_VARIANTS), ...(slot.cardRef ? [slot.cardRef.variant] : [])]),
@@ -58,6 +62,16 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="space-y-1 text-sm">
+        <p className="text-muted">{de.selection.language}</p>
+        <LanguageSelect
+          label={de.selection.language}
+          value={lang}
+          options={langs}
+          onChange={(next) => setCardLang(position, next)}
+        />
       </div>
 
       <dl className="grid grid-cols-2 gap-3 text-sm">

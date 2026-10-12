@@ -15,13 +15,13 @@ import { useAssetUrl } from '../../store/assetStore'
 import { binderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { CardImage } from '../search/CardImage'
-import { useCatalog } from '../search/useCatalog'
+import type { CardLang } from '../../types/binder'
+import { useReadyCatalog } from '../search/useCatalog'
 import { isDragSource, isDropTarget, type DragSource } from './dragDrop'
 import { useCard } from './useCard'
 
-function Preview({ card }: { card: CardSummary }) {
-  const catalog = useCatalog()
-  const set = catalog.status === 'ready' ? catalog.data.setsById.get(setIdOfCard(card)) : undefined
+function Preview({ card, lang }: { card: CardSummary; lang: CardLang }) {
+  const set = useReadyCatalog(lang)?.setsById.get(setIdOfCard(card))
   return (
     <div className="w-28 cursor-grabbing opacity-90 shadow-lg">
       <CardImage card={card} set={set} size="small" />
@@ -29,9 +29,9 @@ function Preview({ card }: { card: CardSummary }) {
   )
 }
 
-function PocketPreview({ cardId }: { cardId: string }) {
-  const card = useCard(cardId)
-  return card ? <Preview card={card} /> : null
+function PocketPreview({ cardId, lang }: { cardId: string; lang: CardLang }) {
+  const card = useCard(cardId, lang)
+  return card ? <Preview card={card} lang={lang} /> : null
 }
 
 function AssetPreview({ assetId }: { assetId: string }) {
@@ -72,8 +72,8 @@ export function CardDragLayer({ children }: { children: ReactNode }) {
     >
       {children}
       <DragOverlay dropAnimation={null}>
-        {dragging?.kind === 'search' && <Preview card={dragging.card} />}
-        {dragging?.kind === 'pocket' && <PocketPreview cardId={dragging.cardId} />}
+        {dragging?.kind === 'search' && <Preview card={dragging.card} lang={dragging.lang} />}
+        {dragging?.kind === 'pocket' && <PocketPreview cardId={dragging.cardId} lang={dragging.lang} />}
         {dragging?.kind === 'asset' && <AssetPreview assetId={dragging.assetId} />}
       </DragOverlay>
     </DndContext>

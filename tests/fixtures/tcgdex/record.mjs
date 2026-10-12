@@ -22,6 +22,17 @@ const requests = [
   // "006/165": both sets with 165 official cards
   'de/cards?localId=6&set.id=eq:sv03.5&pagination:page=1&pagination:itemsPerPage=1000',
   'de/cards?localId=6&set.id=eq:ecard1&pagination:page=1&pagination:itemsPerPage=1000',
+  // English and Japanese cards
+  'en/series',
+  'en/rarities',
+  'en/types',
+  'en/sets/sv03.5',
+  'en/cards?name=Charizard&pagination:page=1&pagination:itemsPerPage=60',
+  'ja/series',
+  'ja/rarities',
+  'ja/types',
+  'ja/sets/SV2a',
+  'ja/cards?name=リザードン&pagination:page=1&pagination:itemsPerPage=60',
 ]
 
 async function fetchJson(request) {
@@ -30,8 +41,9 @@ async function fetchJson(request) {
   return response.json()
 }
 
-const series = await fetchJson('de/series')
-for (const { id } of series) requests.push(`de/series/${id}`)
+for (const lang of ['de', 'en', 'ja']) {
+  for (const { id } of await fetchJson(`${lang}/series`)) requests.push(`${lang}/series/${id}`)
+}
 
 const index = {}
 const seriesOfSet = new Map()
@@ -50,11 +62,18 @@ for (const [i, request] of requests.entries()) {
 }
 // Set details (rarity and finishes of every card) come from the GraphQL endpoint.
 // The query must ask for the same fields as `setDetailsQuery` in src/lib/tcgdex/client.ts.
-for (const setId of ['sv03.5', 'sv08.5', 'svp']) {
+for (const [setId, lang] of [
+  ['sv03.5', 'de'],
+  ['sv08.5', 'de'],
+  ['svp', 'de'],
+  ['sv03.5', 'en'],
+  ['SV2a', 'ja'],
+]) {
   const cards = `cards(filters: { id: "${setId}-" }, pagination: { page: 1, itemsPerPage: 1000 })`
+  const printsLang = lang === 'ja' ? 'ja' : 'en'
   const query = `{
-  cards: ${cards} @locale(lang: "de") { id localId name image rarity }
-  prints: ${cards} @locale(lang: "en") { id variants_detailed { type foil stamp size } }
+  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity }
+  prints: ${cards} @locale(lang: "${printsLang}") { id variants_detailed { type foil stamp size } }
 }`
   const response = await fetch(`${API}/graphql`, {
     method: 'POST',
@@ -63,10 +82,10 @@ for (const setId of ['sv03.5', 'sv08.5', 'svp']) {
   })
   const body = await response.json()
   if (!response.ok || body.errors) throw new Error(`graphql ${setId}: ${JSON.stringify(body.errors)}`)
-  const file = `graphql-set-details-${setId}.json`
+  const file = `graphql-set-details-${lang}-${setId}.json`
   await writeFile(`${outDir}${file}`, JSON.stringify(body))
-  index[`graphql:${setId}`] = file
-  console.log(`graphql:${setId}`, '->', file)
+  index[`graphql:${lang}:${setId}`] = file
+  console.log(`graphql:${lang}:${setId}`, '->', file)
 }
 
 await writeFile(`${outDir}index.json`, `${JSON.stringify(index, null, 2)}\n`)

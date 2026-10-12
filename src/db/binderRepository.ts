@@ -1,5 +1,11 @@
-import type { Asset, Binder } from '../types/binder'
+import { DEFAULT_LANG, type Asset, type Binder } from '../types/binder'
 import { db, type PokeBinderDatabase } from './database'
+
+/** Binders stored by earlier versions lack fields added since; they are filled in on reading. */
+function upgrade(binder: Binder): Binder {
+  const stored = binder as Omit<Binder, 'lang'> & Partial<Pick<Binder, 'lang'>>
+  return stored.lang === undefined ? { ...binder, lang: DEFAULT_LANG } : binder
+}
 
 export function createBinderRepository(database: PokeBinderDatabase = db) {
   return {
@@ -7,13 +13,15 @@ export function createBinderRepository(database: PokeBinderDatabase = db) {
       await database.binders.put(binder)
     },
 
-    loadBinder(id: string): Promise<Binder | undefined> {
-      return database.binders.get(id)
+    async loadBinder(id: string): Promise<Binder | undefined> {
+      const binder = await database.binders.get(id)
+      return binder && upgrade(binder)
     },
 
     /** Most recently changed binder first. */
-    listBinders(): Promise<Binder[]> {
-      return database.binders.orderBy('updatedAt').reverse().toArray()
+    async listBinders(): Promise<Binder[]> {
+      const binders = await database.binders.orderBy('updatedAt').reverse().toArray()
+      return binders.map(upgrade)
     },
 
     async deleteBinder(id: string): Promise<void> {

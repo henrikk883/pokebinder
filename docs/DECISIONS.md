@@ -181,5 +181,23 @@ Die rechte Spalte zeigt Variante und Seltenheit der gewählten Karte; die Varian
 ## 2026-10-12 – Fehlliste: eine Zeile je Pocket, Kästchen als Formularfelder
 Die PDF-Liste (A4) führt jede fehlende Karte in Binder-Reihenfolge mit Set, Nummer, Name, Variante und Seltenheit. Die Kästchen heißen `fehlt_<Nr>_<Karten-ID>_<Variante>`. Schriftzeichen, die die Standardschrift nicht kennt (z. B. ♀), werden ersetzt; eingebettete Schriften für Japanisch und Koreanisch wären ein Thema für v1.
 
+## 2026-10-12 – Sprachen: Deutsch, Englisch, Japanisch; Koreanisch entfällt
+TCGdex hat praktisch keine koreanischen Karten und keine Bilder dazu. `ko` bleibt im Datenmodell gültig, wird aber nirgends angeboten. Henrik hat dem Vorschlag nicht widersprochen und Phase 6 freigegeben.
+
+## 2026-10-12 – `Binder.lang` ergänzt
+Die Sprache, in der der Binder sucht und ein Master Set erzeugt. Jede Karte behält ihre eigene Sprache in `CardRef.lang`. Binder und Backups aus der Zeit davor gelten als deutsch.
+
+## 2026-10-12 – Sprachwechsel pro Karte nur bei gleicher Karten-ID
+Westliche Sets teilen ihre IDs zwischen Deutsch und Englisch, japanische Sets haben eigene (aus „151“ wird dort `SV2a`). Die rechte Spalte bietet deshalb nur die Sprachen an, in denen es die Karte unter derselben ID gibt; japanische Karten kommen über die japanische Suche in den Binder.
+
+## 2026-10-12 – Die Suche beginnt bei einem Sprachwechsel neu
+Namen, Sets, Seltenheiten und Typen sind je Sprache verschieden; Suchtext und Filter werden deshalb zurückgesetzt. Beim Öffnen eines Binders steht die Suche auf dessen Sprache.
+
+## 2026-10-12 – Fehlliste bei mehreren Sprachen
+Enthält die Liste Karten in mehr als einer Sprache, bekommt sie die Spalte „Spr.“. Namen und Sets, die die PDF-Schrift nicht darstellen kann (Japanisch), erscheinen als Karten-ID bzw. Set-ID; eine eingebettete japanische Schrift bräuchte ein weiteres Paket und mehrere Megabyte.
+
+## 2026-10-12 – Sortieren über Sprachen hinweg
+Sortiert wird nach den Sets der Binder-Sprache, danach nach den Sets der übrigen Sprachen, die im Binder vorkommen.
+
 ## 2026-10-12 – Fehler beim Speichern oder Import ohne Rot
 Meldungen erscheinen in neutraler Textfarbe, weil Rot dem Löschen vorbehalten ist.

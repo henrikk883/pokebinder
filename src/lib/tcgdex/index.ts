@@ -1,6 +1,8 @@
 import { db } from '../../db/database'
+import type { CardLang } from '../../types/binder'
 import { createResponseCache } from './cache'
 import { createGraphqlTransport, createSdkTransport, createTcgdexClient } from './client'
+import type { TcgdexClient } from './types'
 
 export { CARDS_PER_PAGE } from './client'
 export {
@@ -17,10 +19,17 @@ export type * from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-/** The app's access point to TCGdex. The MVP works with German cards only. */
-export const tcgdex = createTcgdexClient({
-  lang: 'de',
-  transport: createSdkTransport(),
-  graphql: createGraphqlTransport(),
-  cache: createResponseCache(db, { maxAgeMs: DAY_MS }),
-})
+const transport = createSdkTransport()
+const graphql = createGraphqlTransport()
+const cache = createResponseCache(db, { maxAgeMs: DAY_MS })
+const clients = new Map<CardLang, TcgdexClient>()
+
+/** The app's access point to TCGdex for cards of one language. */
+export function tcgdexFor(lang: CardLang): TcgdexClient {
+  let client = clients.get(lang)
+  if (!client) {
+    client = createTcgdexClient({ lang, transport, graphql, cache })
+    clients.set(lang, client)
+  }
+  return client
+}

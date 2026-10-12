@@ -4,10 +4,12 @@ import type { Binder, CardRef, CardVariant } from '../../types/binder'
 import {
   addPage,
   changeLayout,
+  cardLangs,
   countCards,
   countProgress,
   createBinder,
   setCard,
+  setCardLang,
   setVariant,
   sortCards,
   type ModelContext,
@@ -134,6 +136,35 @@ describe('binder operations', () => {
     })
     expect(setVariant(next, position, 'pokeball', ctx)).toBe(next)
     expect(setVariant(binder, { ...position, slotIndex: 0 }, 'reverse', ctx)).toBe(binder)
+  })
+
+  it('is German unless another language is chosen', () => {
+    expect(binder.lang).toBe('de')
+    expect(createBinder({ name: 'Kanto', lang: 'ja' }, ctx).lang).toBe('ja')
+  })
+
+  it('changes the language of a single card and keeps id, finish and owned state', () => {
+    const position = { pageId: binder.pages[0]?.id ?? '', slotIndex: 3 }
+
+    const next = setCardLang(binder, position, 'en', ctx)
+
+    expect(next.pages[0]?.slots[3]).toEqual({
+      index: 3,
+      cardRef: { cardId: 'swsh3-136', lang: 'en', variant: 'normal' },
+      owned: false,
+    })
+    expect(next.lang).toBe('de')
+    expect(setCardLang(next, position, 'en', ctx)).toBe(next)
+    expect(setCardLang(binder, { ...position, slotIndex: 0 }, 'en', ctx)).toBe(binder)
+  })
+
+  it('lists the languages of its cards, its own first', () => {
+    const position = { pageId: binder.pages[1]?.id ?? '', slotIndex: 0 }
+    const mixed = setCardLang(setCardLang(binder, position, 'ja', ctx), { ...position, slotIndex: 2 }, 'en', ctx)
+
+    expect(cardLangs(binder)).toEqual(['de'])
+    expect(cardLangs(mixed)).toEqual(['de', 'ja', 'en'])
+    expect(cardLangs(createBinder({ name: 'Leer', lang: 'en' }, ctx))).toEqual(['en'])
   })
 
   it('counts the cards in the binder', () => {

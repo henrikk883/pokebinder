@@ -1,10 +1,17 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { de } from '../../i18n/de'
-import { setIdOfCard, type Catalog } from '../../lib/tcgdex'
+import { setIdOfCard } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
-import type { CardRef, PocketOpening, Slot, SlotPosition } from '../../types/binder'
+import {
+  DEFAULT_LANG,
+  type CardRef,
+  type PocketOpening,
+  type Slot,
+  type SlotPosition,
+} from '../../types/binder'
 import { CardImage } from '../search/CardImage'
+import { useReadyCatalog } from '../search/useCatalog'
 import { pocketId, type DragSource, type DropTarget } from './dragDrop'
 import { useCard } from './useCard'
 
@@ -15,7 +22,6 @@ interface PocketProps {
   opening: PocketOpening
   /** An uploaded image lies behind this pocket and should stay visible. */
   overImage: boolean
-  catalog: Catalog | undefined
 }
 
 function EmptyPocketIcon() {
@@ -32,15 +38,15 @@ interface PocketCardProps {
   position: SlotPosition
   cardRef: CardRef
   owned: boolean
-  catalog: Catalog | undefined
 }
 
-function PocketCard({ position, cardRef, owned, catalog }: PocketCardProps) {
-  const { cardId, variant } = cardRef
-  const card = useCard(cardId)
+function PocketCard({ position, cardRef, owned }: PocketCardProps) {
+  const { cardId, variant, lang } = cardRef
+  const card = useCard(cardId, lang)
+  const catalog = useReadyCatalog(lang)
   const setOwned = useBinderStore((state) => state.setOwned)
   const collecting = useEditorStore((state) => state.mode === 'collection')
-  const source: DragSource = { kind: 'pocket', position, cardId }
+  const source: DragSource = { kind: 'pocket', position, cardId, lang }
   const { setNodeRef, listeners, isDragging } = useDraggable({
     id: `card:${pocketId(position)}`,
     data: source,
@@ -93,7 +99,7 @@ function PocketCard({ position, cardRef, owned, catalog }: PocketCardProps) {
   )
 }
 
-export function Pocket({ pageId, pageNumber, slot, opening, overImage, catalog }: PocketProps) {
+export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketProps) {
   const position: SlotPosition = { pageId, slotIndex: slot.index }
   const selected = useEditorStore(
     (state) => state.selection?.pageId === pageId && state.selection.slotIndex === slot.index,
@@ -102,7 +108,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage, catalog }
   const clearSlot = useBinderStore((state) => state.clearSlot)
   const setOwned = useBinderStore((state) => state.setOwned)
   const collecting = useEditorStore((state) => state.mode === 'collection')
-  const card = useCard(slot.cardRef?.cardId)
+  const card = useCard(slot.cardRef?.cardId, slot.cardRef?.lang ?? DEFAULT_LANG)
 
   function handleClick() {
     select(position)
@@ -127,6 +133,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage, catalog }
       data-card-id={slot.cardRef?.cardId ?? ''}
       data-owned={slot.cardRef ? String(slot.owned) : undefined}
       data-variant={slot.cardRef?.variant}
+      data-lang={slot.cardRef?.lang}
       onClick={handleClick}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -148,7 +155,6 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage, catalog }
           position={position}
           cardRef={slot.cardRef}
           owned={slot.owned}
-          catalog={catalog}
         />
       ) : (
         !overImage && <EmptyPocketIcon />

@@ -160,6 +160,7 @@ describe('createMasterSetBinder', () => {
   const input = {
     name: 'Prismatische Entwicklungen',
     layout: '2x2' as const,
+    lang: 'en' as const,
     defaultOpeningSide: 'mixed' as const,
     setId: 'sv08.5',
     options: { ...plain, withVariants: true },
@@ -185,6 +186,8 @@ describe('createMasterSetBinder', () => {
       mode: 'masterSet',
       setId: 'sv08.5',
       layout: '2x2',
+      // the language the binder was made for, which the search then starts in
+      lang: 'en',
       defaultOpeningSide: 'mixed',
       withReverseHolo: true,
       withSecretRares: true,
@@ -220,6 +223,7 @@ describe('rebuildMasterSet', () => {
   const input = {
     name: 'Prismatische Entwicklungen',
     layout: '2x2' as const,
+    lang: 'de' as const,
     defaultOpeningSide: 'right' as const,
     setId: 'sv08.5',
     options: plain,
@@ -339,7 +343,7 @@ describe('currentOptions', () => {
       { ...plain, excludedSecretRarities: ['Selten, besondere Illustration', 'Hyperselten'] },
     ]) {
       const binder = createMasterSetBinder(
-        { name: 'x', layout: '3x3', defaultOpeningSide: 'right', setId: 'sv08.5', options },
+        { name: 'x', layout: '3x3', lang: 'de', defaultOpeningSide: 'right', setId: 'sv08.5', options },
         buildMasterSet(source, options),
         createTestContext(),
       )
@@ -370,6 +374,14 @@ describe('promoSetIdOf', () => {
 
   it('finds the promo set of the series a set belongs to', () => {
     expect(promoSetIdOf(catalog, 'sv03.5')).toBe('svp')
+  })
+
+  it('finds Japanese promo sets, which are named differently', () => {
+    const japanese = [set('SV-P', 'SV'), set('SV2a', 'SV')]
+    const jaCatalog: Catalog = { series: [], setsById: new Map(japanese.map((entry) => [entry.id, entry])) }
+
+    expect(promoSetIdOf(jaCatalog, 'SV2a')).toBe('SV-P')
+    expect(promoSetIdOf(jaCatalog, 'SV-P')).toBeUndefined()
   })
 
   it('has none for a series without promo set, for the promo set itself and for unknown sets', () => {

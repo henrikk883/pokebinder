@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { de } from '../../i18n/de'
-import { tcgdex, type CardDetail, type Catalog } from '../../lib/tcgdex'
-import type { Layout } from '../../types/binder'
+import { tcgdexFor, type CardDetail, type Catalog } from '../../lib/tcgdex'
+import type { CardLang, Layout } from '../../types/binder'
 import { SetPicker } from '../search/SetPicker'
 import {
   buildMasterSet,
@@ -15,27 +15,30 @@ import {
 type Details = { status: 'loading' } | { status: 'ready'; cards: CardDetail[] } | { status: 'error' }
 
 /** Cards of a set with rarity and finishes; `undefined` while no set is chosen. */
-function useSetDetails(setId: string | undefined): Details | undefined {
-  const [loaded, setLoaded] = useState<{ setId: string; details: Details }>()
+function useSetDetails(setId: string | undefined, lang: CardLang): Details | undefined {
+  const [loaded, setLoaded] = useState<{ key: string; details: Details }>()
+  const key = `${lang}:${setId}`
 
   useEffect(() => {
     if (setId === undefined) return
     let cancelled = false
-    tcgdex.getSetDetails(setId).then(
-      (cards) => {
-        if (!cancelled) setLoaded({ setId, details: { status: 'ready', cards } })
-      },
-      () => {
-        if (!cancelled) setLoaded({ setId, details: { status: 'error' } })
-      },
-    )
+    tcgdexFor(lang)
+      .getSetDetails(setId)
+      .then(
+        (cards: CardDetail[]) => {
+          if (!cancelled) setLoaded({ key, details: { status: 'ready', cards } })
+        },
+        () => {
+          if (!cancelled) setLoaded({ key, details: { status: 'error' } })
+        },
+      )
     return () => {
       cancelled = true
     }
-  }, [setId])
+  }, [setId, lang, key])
 
   if (setId === undefined) return undefined
-  return loaded?.setId === setId ? loaded.details : { status: 'loading' }
+  return loaded && loaded.key === key ? loaded.details : { status: 'loading' }
 }
 
 export interface MasterSetChoice {
@@ -50,6 +53,8 @@ interface MasterSetOptionsProps {
   catalog: Catalog | undefined
   catalogUnavailableText: string | undefined
   layout: Layout
+  /** Language of the cards; the catalog must be the one of this language. */
+  lang: CardLang
   /** For an existing master set: its set, which cannot be changed, and its current options. */
   existing?: { setId: string; options: Options }
   onChange: (choice: MasterSetChoice | undefined) => void
@@ -63,6 +68,7 @@ export function MasterSetOptions({
   catalog,
   catalogUnavailableText,
   layout,
+  lang,
   existing,
   onChange,
 }: MasterSetOptionsProps) {
@@ -74,8 +80,8 @@ export function MasterSetOptions({
   const set = setId ? catalog?.setsById.get(setId) : undefined
   const promoSetId = catalog && setId ? promoSetIdOf(catalog, setId) : undefined
   const promoSet = promoSetId ? catalog?.setsById.get(promoSetId) : undefined
-  const details = useSetDetails(setId)
-  const promoDetails = useSetDetails(withPromos ? promoSetId : undefined)
+  const details = useSetDetails(setId, lang)
+  const promoDetails = useSetDetails(withPromos ? promoSetId : undefined, lang)
 
   const options: Options = { withVariants, excludedSecretRarities: excluded, withPromos: withPromos && !!promoSet }
   const promosReady = !options.withPromos || promoDetails?.status === 'ready'
@@ -87,7 +93,7 @@ export function MasterSetOptions({
           cards: details.cards,
           officialCount: set.cardCount.official,
           promos: promoDetails?.status === 'ready' ? promoDetails.cards : [],
-          lang: tcgdex.lang,
+          lang,
         }
       : undefined
   const cardCount = source ? buildMasterSet(source, options).length : undefined

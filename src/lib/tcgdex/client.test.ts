@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ResponseCache } from './cache'
-import { CARDS_PER_PAGE, createTcgdexClient, type QueryParam } from './client'
+import { CARDS_PER_PAGE, createTcgdexClient, setDetailsQuery, type QueryParam } from './client'
 
 const passThrough: ResponseCache = { fetch: (_key, load) => load() }
 
@@ -271,6 +271,14 @@ describe('getSetDetails', () => {
     expect(queries[0]).toContain('@locale(lang: "en") { id variants_detailed')
   })
 
+  it('reads the finishes of Japanese sets from the Japanese data', () => {
+    // western sets share their ids with the English data, Japanese sets do not exist there
+    expect(setDetailsQuery('sv03.5', 'en')).toContain('@locale(lang: "en") { id variants_detailed')
+    expect(setDetailsQuery('SV2a', 'ja')).toContain('@locale(lang: "ja") { id localId name image rarity }')
+    expect(setDetailsQuery('SV2a', 'ja')).toContain('@locale(lang: "ja") { id variants_detailed')
+    expect(setDetailsQuery('SV2a', 'ja')).toContain('id: "SV2a-"')
+  })
+
   it('finds the details of a single binder card', async () => {
     const { client } = setup()
 
@@ -437,6 +445,17 @@ describe('filter lists', () => {
     const { client } = setup()
 
     expect(await client.getRarities()).toEqual(['Häufig', 'Selten', 'Selten, Illustration'])
+  })
+
+  it('leaves out the Pocket rarities under their English names too', async () => {
+    const client = createTcgdexClient({
+      lang: 'en',
+      cache: passThrough,
+      graphql: noGraphql,
+      transport: async () => ['Rare', 'One Diamond', 'Crown', 'Two Star', 'Common', 'Two Shiny'],
+    })
+
+    expect(await client.getRarities()).toEqual(['Common', 'Rare'])
   })
 
   it('lists types alphabetically', async () => {

@@ -80,9 +80,12 @@ describe('binderStore', () => {
     const pageId = firstPageId(store.getState().binder)
     const card = { id: 'sv03.5-006', localId: '006', name: 'Glurak-ex' }
 
-    store.getState().dropCard({ kind: 'search', card }, { kind: 'pocket', position: { pageId, slotIndex: 0 } })
     store.getState().dropCard(
-      { kind: 'pocket', position: { pageId, slotIndex: 0 }, cardId: card.id },
+      { kind: 'search', card, lang: 'de' },
+      { kind: 'pocket', position: { pageId, slotIndex: 0 } },
+    )
+    store.getState().dropCard(
+      { kind: 'pocket', position: { pageId, slotIndex: 0 }, cardId: card.id, lang: 'de' },
       { kind: 'pocket', position: { pageId, slotIndex: 8 } },
     )
     await store.getState().whenSaved()

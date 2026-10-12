@@ -24,9 +24,19 @@ function lastSegment(value: string): string {
 /** Series that only exist in the mobile game "Pokémon TCG Pocket"; there is nothing to put in a binder. */
 const DIGITAL_ONLY_SERIES = new Set(['tcgp'])
 
-/** Rarities used by Pocket cards only (TCGdex lists them untranslated). */
+/** Rarities used by Pocket cards only, as TCGdex names them in the offered languages. */
 const DIGITAL_ONLY_RARITIES = new Set(
   [
+    'Crown',
+    'One Diamond',
+    'Two Diamond',
+    'Three Diamond',
+    'Four Diamond',
+    'One Star',
+    'Two Star',
+    'Three Star',
+    'One Shiny',
+    'Two Shiny',
     'Couronne',
     'Deux Chromatique',
     'Un Chromatique',
@@ -105,13 +115,16 @@ export function createGraphqlTransport(): GraphqlTransport {
 
 /**
  * Everything about the cards of one set in a single request. Names and rarity come in the
- * card language; the finishes are read from the English data, where they have fixed names.
+ * card language. The finishes need their fixed English names: western sets share their
+ * ids across languages, so the English data is asked; Japanese sets exist only in
+ * Japanese, where the finishes carry the English names anyway.
  */
 export function setDetailsQuery(setId: string, lang: CardLang): string {
   const cards = `cards(filters: { id: ${JSON.stringify(`${setId}-`)} }, pagination: { page: 1, itemsPerPage: ${MAX_CARDS_PER_REQUEST} })`
+  const printsLang = lang === 'ja' || lang === 'ko' ? lang : 'en'
   return `{
   cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity }
-  prints: ${cards} @locale(lang: "en") { id variants_detailed { type foil stamp size } }
+  prints: ${cards} @locale(lang: "${printsLang}") { id variants_detailed { type foil stamp size } }
 }`
 }
 

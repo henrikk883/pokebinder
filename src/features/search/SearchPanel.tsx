@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { de } from '../../i18n/de'
-import { setIdOfCard, tcgdex } from '../../lib/tcgdex'
+import { setIdOfCard, tcgdexFor } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
+import type { CardLang } from '../../types/binder'
 import { ImageLibrary } from '../images/ImageLibrary'
 import { CardTile } from './CardTile'
 import { FilterSelect } from './FilterSelect'
+import { LanguageSelect } from './LanguageSelect'
 import { SetPicker } from './SetPicker'
 import { useCardSearch } from './useCardSearch'
 import { useCatalog } from './useCatalog'
@@ -15,34 +17,33 @@ import { useLoaded } from './useLoaded'
 /** Results follow the typing after this pause. */
 const SEARCH_DELAY_MS = 300
 
-const loadRarities = () => tcgdex.getRarities()
-const loadTypes = () => tcgdex.getTypes()
-
 const tabClass = 'border-b-2 px-4 pb-2 text-sm font-medium'
 
-function GermanFlag() {
-  return (
-    <span aria-hidden="true" className="flex size-5 shrink-0 flex-col overflow-hidden rounded-full">
-      <span className="flex-1 bg-black" />
-      <span className="flex-1 bg-[#dd0000]" />
-      <span className="flex-1 bg-[#ffce00]" />
-    </span>
-  )
-}
-
-function CardSearch() {
+/**
+ * Search in the cards of one language. Names, sets, rarities and types all differ between
+ * languages, so the search starts afresh when the language changes (see the `key` below).
+ */
+function CardSearch({ lang }: { lang: CardLang }) {
   const [text, setText] = useState('')
   const [setId, setSetId] = useState<string>()
   const [rarity, setRarity] = useState<string>()
   const [type, setType] = useState<string>()
+  const setSearchLang = useEditorStore((state) => state.setSearchLang)
 
   // cards are dragged into a binder while arranging it, not while ticking off the collection
   const editing = useEditorStore((state) => state.mode === 'edit')
   const binderOpen = useBinderStore((state) => state.binder !== null) && editing
-  const catalog = useCatalog()
-  const rarities = useLoaded(loadRarities)
-  const types = useLoaded(loadTypes)
-  const search = useCardSearch(useDebouncedValue(text, SEARCH_DELAY_MS), setId, rarity, type)
+  const catalog = useCatalog(lang)
+  const loaders = useMemo(
+    () => ({
+      rarities: () => tcgdexFor(lang).getRarities(),
+      types: () => tcgdexFor(lang).getTypes(),
+    }),
+    [lang],
+  )
+  const rarities = useLoaded(loaders.rarities)
+  const types = useLoaded(loaders.types)
+  const search = useCardSearch(lang, useDebouncedValue(text, SEARCH_DELAY_MS), setId, rarity, type)
 
   const sets = catalog.status === 'ready' ? catalog.data.setsById : undefined
   const selectedSet = setId ? sets?.get(setId) : undefined
@@ -87,13 +88,7 @@ function CardSearch() {
           />
         </div>
 
-        <div
-          title={de.search.languageHint}
-          className="flex h-10 items-center gap-3 rounded-control border border-line bg-raised px-3 text-sm text-muted"
-        >
-          <GermanFlag />
-          <span>{de.search.language}</span>
-        </div>
+        <LanguageSelect label={de.search.language} value={lang} onChange={setSearchLang} />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4" data-testid="search-results">
@@ -124,6 +119,7 @@ function CardSearch() {
                   key={card.id}
                   card={card}
                   set={sets?.get(setIdOfCard(card))}
+                  lang={lang}
                   draggable={binderOpen}
                 />
               ))}
@@ -160,6 +156,7 @@ type Tab = 'cards' | 'images'
 /** Left column: card search and the library of uploaded images. */
 export function SearchPanel() {
   const [tab, setTab] = useState<Tab>('cards')
+  const searchLang = useEditorStore((state) => state.searchLang)
 
   return (
     <section className="flex h-full flex-col">
@@ -187,7 +184,7 @@ export function SearchPanel() {
 
       {/* both stay mounted, so the search keeps its results while images are shown */}
       <div className={tab === 'cards' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
-        <CardSearch />
+        <CardSearch key={searchLang} lang={searchLang} />
       </div>
       <div className={tab === 'images' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
         <ImageLibrary />

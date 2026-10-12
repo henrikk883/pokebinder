@@ -81,6 +81,15 @@ describe('binderRepository', () => {
     expect((await repository.listBinders()).map((b) => b.name)).toEqual(['New', 'Mid', 'Old'])
   })
 
+  it('reads binders stored before languages existed as German', async () => {
+    const stored: Partial<Binder> = { ...sampleBinder() }
+    delete stored.lang
+    await database.binders.put(stored as Binder)
+
+    expect((await repository.loadBinder(stored.id ?? ''))?.lang).toBe('de')
+    expect((await repository.listBinders()).map((binder) => binder.lang)).toEqual(['de'])
+  })
+
   it('deletes a binder', async () => {
     const binder = sampleBinder()
     await repository.saveBinder(binder)

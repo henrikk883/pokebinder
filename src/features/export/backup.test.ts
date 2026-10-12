@@ -230,6 +230,22 @@ describe('parseBackup validation', () => {
     expect(errorCodeOf(() => parseBackup(JSON.stringify(backup)))).toBe('invalidData')
   })
 
+  it('reads backups from before binders had a language as German', async () => {
+    const backup = await backupObject()
+    delete (backup.binder as Record<string, unknown>).lang
+
+    expect(parseBackup(JSON.stringify(backup)).binder.lang).toBe('de')
+  })
+
+  it('keeps the language of a binder and rejects one it does not know', async () => {
+    const backup = await backupObject()
+    ;(backup.binder as Record<string, unknown>).lang = 'ja'
+    expect(parseBackup(JSON.stringify(backup)).binder.lang).toBe('ja')
+
+    ;(backup.binder as Record<string, unknown>).lang = 'xx'
+    expect(errorCodeOf(() => parseBackup(JSON.stringify(backup)))).toBe('invalidData')
+  })
+
   it('drops fields the app does not know', async () => {
     const backup = await backupObject()
     ;(backup.binder as Record<string, unknown>).cardData = { hp: 60 }

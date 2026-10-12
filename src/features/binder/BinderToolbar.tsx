@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { de } from '../../i18n/de'
-import { chronologicalSetIds, tcgdex } from '../../lib/tcgdex'
+import { chronologicalSetIds, tcgdexFor } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { LAYOUTS, type Binder, type Layout } from '../../types/binder'
 import { MasterSetSettingsDialog } from '../masterset/MasterSetSettingsDialog'
-import { countCards } from './binderModel'
+import { cardLangs, countCards } from './binderModel'
 import { buildSpreads, pageNumbersOf, type Spread } from './spreads'
 
 const buttonClass =
@@ -22,7 +22,9 @@ function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
     setOpen(false)
     setFailed(false)
     try {
-      const setOrder = chronologicalSetIds(await tcgdex.getCatalog())
+      // sets of the binder's language first, then those of other languages its cards are in
+      const catalogs = await Promise.all(cardLangs(binder).map((lang) => tcgdexFor(lang).getCatalog()))
+      const setOrder = [...new Set(catalogs.flatMap(chronologicalSetIds))]
       sortCards(pageId === undefined ? {} : { pageId }, setOrder)
     } catch {
       setFailed(true)

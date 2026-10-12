@@ -1,13 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { de } from '../../i18n/de'
+import { useEditorStore } from '../../store/editorStore'
 import {
   LAYOUTS,
   OPENING_SIDES,
   type Binder,
   type BinderMode,
+  type CardLang,
   type Layout,
   type OpeningSide,
 } from '../../types/binder'
+import { LanguageSelect } from '../search/LanguageSelect'
 import { buildMasterSet, createMasterSetBinder } from '../masterset/masterSet'
 import { MasterSetOptions, type MasterSetChoice } from '../masterset/MasterSetOptions'
 import { useCatalog } from '../search/useCatalog'
@@ -33,7 +36,8 @@ export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
   const [layout, setLayout] = useState<Layout>('3x3')
   const [openingSide, setOpeningSide] = useState<OpeningSide>('right')
   const [masterSet, setMasterSet] = useState<MasterSetChoice>()
-  const catalog = useCatalog()
+  const [lang, setLang] = useState<CardLang>(useEditorStore.getState().searchLang)
+  const catalog = useCatalog(lang)
 
   const trimmedName = name.trim()
   // a master set may simply be named after its set
@@ -43,7 +47,7 @@ export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!ready) return
-    const common = { name: binderName, layout, defaultOpeningSide: openingSide }
+    const common = { name: binderName, layout, lang, defaultOpeningSide: openingSide }
     if (kind === 'empty') {
       onCreate(createBinder(common))
     } else if (masterSet?.source) {
@@ -93,8 +97,16 @@ export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
           </div>
         </fieldset>
 
+        <div className="space-y-2 text-sm">
+          <p>{de.newBinder.lang}</p>
+          <LanguageSelect label={de.newBinder.lang} value={lang} onChange={setLang} />
+        </div>
+
         {kind === 'masterSet' && (
           <MasterSetOptions
+            // sets differ between languages: another language starts the choice afresh
+            key={lang}
+            lang={lang}
             catalog={catalog.status === 'ready' ? catalog.data : undefined}
             catalogUnavailableText={
               catalog.status === 'ready'

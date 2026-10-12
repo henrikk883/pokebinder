@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { de } from '../../i18n/de'
-import { tcgdex, type CardDetail } from '../../lib/tcgdex'
+import { tcgdexFor, type CardDetail } from '../../lib/tcgdex'
 import type { Binder } from '../../types/binder'
 import { useCatalog } from '../search/useCatalog'
 import { currentOptions, rebuildMasterSet, type MasterSetOptions as Options } from './masterSet'
@@ -19,25 +19,28 @@ type Loaded = { status: 'loading' } | { status: 'ready'; cards: CardDetail[] } |
 
 /** Change what an existing master set contains: holo variants, secret rares, promos. */
 export function MasterSetSettingsDialog({ binder, setId, onApply, onCancel }: MasterSetSettingsDialogProps) {
-  const catalog = useCatalog()
+  const { lang } = binder
+  const catalog = useCatalog(lang)
   const [details, setDetails] = useState<Loaded>({ status: 'loading' })
   const [choice, setChoice] = useState<MasterSetChoice>()
 
   // the options the binder has now can only be read once its set is known
   useEffect(() => {
     let cancelled = false
-    tcgdex.getSetDetails(setId).then(
-      (cards) => {
-        if (!cancelled) setDetails({ status: 'ready', cards })
-      },
-      () => {
-        if (!cancelled) setDetails({ status: 'error' })
-      },
-    )
+    tcgdexFor(lang)
+      .getSetDetails(setId)
+      .then(
+        (cards: CardDetail[]) => {
+          if (!cancelled) setDetails({ status: 'ready', cards })
+        },
+        () => {
+          if (!cancelled) setDetails({ status: 'error' })
+        },
+      )
     return () => {
       cancelled = true
     }
-  }, [setId])
+  }, [setId, lang])
 
   const set = catalog.status === 'ready' ? catalog.data.setsById.get(setId) : undefined
   const initial: Options | undefined =
@@ -47,7 +50,7 @@ export function MasterSetSettingsDialog({ binder, setId, onApply, onCancel }: Ma
           cards: details.cards,
           officialCount: set.cardCount.official,
           promos: [],
-          lang: tcgdex.lang,
+          lang,
         })
       : undefined
   const failed = details.status === 'error' || catalog.status === 'error' || (catalog.status === 'ready' && !set)
@@ -91,6 +94,7 @@ export function MasterSetSettingsDialog({ binder, setId, onApply, onCancel }: Ma
             catalog={catalog.data}
             catalogUnavailableText={undefined}
             layout={binder.layout}
+            lang={lang}
             existing={{ setId, options: initial }}
             onChange={setChoice}
           />

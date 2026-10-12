@@ -40,6 +40,14 @@ export function compareVariants(a: CardVariant, b: CardVariant): number {
 export const CARD_LANGS = ['de', 'en', 'ja', 'ko'] as const
 export type CardLang = (typeof CARD_LANGS)[number]
 
+/**
+ * Languages the app offers. Korean is part of the data model, but TCGdex has next to no
+ * Korean cards and no images for them, so it is not offered.
+ */
+export const OFFERED_LANGS = ['de', 'en', 'ja'] as const satisfies readonly CardLang[]
+
+export const DEFAULT_LANG: CardLang = 'de'
+
 /** Reference to a TCGdex card; card data itself is never stored. */
 export interface CardRef {
   cardId: string
@@ -98,6 +106,8 @@ export interface Binder {
   withSecretRares: boolean
   withPromos: boolean
   layout: Layout
+  /** Language new cards are searched and placed in; each card keeps its own language. */
+  lang: CardLang
   /** Opening side that newly added pages start with. */
   defaultOpeningSide: OpeningSide
   cover: BinderCover

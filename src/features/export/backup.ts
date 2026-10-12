@@ -1,6 +1,7 @@
 import {
   BINDER_MODES,
   CARD_LANGS,
+  DEFAULT_LANG,
   isCardVariant,
   LAYOUTS,
   OPENING_SIDES,
@@ -218,6 +219,8 @@ function readBinder(value: unknown): Binder {
     withSecretRares: readBoolean(raw.withSecretRares, 'binder.withSecretRares'),
     withPromos: readBoolean(raw.withPromos, 'binder.withPromos'),
     layout,
+    // backups from before languages could be chosen hold German binders
+    lang: raw.lang === undefined ? DEFAULT_LANG : readOneOf(raw.lang, CARD_LANGS, 'binder.lang'),
     defaultOpeningSide: readOneOf(
       raw.defaultOpeningSide,
       OPENING_SIDES,

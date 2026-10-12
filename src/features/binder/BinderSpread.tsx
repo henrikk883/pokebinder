@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react'
 import { de } from '../../i18n/de'
-import type { Catalog } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import type { Binder, Page } from '../../types/binder'
 import { useAssetUrl } from '../../store/assetStore'
@@ -18,7 +17,7 @@ const sideClass = 'flex min-w-0 flex-1 flex-col'
 const sheetClass =
   'flex-1 rounded-control border border-line bg-raised/60 p-[calc(var(--u)*12)]'
 
-function PageSide({ binder, page, catalog }: { binder: Binder; page: Page; catalog: Catalog | undefined }) {
+function PageSide({ binder, page }: { binder: Binder; page: Page }) {
   const removePage = useBinderStore((state) => state.removePage)
   const { cols } = layoutDimensions(binder.layout)
   const pageNumber = page.index + 1
@@ -41,7 +40,6 @@ function PageSide({ binder, page, catalog }: { binder: Binder; page: Page; catal
                 slot={slot}
                 opening={pocketOpening(page.openingSide, page.index, slot.index, binder.layout)}
                 overImage={imageAt(binder, page.index, slot.index) !== undefined}
-                catalog={catalog}
               />
             ))}
           </div>
@@ -122,15 +120,14 @@ interface BinderSpreadProps {
   binder: Binder
   spread: Spread
   zoom: number
-  catalog: Catalog | undefined
 }
 
 /** The open binder: two facing sides in a dark frame with the rings in between. */
-export function BinderSpread({ binder, spread, zoom, catalog }: BinderSpreadProps) {
+export function BinderSpread({ binder, spread, zoom }: BinderSpreadProps) {
   function side(content: Spread['left']) {
     if (content === 'cover') return <CoverInside binder={binder} />
     const page = content === null ? undefined : binder.pages[content]
-    return page ? <PageSide binder={binder} page={page} catalog={catalog} /> : <NoPage />
+    return page ? <PageSide binder={binder} page={page} /> : <NoPage />
   }
 
   return (

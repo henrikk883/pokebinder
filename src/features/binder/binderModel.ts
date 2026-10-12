@@ -1,14 +1,16 @@
-import type {
-  Binder,
-  BinderMode,
-  CardRef,
-  CardVariant,
-  Layout,
-  OpeningSide,
-  Page,
-  PocketOpening,
-  Slot,
-  SlotPosition,
+import {
+  DEFAULT_LANG,
+  type Binder,
+  type BinderMode,
+  type CardLang,
+  type CardRef,
+  type CardVariant,
+  type Layout,
+  type OpeningSide,
+  type Page,
+  type PocketOpening,
+  type Slot,
+  type SlotPosition,
 } from '../../types/binder'
 
 export interface LayoutDimensions {
@@ -55,6 +57,7 @@ export function pocketOpening(
 export interface NewBinderInput {
   name: string
   layout?: Layout
+  lang?: CardLang
   defaultOpeningSide?: OpeningSide
   mode?: BinderMode
   setId?: string
@@ -105,6 +108,7 @@ export function createBinder(input: NewBinderInput, ctx: ModelContext = defaultC
     withSecretRares: input.withSecretRares ?? true,
     withPromos: input.withPromos ?? true,
     layout,
+    lang: input.lang ?? DEFAULT_LANG,
     defaultOpeningSide,
     cover: { title: input.name },
     pages: [createPage(layout, 0, defaultOpeningSide, ctx)],
@@ -304,6 +308,27 @@ export function setVariant(
     [{ position, content: { cardRef: { ...slot.cardRef, variant }, owned: slot.owned } }],
     ctx,
   )
+}
+
+/** Changes the language of the card in a pocket; the card id stays the same. */
+export function setCardLang(
+  binder: Binder,
+  position: SlotPosition,
+  lang: CardLang,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const slot = findSlot(binder, position)
+  if (!slot.cardRef || slot.cardRef.lang === lang) return binder
+  return writeSlots(
+    binder,
+    [{ position, content: { cardRef: { ...slot.cardRef, lang }, owned: slot.owned } }],
+    ctx,
+  )
+}
+
+/** Languages of the cards in the binder, the binder's own language first. */
+export function cardLangs(binder: Binder): CardLang[] {
+  return [...new Set([binder.lang, ...cardsOf(binder.pages).map((card) => card.cardRef.lang)])]
 }
 
 export interface Progress {

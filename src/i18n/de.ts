@@ -20,6 +20,19 @@ export const de = {
       .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' '),
+  languages: {
+    de: 'Deutsch',
+    en: 'Englisch',
+    ja: 'Japanisch',
+    ko: 'Koreanisch',
+  },
+  /** Short form for tight places such as the list of missing cards. */
+  languageCodes: {
+    de: 'DE',
+    en: 'EN',
+    ja: 'JA',
+    ko: 'KO',
+  },
   missingList: {
     title: (binderName: string) => `Fehlliste – ${binderName}`,
     subtitle: (count: number, date: string) =>
@@ -27,6 +40,7 @@ export const de = {
     empty: 'Es fehlt keine Karte. Der Binder ist vollständig.',
     columns: {
       set: 'Set',
+      lang: 'Spr.',
       number: 'Nummer',
       name: 'Name',
       variant: 'Variante',
@@ -110,8 +124,7 @@ export const de = {
     setsError: 'Die Sets konnten nicht geladen werden.',
     rarity: 'Seltenheit',
     type: 'Typ',
-    language: 'Deutsch',
-    languageHint: 'Weitere Sprachen folgen in einer späteren Version.',
+    language: 'Sprache der Karten',
     idle: 'Namen eingeben oder ein Set wählen.',
     needsContext:
       'Für die Suche nach einer Nummer bitte ein Set wählen, einen Namen ergänzen oder die Nummer wie auf der Karte eingeben, z. B. 188/125.',
@@ -146,6 +159,7 @@ export const de = {
     name: 'Name',
     namePlaceholder: 'z. B. Kanto Collection',
     layout: 'Pocket-Layout',
+    lang: 'Sprache der Karten',
     openingSide: 'Öffnung der Pockets',
     create: 'Anlegen',
     cancel: 'Abbrechen',
@@ -214,6 +228,7 @@ export const de = {
     owned: 'Vorhanden',
     missing: 'Fehlt',
     ownedState: 'Besitz',
+    language: 'Sprache der Karte',
     variant: 'Variante',
     rarity: 'Seltenheit',
     unknown: '–',

@@ -4,8 +4,8 @@ import { moveCard, setCard, type ModelContext } from './binderModel'
 
 /** A card being dragged: from the search, or one that already sits in a pocket. */
 export type CardDragSource =
-  | { kind: 'search'; card: CardSummary }
-  | { kind: 'pocket'; position: SlotPosition; cardId: string }
+  | { kind: 'search'; card: CardSummary; lang: CardLang }
+  | { kind: 'pocket'; position: SlotPosition; cardId: string; lang: CardLang }
 
 /** What is being dragged: a card, or an image from the library. */
 export type DragSource = CardDragSource | { kind: 'asset'; assetId: string }
@@ -38,14 +38,13 @@ export function applyDrop(
   binder: Binder,
   source: CardDragSource,
   target: DropTarget,
-  lang: CardLang,
   ctx?: ModelContext,
 ): Binder {
   if (source.kind === 'pocket') return moveCard(binder, source.position, target.position, ctx)
   return setCard(
     binder,
     target.position,
-    { cardId: source.card.id, lang, variant: 'normal' },
+    { cardId: source.card.id, lang: source.lang, variant: 'normal' },
     true,
     ctx,
   )

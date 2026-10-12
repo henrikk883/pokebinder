@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { binderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
-import { useCatalog } from '../search/useCatalog'
 import { BinderSpread } from './BinderSpread'
 import { BinderToolbar } from './BinderToolbar'
 import { PageControls } from './PageControls'
@@ -36,7 +35,6 @@ export function BinderEditor({ binder }: { binder: Binder }) {
   const zoom = useEditorStore((state) => state.zoom)
   const spreadIndex = useEditorStore((state) => state.spreadIndex)
   const notice = useEditorStore((state) => state.notice)
-  const catalog = useCatalog()
 
   const spreads = buildSpreads(binder.pages.length)
   const current = clampSpread(spreadIndex, spreads.length)
@@ -55,12 +53,7 @@ export function BinderEditor({ binder }: { binder: Binder }) {
         </p>
       )}
       <div className="min-h-0 flex-1 overflow-auto">
-        <BinderSpread
-          binder={binder}
-          spread={spread}
-          zoom={zoom}
-          catalog={catalog.status === 'ready' ? catalog.data : undefined}
-        />
+        <BinderSpread binder={binder} spread={spread} zoom={zoom} />
       </div>
       <ThumbnailStrip binder={binder} spreads={spreads} current={current} />
       <ProgressBar binder={binder} />
