@@ -348,7 +348,7 @@ Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket
 - Budget: ein Betrag in Euro (deutsche Schreibweise, „49,90“). Die App kauft gedanklich die günstigsten Karten zuerst, bis das Geld nicht mehr reicht, nennt Anzahl und Betrag und blendet die übrigen Zeilen ab. Es wird keine Karte übersprungen, um später eine andere unterzubringen.
 - Eine Zeile je Pocket wie in der Fehlliste: Eine Karte, die zweimal fehlt, steht zweimal da.
 - Dieselbe Ansicht gibt es für jede Merkliste (Knopf „Einkaufsliste“ neben „Wert berechnen“), dort mit der Grundvariante jeder Karte.
-- Link zu Cardmarket: TCGdex liefert die Produktnummer (`idProduct`) mit; der Link führt damit zur Karte (`…/Products?idProduct=…`), ohne Nummer zur Suche nach dem Namen. Er öffnet sich nur per Klick in einem neuen Tab. Die App selbst ruft Cardmarket nicht ab – deshalb kein Verstoß gegen „keine externen Dienste“.
+- Link zu Cardmarket: TCGdex liefert die Produktnummer (`idProduct`) mit; der Link führt damit zur Karte (`…/Products?idProduct=…`), ohne Nummer zur Suche nach dem Namen. Er öffnet sich nur per Klick in einem neuen Tab. Die App selbst ruft Cardmarket nicht ab – deshalb kein Verstoß gegen „keine externen Dienste“. Dass der Link bei der richtigen Karte landet, hat Henrik im Browser bestätigt (automatisiert ließ es sich wegen der Bot-Sperre von Cardmarket nicht prüfen).
 
 ## 2026-10-12 – Lücke einfügen und schließen
 - Zwei Knöpfe in der rechten Spalte unter „Pocket leeren“, für das gewählte Pocket.
