@@ -26,7 +26,7 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 
 | Nr. | Gemeldet | Von | Fehler | Stand |
 |---|---|---|---|---|
-| B-001 | 12.10.2026 | Henrik | Binder-Seiten mit vielen fehlenden (grauen) Karten laden langsam | offen – am PC in Chrome nachgemessen, dort nicht der Graufilter; Gerät von Henrik erfragt |
+| B-001 | 12.10.2026 | Henrik | Binder-Seiten mit vielen fehlenden (grauen) Karten laden langsam | offen – lässt sich an Henriks PC im Testbrowser nicht nachstellen; Vergleich mit `?grau=aus` durch Henrik steht aus |
 
 ### B-001 – Seiten mit vielen grauen Karten laden langsam
 
@@ -39,7 +39,10 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
   - **Ergebnis:** In Chrome am PC ist der Graufilter nicht die Ursache. Nicht gemessen: Safari auf iPhone und iPad, wo solche Filter erfahrungsgemäß teurer sind, und das erstmalige Laden der Bilder über das Netz.
 - **Wahrscheinlicher:** Graue Seiten sind die Seiten großer Master Sets, die man zum ersten Mal durchblättert; dort lädt jede Karte ein großes Bild (60–125 KB), und TCGdex braucht für ein selten abgerufenes Bild bis zu 0,7 s.
 - **Vorschlag:** Jede Karte zuerst mit dem kleinen Bild zeigen (16–30 KB, oft schon von der Suche her da) und das große nachladen. Das hilft, wo immer die Ursache liegt.
-- **Nächster Schritt:** von Henrik wissen, auf welchem Gerät und in welchem Browser es auffällt, und ob beim ersten Durchblättern oder auch beim zweiten.
+- **Henrik dazu (12.10.2026):** am Handy und am PC, auch beim zweiten Aufschlagen; nur wenn fast alles grau ist, bei wenigen grauen Karten und ganz ohne Graufilter nicht.
+- **Zweite Messung, mit Grafikkarte:** an Henriks PC (Chromium mit eingeschalteter Grafikbeschleunigung), gemessen wurde, wann sich das Bild auf dem Schirm nach dem Blättern nicht mehr ändert. Grau 54 ms, farbig 55 ms; auch bei 140 % Zoom auf einem hochauflösenden Schirm und in den Sets „Erhabene Helden“ und „Weiße Flammen“ kein Unterschied. **Der Fehler lässt sich hier nicht nachstellen.**
+- **Was sich zwischen der Messung und Henriks Alltag unterscheidet:** sein Browser, die Fassung im Netz mit dem Bilder-Vorrat, seine echten, sehr großen Binder (bis 613 Karten) und Seiten weiter hinten im Binder.
+- **Nächster Schritt:** Henrik vergleicht denselben Binder mit und ohne Graufilter – mit `?grau=aus` hinter der Adresse zeigt die App fehlende Karten farbig – und nennt Browser und Binder. Erst danach wird etwas geändert.
 
 ## Behobene Fehler
 
