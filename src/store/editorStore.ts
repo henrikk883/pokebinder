@@ -2,12 +2,17 @@ import { create } from 'zustand'
 import { clampZoom, DEFAULT_ZOOM } from '../features/binder/spreads'
 import type { SlotPosition } from '../types/binder'
 
+export type EditorMode = 'edit' | 'collection'
+
 /** View state of the binder editor; nothing here is saved. */
 export interface EditorState {
   /** Which spread lies open. Components clamp it to the spreads that exist. */
   spreadIndex: number
   zoom: number
   selection: SlotPosition | null
+  /** `edit` arranges the binder; in `collection` a click on a card toggles owned / missing. */
+  mode: EditorMode
+  setMode: (mode: EditorMode) => void
   /** Message about the last action that did not work, e.g. an image that does not fit. */
   notice: string | null
 
@@ -23,11 +28,13 @@ export const useEditorStore = create<EditorState>()((set) => ({
   spreadIndex: 0,
   zoom: DEFAULT_ZOOM,
   selection: null,
+  mode: 'edit',
   notice: null,
 
+  setMode: (mode) => set({ mode, notice: null }),
   setNotice: (notice) => set({ notice }),
   showSpread: (index) => set({ spreadIndex: Math.max(0, index), selection: null, notice: null }),
   setZoom: (zoom) => set({ zoom: clampZoom(zoom) }),
   select: (selection) => set({ selection, notice: null }),
-  reset: () => set({ spreadIndex: 0, selection: null, notice: null }),
+  reset: () => set({ spreadIndex: 0, selection: null, notice: null, mode: 'edit' }),
 }))

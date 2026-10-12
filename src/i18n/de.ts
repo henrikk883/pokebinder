@@ -1,4 +1,68 @@
+const VARIANT_LABELS: Record<string, string> = {
+  normal: 'Normal',
+  holo: 'Holo',
+  reverse: 'Reverse Holo',
+  pokeball: 'Pokéball',
+  masterball: 'Meisterball',
+  energy: 'Energie',
+  friendball: 'Freundesball',
+  loveball: 'Sympaball',
+  quickball: 'Flottball',
+  duskball: 'Finsterball',
+  'team-rocket': 'Team Rocket',
+}
+
 export const de = {
+  /** Name of a print finish; patterns without a German name show their TCGdex name. */
+  variantLabel: (variant: string): string =>
+    VARIANT_LABELS[variant] ??
+    variant
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' '),
+  missingList: {
+    title: (binderName: string) => `Fehlliste – ${binderName}`,
+    subtitle: (count: number, date: string) =>
+      `${count} ${count === 1 ? 'fehlende Karte' : 'fehlende Karten'} · Stand ${date}`,
+    empty: 'Es fehlt keine Karte. Der Binder ist vollständig.',
+    columns: {
+      set: 'Set',
+      number: 'Nummer',
+      name: 'Name',
+      variant: 'Variante',
+      rarity: 'Seltenheit',
+    },
+    page: (page: number, pageCount: number) => `Seite ${page} von ${pageCount}`,
+    failed: 'Die Fehlliste konnte nicht erstellt werden.',
+  },
+  progress: {
+    collected: (owned: number, total: number) => `${owned} / ${total} Karten gesammelt`,
+    missing: (count: number) => (count === 1 ? '1 fehlt' : `${count} fehlen`),
+    bar: 'Fortschritt der Sammlung',
+  },
+  masterSet: {
+    kind: 'Art des Binders',
+    empty: 'Leerer Binder',
+    masterSet: 'Master Set',
+    set: 'Set',
+    chooseSet: 'Bitte ein Set wählen.',
+    loading: 'Karten des Sets werden geladen …',
+    loadFailed: 'Die Karten des Sets konnten nicht geladen werden. Besteht eine Internetverbindung?',
+    withVariants: 'Mit Holo-Varianten',
+    withVariantsHint: 'Reverse Holo und jedes Sondermuster bekommen einen eigenen Pocket direkt hinter der Karte.',
+    secretRares: 'Secret Rares',
+    secretRaresHint: 'Karten mit einer Nummer über der Setgröße, nach Seltenheit.',
+    noSecretRares: 'Dieses Set hat keine Secret Rares.',
+    unknownRarity: 'Ohne Seltenheit',
+    rarityCount: (rarity: string, count: number) => `${rarity} (${count})`,
+    withPromos: 'Promos',
+    withPromosHint: (setName: string, count: number) =>
+      `${count} Karten aus „${setName}“ kommen ans Ende des Binders.`,
+    noPromos: 'Für diese Serie gibt es bei TCGdex kein Promo-Set.',
+    summary: (cards: number, pages: number) =>
+      `Ergibt ${cards} ${cards === 1 ? 'Karte' : 'Karten'} auf ${pages} ${pages === 1 ? 'Seite' : 'Seiten'}. Alle Karten starten als „fehlt“.`,
+    creating: 'Binder wird erzeugt …',
+  },
   app: {
     name: 'PokéBinder',
   },
@@ -102,10 +166,12 @@ export const de = {
     missingListPdf: 'Fehlliste als PDF',
     addPage: 'Seite',
     addPageLabel: 'Seite hinzufügen',
+    mode: 'Modus',
     modes: {
       edit: 'Bearbeiten',
       collection: 'Sammlung',
     },
+    collectionHint: 'Ein Klick auf eine Karte schaltet zwischen „vorhanden“ und „fehlt“ um.',
     previous: 'Zurückblättern',
     next: 'Weiterblättern',
     spreadLabel: (pages: number[]) =>
@@ -141,6 +207,9 @@ export const de = {
     owned: 'Vorhanden',
     missing: 'Fehlt',
     ownedState: 'Besitz',
+    variant: 'Variante',
+    rarity: 'Seltenheit',
+    unknown: '–',
     pocket: 'Pocket',
     page: 'Seite',
     position: 'Position',

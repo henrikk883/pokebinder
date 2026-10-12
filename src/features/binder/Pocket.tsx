@@ -3,7 +3,7 @@ import { de } from '../../i18n/de'
 import { setIdOfCard, type Catalog } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
-import type { PocketOpening, Slot, SlotPosition } from '../../types/binder'
+import type { CardRef, PocketOpening, Slot, SlotPosition } from '../../types/binder'
 import { CardImage } from '../search/CardImage'
 import { pocketId, type DragSource, type DropTarget } from './dragDrop'
 import { useCard } from './useCard'
@@ -30,26 +30,41 @@ function EmptyPocketIcon() {
 
 interface PocketCardProps {
   position: SlotPosition
-  cardId: string
+  cardRef: CardRef
   owned: boolean
   catalog: Catalog | undefined
 }
 
-function PocketCard({ position, cardId, owned, catalog }: PocketCardProps) {
+function PocketCard({ position, cardRef, owned, catalog }: PocketCardProps) {
+  const { cardId, variant } = cardRef
   const card = useCard(cardId)
   const setOwned = useBinderStore((state) => state.setOwned)
+  const collecting = useEditorStore((state) => state.mode === 'collection')
   const source: DragSource = { kind: 'pocket', position, cardId }
   const { setNodeRef, listeners, isDragging } = useDraggable({
     id: `card:${pocketId(position)}`,
     data: source,
+    disabled: collecting,
   })
+  // normal and holo are what the picture shows anyway; the other finishes need a word
+  const showsVariant = variant !== 'normal' && variant !== 'holo'
 
   return (
     <div
       ref={setNodeRef}
       {...listeners}
-      className={`group relative w-full cursor-grab ${isDragging ? 'opacity-30' : ''}`}
+      className={`group relative w-full ${collecting ? 'cursor-pointer' : 'cursor-grab'} ${
+        isDragging ? 'opacity-30' : ''
+      }`}
     >
+      {showsVariant && (
+        <span
+          data-testid="variant-badge"
+          className="pointer-events-none absolute bottom-1 left-1 z-10 max-w-[90%] truncate rounded-control bg-bg/90 px-1.5 py-0.5 text-[0.6rem] font-medium"
+        >
+          {de.variantLabel(variant)}
+        </span>
+      )}
       {card ? (
         <CardImage
           card={card}
@@ -85,7 +100,15 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage, catalog }
   )
   const select = useEditorStore((state) => state.select)
   const clearSlot = useBinderStore((state) => state.clearSlot)
+  const setOwned = useBinderStore((state) => state.setOwned)
+  const collecting = useEditorStore((state) => state.mode === 'collection')
   const card = useCard(slot.cardRef?.cardId)
+
+  function handleClick() {
+    select(position)
+    // in collection mode a click says "I have this card" or takes it back
+    if (collecting && slot.cardRef) setOwned(position, !slot.owned)
+  }
   const target: DropTarget = { kind: 'pocket', position }
   const { setNodeRef, isOver } = useDroppable({ id: pocketId(position), data: target })
 
@@ -103,16 +126,17 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage, catalog }
       data-testid="pocket"
       data-card-id={slot.cardRef?.cardId ?? ''}
       data-owned={slot.cardRef ? String(slot.owned) : undefined}
-      onClick={() => select(position)}
+      data-variant={slot.cardRef?.variant}
+      onClick={handleClick}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
-          select(position)
+          handleClick()
         }
       }}
       onContextMenu={(event) => {
         event.preventDefault()
-        if (slot.cardRef) clearSlot(position)
+        if (slot.cardRef && !collecting) clearSlot(position)
       }}
       data-over-image={overImage}
       className={`relative flex aspect-[63/88] items-center justify-center rounded-pocket outline-offset-2 ${
@@ -122,7 +146,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage, catalog }
       {slot.cardRef ? (
         <PocketCard
           position={position}
-          cardId={slot.cardRef.cardId}
+          cardRef={slot.cardRef}
           owned={slot.owned}
           catalog={catalog}
         />

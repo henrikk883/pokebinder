@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { setIdOfCard, tcgdex } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
+import { useEditorStore } from '../../store/editorStore'
 import { ImageLibrary } from '../images/ImageLibrary'
 import { CardTile } from './CardTile'
 import { FilterSelect } from './FilterSelect'
@@ -35,7 +36,9 @@ function CardSearch() {
   const [rarity, setRarity] = useState<string>()
   const [type, setType] = useState<string>()
 
-  const binderOpen = useBinderStore((state) => state.binder !== null)
+  // cards are dragged into a binder while arranging it, not while ticking off the collection
+  const editing = useEditorStore((state) => state.mode === 'edit')
+  const binderOpen = useBinderStore((state) => state.binder !== null) && editing
   const catalog = useCatalog()
   const rarities = useLoaded(loadRarities)
   const types = useLoaded(loadTypes)

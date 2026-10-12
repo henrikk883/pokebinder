@@ -63,11 +63,45 @@ const responses: Record<string, unknown> = {
   },
 }
 
+/** What TCGdex answers to the set details query for "151" (shortened). */
+const setDetailsResponse = {
+  cards: [
+    { ...card('sv03.5-025', '025', 'Pikachu'), rarity: 'Häufig' },
+    { ...card('sv03.5-006', '006', 'Glurak-ex'), rarity: 'Doppelselten' },
+    { ...card('sv03.5-173', '173', 'Pikachu'), rarity: 'Selten, Illustration' },
+    { ...card('sv03.5-207', '207', 'Mew-ex', false), rarity: null },
+    // the id filter of TCGdex matches loosely and may return cards of other sets
+    { ...card('xsv03.5-001', '001', 'Fremd'), rarity: 'Häufig' },
+  ],
+  prints: [
+    {
+      id: 'sv03.5-025',
+      variants_detailed: [
+        { type: 'normal', foil: null, stamp: null, size: 'standard' },
+        { type: 'reverse', foil: null, stamp: null, size: 'standard' },
+        { type: 'reverse', foil: 'pokeball', stamp: null, size: 'standard' },
+        { type: 'normal', foil: null, stamp: ['snowflake'], size: 'standard' },
+        { type: 'reverse', foil: 'cosmos', stamp: null, size: 'standard' },
+      ],
+    },
+    { id: 'sv03.5-006', variants_detailed: [{ type: 'holo', foil: null, stamp: null, size: 'standard' }] },
+    { id: 'sv03.5-207', variants_detailed: [{ type: 'holo', foil: 'gold', stamp: null, size: 'standard' }] },
+  ],
+}
+
+const noGraphql = () => Promise.reject(new Error('GraphQL is not part of this test'))
+
 function setup(cards: unknown[] = []) {
   const calls: { key: string; params: QueryParam[] }[] = []
+  const queries: string[] = []
   const client = createTcgdexClient({
     lang: 'de',
     cache: passThrough,
+    graphql: async (query) => {
+      queries.push(query)
+      if (query.includes('"sv03.5-"')) return setDetailsResponse
+      throw new Error('unknown set')
+    },
     transport: async (lang, path, params) => {
       const key = `${lang}/${path.join('/')}`
       calls.push({ key, params })
@@ -78,7 +112,7 @@ function setup(cards: unknown[] = []) {
     const call = calls.find((c) => c.key === 'de/cards')
     return Object.fromEntries((call?.params ?? []).map(({ key, value }) => [key, value]))
   }
-  return { client, calls, cardParams }
+  return { client, calls, queries, cardParams }
 }
 
 describe('getCatalog', () => {
@@ -126,6 +160,7 @@ describe('getCatalog', () => {
     const client = createTcgdexClient({
       lang: 'de',
       cache: passThrough,
+      graphql: noGraphql,
       transport: async (lang, path) => {
         if (!online) throw new Error('offline')
         return responses[`${lang}/${path.join('/')}`]
@@ -189,6 +224,68 @@ describe('getCard', () => {
 
     expect(await client.getCard('sv03.5-999')).toBeUndefined()
     expect(await client.getCard('mystery-1')).toBeUndefined()
+  })
+})
+
+describe('getSetDetails', () => {
+  it('returns the cards of a set in number order with rarity and finishes', async () => {
+    const { client } = setup()
+
+    const details = await client.getSetDetails('sv03.5')
+
+    expect(details.map((detail) => detail.id)).toEqual([
+      'sv03.5-006',
+      'sv03.5-025',
+      'sv03.5-173',
+      'sv03.5-207',
+    ])
+    expect(details[1]).toEqual({
+      id: 'sv03.5-025',
+      localId: '025',
+      name: 'Pikachu',
+      image: 'https://assets.tcgdex.net/de/x/sv03.5-025',
+      rarity: 'Häufig',
+      // stamped prints and the cosmos foil from special products are not part of the set
+      variants: ['normal', 'reverse', 'pokeball'],
+    })
+    expect(details[0]).toMatchObject({ rarity: 'Doppelselten', variants: ['holo'] })
+  })
+
+  it('gives every card a finish, even without print data, and tolerates a missing rarity', async () => {
+    const { client } = setup()
+
+    const details = await client.getSetDetails('sv03.5')
+
+    expect(details[2]).toMatchObject({ id: 'sv03.5-173', variants: ['normal'] })
+    expect(details[3]).toEqual({ id: 'sv03.5-207', localId: '207', name: 'Mew-ex', variants: ['holo'] })
+  })
+
+  it('asks for names in German and for finishes in English, in one request', async () => {
+    const { client, queries } = setup()
+
+    await client.getSetDetails('sv03.5')
+    await client.getSetDetails('sv03.5')
+
+    expect(queries).toHaveLength(1)
+    expect(queries[0]).toContain('@locale(lang: "de") { id localId name image rarity }')
+    expect(queries[0]).toContain('@locale(lang: "en") { id variants_detailed')
+  })
+
+  it('finds the details of a single binder card', async () => {
+    const { client } = setup()
+
+    expect(await client.getCardDetail('sv03.5-006')).toMatchObject({ name: 'Glurak-ex', rarity: 'Doppelselten' })
+    expect(await client.getCardDetail('sv03.5-999')).toBeUndefined()
+    expect(await client.getCardDetail('mystery-1')).toBeUndefined()
+  })
+
+  it('fails when the set cannot be loaded, and tries again next time', async () => {
+    const { client, queries } = setup()
+
+    await expect(client.getSetDetails('swsh3')).rejects.toThrow()
+    await expect(client.getSetDetails('swsh3')).rejects.toThrow()
+
+    expect(queries).toHaveLength(2)
   })
 })
 
@@ -280,6 +377,7 @@ describe('queryCards', () => {
     const client = createTcgdexClient({
       lang: 'de',
       cache: passThrough,
+      graphql: noGraphql,
       transport: async (lang, path, params) => {
         const key = `${lang}/${path.join('/')}`
         if (key !== 'de/cards') return responses[key]

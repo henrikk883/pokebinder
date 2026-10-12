@@ -5,8 +5,10 @@ import {
   addPage,
   changeLayout,
   countCards,
+  countProgress,
   createBinder,
   setCard,
+  setVariant,
   sortCards,
   type ModelContext,
   type PlacedCard,
@@ -112,6 +114,26 @@ describe('binder operations', () => {
 
   it('rejects sorting an unknown page', () => {
     expect(() => sortCards(binder, { pageId: 'nope' }, compare, ctx)).toThrow(RangeError)
+  })
+
+  it('counts progress over pockets with a card only', () => {
+    // four cards in 18 pockets, one of them (swsh3-136) missing
+    expect(countProgress(binder)).toEqual({ total: 4, owned: 3, missing: 1 })
+    expect(countProgress(createBinder({ name: 'Empty' }, ctx))).toEqual({ total: 0, owned: 0, missing: 0 })
+  })
+
+  it('changes the finish of a card and keeps the rest', () => {
+    const position = { pageId: binder.pages[0]?.id ?? '', slotIndex: 3 }
+
+    const next = setVariant(binder, position, 'pokeball', ctx)
+
+    expect(next.pages[0]?.slots[3]).toEqual({
+      index: 3,
+      cardRef: { cardId: 'swsh3-136', lang: 'de', variant: 'pokeball' },
+      owned: false,
+    })
+    expect(setVariant(next, position, 'pokeball', ctx)).toBe(next)
+    expect(setVariant(binder, { ...position, slotIndex: 0 }, 'reverse', ctx)).toBe(binder)
   })
 
   it('counts the cards in the binder', () => {

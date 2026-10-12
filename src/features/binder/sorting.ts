@@ -1,10 +1,10 @@
 import { compareLocalId, setIdOfCardId } from '../../lib/tcgdex'
-import { CARD_VARIANTS } from '../../types/binder'
+import { compareVariants } from '../../types/binder'
 import type { PlacedCard } from './binderModel'
 
 /**
  * Order for "sort by set and number": sets as given (release order), cards of unknown
- * sets last, then the card number, then the variant (normal before reverse and so on).
+ * sets last, then the card number, then the variant (normal, holo, reverse, then patterns).
  */
 export function createCardComparator(
   setOrder: readonly string[],
@@ -24,7 +24,7 @@ export function createCardComparator(
     if (left.rank !== right.rank) return left.rank < right.rank ? -1 : 1
     return (
       compareLocalId(left.localId, right.localId) ||
-      CARD_VARIANTS.indexOf(a.cardRef.variant) - CARD_VARIANTS.indexOf(b.cardRef.variant)
+      compareVariants(a.cardRef.variant, b.cardRef.variant)
     )
   }
 }

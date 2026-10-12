@@ -2,7 +2,9 @@ import TCGdex, { Query } from '@tcgdex/sdk'
 import type { CardLang } from '../../types/binder'
 import type { ResponseCache } from './cache'
 import { matchesNumber, setIdOfCard, setIdOfCardId, sortByNumber } from './cardIds'
+import { variantsOf, type RawVariant } from './variants'
 import type {
+  CardDetail,
   CardPage,
   CardQuery,
   CardSummary,
@@ -80,6 +82,44 @@ const noCache = {
   deleteMultiple: () => true,
 }
 
+/** Runs a GraphQL query against TCGdex and resolves to its `data`. */
+export type GraphqlTransport = (query: string) => Promise<unknown>
+
+const GRAPHQL_ENDPOINT = 'https://api.tcgdex.net/v2/graphql'
+
+export function createGraphqlTransport(): GraphqlTransport {
+  return async (query) => {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query }),
+    })
+    if (!response.ok) throw new Error(`TCGdex GraphQL responded with ${response.status}`)
+    const body = (await response.json()) as { data?: unknown; errors?: unknown[] }
+    if (body.errors?.length || body.data === undefined || body.data === null) {
+      throw new Error('TCGdex GraphQL reported an error')
+    }
+    return body.data
+  }
+}
+
+/**
+ * Everything about the cards of one set in a single request. Names and rarity come in the
+ * card language; the finishes are read from the English data, where they have fixed names.
+ */
+export function setDetailsQuery(setId: string, lang: CardLang): string {
+  const cards = `cards(filters: { id: ${JSON.stringify(`${setId}-`)} }, pagination: { page: 1, itemsPerPage: ${MAX_CARDS_PER_REQUEST} })`
+  return `{
+  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity }
+  prints: ${cards} @locale(lang: "en") { id variants_detailed { type foil stamp size } }
+}`
+}
+
+interface RawSetDetails {
+  cards?: (RawCard & { rarity?: string | null })[] | null
+  prints?: { id: string; variants_detailed?: RawVariant[] | null }[] | null
+}
+
 export function createSdkTransport(): Transport {
   const sdks = new Map<CardLang, TCGdex>()
   return (lang, path, params) => {
@@ -102,10 +142,16 @@ function toCard(raw: RawCard): CardSummary {
 export interface TcgdexClientOptions {
   lang: CardLang
   transport: Transport
+  graphql: GraphqlTransport
   cache: ResponseCache
 }
 
-export function createTcgdexClient({ lang, transport, cache }: TcgdexClientOptions): TcgdexClient {
+export function createTcgdexClient({
+  lang,
+  transport,
+  graphql,
+  cache,
+}: TcgdexClientOptions): TcgdexClient {
   function request<T>(
     requestLang: CardLang,
     path: [Endpoint, ...string[]],
@@ -203,10 +249,51 @@ export function createTcgdexClient({ lang, transport, cache }: TcgdexClientOptio
     return cards
   }
 
+  const setDetails = new Map<string, Promise<CardDetail[]>>()
+
+  async function loadSetDetails(setId: string): Promise<CardDetail[]> {
+    const data = await cache.fetch(`${lang}/graphql/set-details/${setId}`, () =>
+      graphql(setDetailsQuery(setId, lang)),
+    )
+    const { cards, prints } = (data ?? {}) as RawSetDetails
+    const printsById = new Map((prints ?? []).map((entry) => [entry.id, entry.variants_detailed ?? []]))
+    const prefix = `${setId}-`
+    return sortByNumber(
+      (cards ?? [])
+        // the id filter matches loosely; keep only cards that really belong to the set
+        .filter((raw) => raw.id.startsWith(prefix) && raw.id === `${prefix}${raw.localId}`)
+        .map((raw): CardDetail => {
+          const detail: CardDetail = { ...toCard(raw), variants: variantsOf(printsById.get(raw.id) ?? []) }
+          if (raw.rarity) detail.rarity = raw.rarity
+          return detail
+        }),
+    )
+  }
+
+  function getSetDetails(setId: string): Promise<CardDetail[]> {
+    let details = setDetails.get(setId)
+    if (!details) {
+      details = loadSetDetails(setId).catch((error: unknown) => {
+        setDetails.delete(setId)
+        throw error
+      })
+      setDetails.set(setId, details)
+    }
+    return details
+  }
+
   const client: TcgdexClient = {
     lang,
     getCatalog,
     getSetCards,
+    getSetDetails,
+
+    async getCardDetail(cardId) {
+      const { setsById } = await getCatalog()
+      const setId = setIdOfCardId(cardId, setsById)
+      if (setId === undefined) return undefined
+      return (await getSetDetails(setId)).find((entry) => entry.id === cardId)
+    },
 
     async getCard(cardId) {
       const { setsById } = await getCatalog()

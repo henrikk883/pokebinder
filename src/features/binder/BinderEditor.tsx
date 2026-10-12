@@ -6,6 +6,7 @@ import { useCatalog } from '../search/useCatalog'
 import { BinderSpread } from './BinderSpread'
 import { BinderToolbar } from './BinderToolbar'
 import { PageControls } from './PageControls'
+import { ProgressBar } from './ProgressBar'
 import { buildSpreads, clampSpread } from './spreads'
 import { ThumbnailStrip } from './ThumbnailStrip'
 
@@ -62,6 +63,7 @@ export function BinderEditor({ binder }: { binder: Binder }) {
         />
       </div>
       <ThumbnailStrip binder={binder} spreads={spreads} current={current} />
+      <ProgressBar binder={binder} />
     </section>
   )
 }

@@ -3,12 +3,19 @@ import { de } from '../../i18n/de'
 import { setIdOfCard } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
-import { OPENING_SIDES, type OpeningSide, type Page, type Slot } from '../../types/binder'
+import {
+  BASE_VARIANTS,
+  compareVariants,
+  OPENING_SIDES,
+  type OpeningSide,
+  type Page,
+  type Slot,
+} from '../../types/binder'
 import { CoverDialog } from '../images/CoverDialog'
 import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
 import { useCatalog } from '../search/useCatalog'
-import { useCard } from './useCard'
+import { useCard, useCardDetail } from './useCard'
 
 const fieldClass =
   'flex h-10 items-center rounded-control border border-line bg-raised px-3 text-sm'
@@ -22,6 +29,12 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
   const set =
     card && catalog.status === 'ready' ? catalog.data.setsById.get(setIdOfCard(card)) : undefined
   const position = { pageId: page.id, slotIndex: slot.index }
+  const setVariant = useBinderStore((state) => state.setVariant)
+  const detail = useCardDetail(slot.cardRef?.cardId)
+  // offer the finishes the card exists in; the current one stays selectable in any case
+  const variants = [
+    ...new Set([...(detail?.variants ?? BASE_VARIANTS), ...(slot.cardRef ? [slot.cardRef.variant] : [])]),
+  ].sort(compareVariants)
 
   if (!slot.cardRef) return <p className="text-sm text-muted">{de.selection.emptyPocket}</p>
 
@@ -46,6 +59,34 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
           )}
         </div>
       </div>
+
+      <dl className="grid grid-cols-2 gap-3 text-sm">
+        <div className="space-y-1">
+          <dt className="text-muted">
+            <label htmlFor="selected-variant">{de.selection.variant}</label>
+          </dt>
+          <dd>
+            <select
+              id="selected-variant"
+              value={slot.cardRef.variant}
+              onChange={(event) => setVariant(position, event.target.value)}
+              className={`${fieldClass} w-full`}
+            >
+              {variants.map((variant) => (
+                <option key={variant} value={variant}>
+                  {de.variantLabel(variant)}
+                </option>
+              ))}
+            </select>
+          </dd>
+        </div>
+        <div className="space-y-1">
+          <dt className="text-muted">{de.selection.rarity}</dt>
+          <dd data-testid="selected-rarity" className={`${fieldClass} truncate`} title={detail?.rarity}>
+            {detail?.rarity ?? de.selection.unknown}
+          </dd>
+        </div>
+      </dl>
 
       <div role="group" aria-label={de.selection.ownedState} className="flex rounded-control bg-raised p-0.5 text-sm">
         {[true, false].map((owned) => (

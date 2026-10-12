@@ -1,25 +1,59 @@
 import { useState, type FormEvent } from 'react'
 import { de } from '../../i18n/de'
-import { LAYOUTS, OPENING_SIDES, type Layout, type OpeningSide } from '../../types/binder'
-import type { NewBinderInput } from './binderModel'
+import {
+  LAYOUTS,
+  OPENING_SIDES,
+  type Binder,
+  type BinderMode,
+  type Layout,
+  type OpeningSide,
+} from '../../types/binder'
+import { buildMasterSet, createMasterSetBinder } from '../masterset/masterSet'
+import { MasterSetOptions, type MasterSetChoice } from '../masterset/MasterSetOptions'
+import { useCatalog } from '../search/useCatalog'
+import { createBinder } from './binderModel'
 
 interface NewBinderDialogProps {
-  onCreate: (input: NewBinderInput) => void
+  onCreate: (binder: Binder) => void
   onCancel: () => void
 }
 
 const choiceClass =
   'flex h-10 flex-1 cursor-pointer items-center justify-center rounded-control border border-line bg-raised text-center text-sm whitespace-nowrap has-checked:border-accent has-checked:bg-accent has-checked:text-white'
 
+const KINDS: readonly BinderMode[] = ['empty', 'masterSet']
+
+/**
+ * Assistant for a new binder: empty, or a master set that fills itself with every card
+ * of a set.
+ */
 export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
+  const [kind, setKind] = useState<BinderMode>('empty')
   const [name, setName] = useState('')
   const [layout, setLayout] = useState<Layout>('3x3')
   const [openingSide, setOpeningSide] = useState<OpeningSide>('right')
+  const [masterSet, setMasterSet] = useState<MasterSetChoice>()
+  const catalog = useCatalog()
+
+  const trimmedName = name.trim()
+  // a master set may simply be named after its set
+  const binderName = trimmedName || (kind === 'masterSet' ? (masterSet?.setName ?? '') : '')
+  const ready = binderName !== '' && (kind === 'empty' || masterSet?.source !== undefined)
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    const trimmed = name.trim()
-    if (trimmed) onCreate({ name: trimmed, layout, defaultOpeningSide: openingSide })
+    if (!ready) return
+    const common = { name: binderName, layout, defaultOpeningSide: openingSide }
+    if (kind === 'empty') {
+      onCreate(createBinder(common))
+    } else if (masterSet?.source) {
+      onCreate(
+        createMasterSetBinder(
+          { ...common, setId: masterSet.setId, options: masterSet.options },
+          buildMasterSet(masterSet.source, masterSet.options),
+        ),
+      )
+    }
   }
 
   return (
@@ -34,19 +68,55 @@ export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
         aria-modal="true"
         aria-labelledby="new-binder-title"
         onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-5 rounded-panel border border-line bg-panel p-6 shadow-lg"
+        className="max-h-full w-full max-w-md space-y-5 overflow-y-auto rounded-panel border border-line bg-panel p-6 shadow-lg"
       >
         <h2 id="new-binder-title" className="text-xl font-semibold">
           {de.newBinder.title}
         </h2>
+
+        <fieldset className="text-sm">
+          <legend className="sr-only">{de.masterSet.kind}</legend>
+          <div className="flex gap-2">
+            {KINDS.map((option) => (
+              <label key={option} className={choiceClass}>
+                <input
+                  type="radio"
+                  name="kind"
+                  value={option}
+                  checked={kind === option}
+                  onChange={() => setKind(option)}
+                  className="sr-only"
+                />
+                {option === 'empty' ? de.masterSet.empty : de.masterSet.masterSet}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        {kind === 'masterSet' && (
+          <MasterSetOptions
+            catalog={catalog.status === 'ready' ? catalog.data : undefined}
+            catalogUnavailableText={
+              catalog.status === 'ready'
+                ? undefined
+                : catalog.status === 'loading'
+                  ? de.search.setsLoading
+                  : de.search.setsError
+            }
+            layout={layout}
+            onChange={setMasterSet}
+          />
+        )}
 
         <label className="block space-y-2 text-sm">
           <span>{de.newBinder.name}</span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder={de.newBinder.namePlaceholder}
-            required
+            placeholder={
+              kind === 'masterSet' && masterSet ? masterSet.setName : de.newBinder.namePlaceholder
+            }
+            required={kind === 'empty'}
             autoFocus
             className="h-10 w-full rounded-control border border-line bg-raised px-3 placeholder:text-muted focus:border-accent focus:outline-none"
           />
@@ -101,7 +171,8 @@ export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
           </button>
           <button
             type="submit"
-            className="h-10 rounded-control bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover"
+            disabled={kind === 'masterSet' && !ready}
+            className="h-10 rounded-control bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             {de.newBinder.create}
           </button>

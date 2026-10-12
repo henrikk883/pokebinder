@@ -11,6 +11,7 @@ import {
   setCard,
   setOpeningSide,
   setOwned,
+  setVariant,
   sortCards,
   type NewBinderInput,
 } from '../features/binder/binderModel'
@@ -33,6 +34,7 @@ import type {
   CardLang,
   ImageCrop,
   CardRef,
+  CardVariant,
   Layout,
   OpeningSide,
   SlotPosition,
@@ -51,6 +53,9 @@ export interface BinderState {
   openBinder: (binder: Binder) => void
   closeBinder: () => void
   createBinder: (input: NewBinderInput) => void
+  /** Opens a binder that was built elsewhere (e.g. a master set) and stores it. */
+  adoptBinder: (binder: Binder) => void
+  setVariant: (position: SlotPosition, variant: CardVariant) => void
   addPage: () => void
   removePage: (pageId: string) => void
   setCard: (position: SlotPosition, cardRef: CardRef, owned?: boolean) => void
@@ -139,6 +144,11 @@ export function createBinderStore(deps: BinderStoreDeps) {
         set({ binder: createBinder(input) })
         scheduleSave()
       },
+      adoptBinder: (binder) => {
+        set({ binder })
+        scheduleSave()
+      },
+      setVariant: (position, variant) => change((binder) => setVariant(binder, position, variant)),
       addPage: () => change((binder) => addPage(binder)),
       // pages behind the removed one change sides, which may cut off images spanning two pages
       removePage: (pageId) => change((binder) => normalizeImages(removePage(binder, pageId))),

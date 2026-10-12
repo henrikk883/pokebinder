@@ -1,7 +1,7 @@
 import {
   BINDER_MODES,
   CARD_LANGS,
-  CARD_VARIANTS,
+  isCardVariant,
   LAYOUTS,
   OPENING_SIDES,
   type Asset,
@@ -158,7 +158,7 @@ function readCardRef(value: unknown, path: string): CardRef {
   return {
     cardId: readString(raw.cardId, `${path}.cardId`),
     lang: readOneOf(raw.lang, CARD_LANGS, `${path}.lang`),
-    variant: readOneOf(raw.variant, CARD_VARIANTS, `${path}.variant`),
+    variant: isCardVariant(raw.variant) ? raw.variant : invalid(`${path}.variant`),
   }
 }
 

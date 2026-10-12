@@ -14,8 +14,28 @@ export type PocketOpening = 'left' | 'right'
 export const BINDER_MODES = ['empty', 'masterSet'] as const
 export type BinderMode = (typeof BINDER_MODES)[number]
 
-export const CARD_VARIANTS = ['normal', 'reverse', 'holo', 'pokeball', 'masterball'] as const
-export type CardVariant = (typeof CARD_VARIANTS)[number]
+/** The print finishes every set knows. */
+export const BASE_VARIANTS = ['normal', 'holo', 'reverse'] as const
+
+/**
+ * Print finish of a card: one of `BASE_VARIANTS`, or the pattern of a special reverse
+ * holo as TCGdex names it (`pokeball`, `masterball`, `energy`, `friendball`, …). Which
+ * patterns exist differs from set to set, so the list is open.
+ */
+export type CardVariant = string
+
+export function isCardVariant(value: unknown): value is CardVariant {
+  return typeof value === 'string' && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(value)
+}
+
+/** Order of variants of the same card: base finishes first, then patterns by name. */
+export function compareVariants(a: CardVariant, b: CardVariant): number {
+  const rank = (variant: CardVariant) => {
+    const index = (BASE_VARIANTS as readonly string[]).indexOf(variant)
+    return index === -1 ? BASE_VARIANTS.length : index
+  }
+  return rank(a) - rank(b) || a.localeCompare(b)
+}
 
 export const CARD_LANGS = ['de', 'en', 'ja', 'ko'] as const
 export type CardLang = (typeof CARD_LANGS)[number]

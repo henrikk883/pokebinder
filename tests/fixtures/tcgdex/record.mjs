@@ -14,6 +14,8 @@ const requests = [
   'de/rarities',
   'de/types',
   'de/sets/sv03.5',
+  'de/sets/sv08.5',
+  'de/sets/svp',
   'de/cards?name=Glurak&pagination:page=1&pagination:itemsPerPage=60',
   'de/cards?name=Glurak&pagination:page=2&pagination:itemsPerPage=60',
   'de/cards?name=Glurak&set.id=eq:sv03.5&pagination:page=1&pagination:itemsPerPage=1000',
@@ -46,6 +48,27 @@ for (const [i, request] of requests.entries()) {
   if (request.startsWith('de/series/')) for (const set of data.sets) seriesOfSet.set(set.id, data.id)
   if (request.startsWith('de/cards?')) cardsWithoutImage.push(...data.filter((card) => !card.image))
 }
+// Set details (rarity and finishes of every card) come from the GraphQL endpoint.
+// The query must ask for the same fields as `setDetailsQuery` in src/lib/tcgdex/client.ts.
+for (const setId of ['sv03.5', 'sv08.5', 'svp']) {
+  const cards = `cards(filters: { id: "${setId}-" }, pagination: { page: 1, itemsPerPage: 1000 })`
+  const query = `{
+  cards: ${cards} @locale(lang: "de") { id localId name image rarity }
+  prints: ${cards} @locale(lang: "en") { id variants_detailed { type foil stamp size } }
+}`
+  const response = await fetch(`${API}/graphql`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ query }),
+  })
+  const body = await response.json()
+  if (!response.ok || body.errors) throw new Error(`graphql ${setId}: ${JSON.stringify(body.errors)}`)
+  const file = `graphql-set-details-${setId}.json`
+  await writeFile(`${outDir}${file}`, JSON.stringify(body))
+  index[`graphql:${setId}`] = file
+  console.log(`graphql:${setId}`, '->', file)
+}
+
 await writeFile(`${outDir}index.json`, `${JSON.stringify(index, null, 2)}\n`)
 
 // Which of the cards without a German scan have an English one? The tests answer image

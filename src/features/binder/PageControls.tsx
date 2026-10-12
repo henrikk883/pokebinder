@@ -27,16 +27,26 @@ export function PageControls({ spread, spreadCount }: PageControlsProps) {
   const zoom = useEditorStore((state) => state.zoom)
   const setZoom = useEditorStore((state) => state.setZoom)
   const showSpread = useEditorStore((state) => state.showSpread)
+  const mode = useEditorStore((state) => state.mode)
+  const setMode = useEditorStore((state) => state.setMode)
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div role="group" className="flex rounded-control bg-raised p-0.5 text-sm">
-        <button type="button" aria-pressed="true" className="h-9 rounded-control bg-accent px-4 font-medium text-white">
-          {de.binder.modes.edit}
-        </button>
-        <button type="button" aria-pressed="false" disabled className="h-9 px-4 text-muted">
-          {de.binder.modes.collection}
-        </button>
+      <div role="group" aria-label={de.binder.mode} className="flex rounded-control bg-raised p-0.5 text-sm">
+        {(['edit', 'collection'] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={mode === option}
+            title={option === 'collection' ? de.binder.collectionHint : undefined}
+            onClick={() => setMode(option)}
+            className={`h-9 rounded-control px-4 font-medium ${
+              mode === option ? 'bg-accent text-white' : 'text-muted hover:text-text'
+            }`}
+          >
+            {de.binder.modes[option]}
+          </button>
+        ))}
       </div>
 
       <div className="flex items-center gap-3">

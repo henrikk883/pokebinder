@@ -57,7 +57,13 @@ async function mockTcgdex(page: Page): Promise<Tcgdex> {
   const state = { requests: [] as string[], offline: false }
 
   await page.route('https://api.tcgdex.net/**', async (route) => {
-    const key = requestKey(new URL(route.request().url()))
+    const url = new URL(route.request().url())
+    // set details are asked for by GraphQL; the set is named in the query's id filter
+    const query = url.pathname.endsWith('/graphql')
+      ? ((route.request().postDataJSON() as { query?: string } | null)?.query ?? '')
+      : undefined
+    const key =
+      query === undefined ? requestKey(url) : `graphql:${/id: "([^"]+)-"/.exec(query)?.[1] ?? '?'}`
     state.requests.push(key)
     if (state.offline) return route.abort('internetdisconnected')
     const file = index[key]

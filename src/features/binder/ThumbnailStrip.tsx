@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { de } from '../../i18n/de'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
@@ -35,15 +36,24 @@ interface ThumbnailStripProps {
 /** All spreads in miniature, for jumping straight to one. */
 export function ThumbnailStrip({ binder, spreads, current }: ThumbnailStripProps) {
   const showSpread = useEditorStore((state) => state.showSpread)
+  const currentThumbnail = useRef<HTMLButtonElement>(null)
+
+  // a master set has dozens of spreads; keep the open one in view
+  useEffect(() => {
+    currentThumbnail.current?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [current, spreads.length])
 
   return (
-    <nav aria-label={de.binder.thumbnails} className="flex justify-center gap-3 overflow-x-auto py-1">
+    <nav aria-label={de.binder.thumbnails} className="shrink-0 overflow-x-auto py-1">
+      {/* centred while it fits, scrollable from the first thumbnail when it does not */}
+      <div className="mx-auto flex w-max gap-3">
       {spreads.map((spread) => {
         const label = de.binder.thumbnailLabel(pageNumbersOf(spread))
         const active = spread.index === current
         return (
           <button
             key={spread.index}
+            ref={active ? currentThumbnail : undefined}
             type="button"
             aria-label={de.binder.spreadLabel(pageNumbersOf(spread))}
             aria-current={active ? 'page' : undefined}
@@ -62,6 +72,7 @@ export function ThumbnailStrip({ binder, spreads, current }: ThumbnailStripProps
           </button>
         )
       })}
+      </div>
     </nav>
   )
 }

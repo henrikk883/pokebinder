@@ -1,6 +1,6 @@
 import { db } from '../../db/database'
 import { createResponseCache } from './cache'
-import { createSdkTransport, createTcgdexClient } from './client'
+import { createGraphqlTransport, createSdkTransport, createTcgdexClient } from './client'
 
 export { CARDS_PER_PAGE } from './client'
 export {
@@ -11,6 +11,7 @@ export {
   setIdOfCardId,
   sortByNumber,
 } from './cardIds'
+export { baseVariant } from './variants'
 export { cardImageUrl, englishCardImage, setLogoUrl, type CardImageSize } from './images'
 export type * from './types'
 
@@ -20,5 +21,6 @@ const DAY_MS = 24 * 60 * 60 * 1000
 export const tcgdex = createTcgdexClient({
   lang: 'de',
   transport: createSdkTransport(),
+  graphql: createGraphqlTransport(),
   cache: createResponseCache(db, { maxAgeMs: DAY_MS }),
 })

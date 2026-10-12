@@ -200,11 +200,11 @@ describe('parseBackup validation', () => {
       },
     ],
     [
-      'an unknown card variant',
+      'a malformed card variant',
       (b: Record<string, unknown>) => {
         const page = (b.pages as { slots: { cardRef?: { variant: string } }[] }[])[0]
         const cardRef = page?.slots[0]?.cardRef
-        if (cardRef) cardRef.variant = 'shiny'
+        if (cardRef) cardRef.variant = 'Not A Variant!'
       },
     ],
     [

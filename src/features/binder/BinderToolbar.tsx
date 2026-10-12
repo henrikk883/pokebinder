@@ -76,6 +76,23 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
   const changeLayout = useBinderStore((state) => state.changeLayout)
   const showSpread = useEditorStore((state) => state.showSpread)
 
+  const [exporting, setExporting] = useState(false)
+  const [exportFailed, setExportFailed] = useState(false)
+
+  async function handleMissingList() {
+    setExporting(true)
+    setExportFailed(false)
+    try {
+      // the PDF library is large and only needed here, so it is loaded on demand
+      const { downloadMissingList } = await import('../export/missingListTransfer')
+      await downloadMissingList(binder)
+    } catch {
+      setExportFailed(true)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   function handleLayout(layout: Layout) {
     if (countCards(binder) === 0 || window.confirm(de.binder.confirmLayout)) changeLayout(layout)
   }
@@ -102,9 +119,16 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
         ))}
       </select>
       <SortMenu binder={binder} spread={spread} />
-      <button type="button" disabled className={buttonClass}>
-        {de.binder.missingListPdf}
-      </button>
+      <div className="relative">
+        <button type="button" disabled={exporting} onClick={handleMissingList} className={buttonClass}>
+          {de.binder.missingListPdf}
+        </button>
+        {exportFailed && (
+          <p role="alert" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-3 text-sm text-muted shadow-lg">
+            {de.missingList.failed}
+          </p>
+        )}
+      </div>
       <button
         type="button"
         aria-label={de.binder.addPageLabel}

@@ -13,7 +13,7 @@ const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' })
 /** "Meine Binder": every stored binder, with the way to a new one. */
 export function BinderList() {
   const openBinder = useBinderStore((state) => state.openBinder)
-  const createBinder = useBinderStore((state) => state.createBinder)
+  const adoptBinder = useBinderStore((state) => state.adoptBinder)
   const [listing, setListing] = useState<Listing>({ status: 'loading' })
   const [creating, setCreating] = useState(false)
   const [version, setVersion] = useState(0)
@@ -103,9 +103,9 @@ export function BinderList() {
       {creating && (
         <NewBinderDialog
           onCancel={() => setCreating(false)}
-          onCreate={(input) => {
+          onCreate={(binder) => {
             setCreating(false)
-            createBinder(input)
+            adoptBinder(binder)
           }}
         />
       )}

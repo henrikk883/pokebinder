@@ -151,5 +151,32 @@ Optionales Feld, nach dem die Bibliothek sortiert wird. Grund: ohne es stünden 
 ## 2026-10-12 – Cover-Titel getrennt vom Binder-Namen
 „Cover bearbeiten“ ändert Titel und Bild des Covers; der Name des Binders in Liste und Kopfzeile bleibt. Das Cover-Bild füllt die Cover-Innenseite mittig, ohne eigenen Ausschnitt.
 
+## 2026-10-12 – Varianten sind eine offene Liste, nicht fünf feste Werte
+`CardRef.variant` ist `normal`, `holo`, `reverse` oder der Name eines Sonder-Reverse-Musters, wie TCGdex ihn auf Englisch führt (`pokeball`, `masterball`, `energy`, `friendball` …). Grund: „Erhabene Helden“ hat sieben solche Muster, das Datenmodell sah nur Pokéball und Meisterball vor; die Anforderung verlangt aber jedes Muster, das es im Set gibt. Bekannte Muster haben deutsche Namen, unbekannte zeigen ihren TCGdex-Namen.
+
+## 2026-10-12 – Was als Variante einer Karte zählt
+Normal, Holo (auch Gold und Regenbogen), Reverse Holo und jedes Sonder-Reverse-Muster. Nicht gezählt werden Stempel-Varianten, Jumbo-Karten und Folien aus Sonderprodukten (Kosmos, Galaxie, Cracked Ice). Von Henrik bestätigt. Die Grundvariante einer Karte ist „normal“, wenn es sie gibt, sonst „holo“.
+
+## 2026-10-12 – Seltenheit und Varianten kommen über die GraphQL-Schnittstelle von TCGdex
+Eine Abfrage liefert beides für alle Karten eines Sets; über das SDK wären es hunderte Einzelabfragen. Die Varianten werden aus den englischen Daten gelesen, weil ihre Namen dort einheitlich sind. Der Zugriff liegt wie alle anderen in `src/lib/tcgdex/` und wird gecacht.
+
+## 2026-10-12 – Secret Rares nach Seltenheit wählbar
+Als Secret Rare zählt jede Karte mit einer Nummer über der offiziellen Setgröße (oder mit eigener Nummernart wie TG01). Der Assistent zeigt sie nach Seltenheit gruppiert (Illustration Rare, Special Illustration Rare, Hyper Rare usw.), jede Gruppe einzeln abwählbar, alle standardmäßig an. Von Henrik angeregt.
+
+## 2026-10-12 – Promos als einfacher Schalter, standardmäßig aus
+„Promos“ hängt alle bei TCGdex gelisteten Promos der Serie ans Ende des Binders, jede einmal. TCGdex ordnet Promos nur der Serie zu, nicht einem Set; einzelne lassen sich danach im Binder entfernen. Abweichend von REQUIREMENTS.md (dort „standardmäßig an“ und „einzeln abwählbar“), weil es je Serie um die 200 Karten sind. Von Henrik so gewünscht.
+
+## 2026-10-12 – Assistent in einem Dialog
+„Leerer Binder“ oder „Master Set“ oben, darunter die jeweiligen Angaben. Ein Master Set heißt wie sein Set, wenn kein Name eingegeben wird. Alle Karten eines Master Sets starten als „fehlt“.
+
+## 2026-10-12 – Modus „Sammlung“ sperrt das Umordnen
+Im Modus „Sammlung“ schaltet ein Klick auf eine Karte Vorhanden/Fehlt; Ziehen, Rechtsklick-Leeren und das Hineinziehen aus der Suche sind dort abgeschaltet. Beim Öffnen eines Binders gilt „Bearbeiten“.
+
+## 2026-10-12 – Variante im Binder sichtbar und änderbar
+Die rechte Spalte zeigt Variante und Seltenheit der gewählten Karte; die Variante lässt sich auf jede Ausführung umstellen, die es von der Karte gibt. Karten in einer anderen Variante als Normal oder Holo tragen im Pocket ein kleines Schild (z. B. „Reverse Holo“, „Pokéball“), damit gleiche Bilder unterscheidbar sind.
+
+## 2026-10-12 – Fehlliste: eine Zeile je Pocket, Kästchen als Formularfelder
+Die PDF-Liste (A4) führt jede fehlende Karte in Binder-Reihenfolge mit Set, Nummer, Name, Variante und Seltenheit. Die Kästchen heißen `fehlt_<Nr>_<Karten-ID>_<Variante>`. Schriftzeichen, die die Standardschrift nicht kennt (z. B. ♀), werden ersetzt; eingebettete Schriften für Japanisch und Koreanisch wären ein Thema für v1.
+
 ## 2026-10-12 – Fehler beim Speichern oder Import ohne Rot
 Meldungen erscheinen in neutraler Textfarbe, weil Rot dem Löschen vorbehalten ist.

@@ -2,6 +2,7 @@ import type {
   Binder,
   BinderMode,
   CardRef,
+  CardVariant,
   Layout,
   OpeningSide,
   Page,
@@ -287,6 +288,35 @@ export function changeLayout(
     return fillPage(previous ? { ...page, id: previous.id } : page, cards)
   })
   return { ...withPages(binder, pages, ctx), layout }
+}
+
+/** Changes the print finish of the card in a pocket. */
+export function setVariant(
+  binder: Binder,
+  position: SlotPosition,
+  variant: CardVariant,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const slot = findSlot(binder, position)
+  if (!slot.cardRef || slot.cardRef.variant === variant) return binder
+  return writeSlots(
+    binder,
+    [{ position, content: { cardRef: { ...slot.cardRef, variant }, owned: slot.owned } }],
+    ctx,
+  )
+}
+
+export interface Progress {
+  /** Pockets that hold a card; empty pockets do not count. */
+  total: number
+  owned: number
+  missing: number
+}
+
+export function countProgress(binder: Binder): Progress {
+  const cards = cardsOf(binder.pages)
+  const owned = cards.filter((card) => card.owned).length
+  return { total: cards.length, owned, missing: cards.length - owned }
 }
 
 /** Number of pockets that hold a card. */

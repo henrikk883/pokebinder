@@ -1,4 +1,4 @@
-import type { CardLang } from '../../types/binder'
+import type { CardLang, CardVariant } from '../../types/binder'
 
 /** A card as it appears in lists: enough to show a tile, nothing more. */
 export interface CardSummary {
@@ -7,6 +7,14 @@ export interface CardSummary {
   name: string
   /** Base image URL without quality and extension; missing for cards TCGdex has no scan of. */
   image?: string
+}
+
+/** A card with what a master set and the list of missing cards need to know about it. */
+export interface CardDetail extends CardSummary {
+  /** Rarity in the card language, e.g. "Selten, Illustration". */
+  rarity?: string
+  /** Finishes that belong into a binder, base finish first; never empty. */
+  variants: CardVariant[]
 }
 
 export interface SetSummary {
@@ -56,6 +64,10 @@ export interface TcgdexClient {
   getSetCards(setId: string): Promise<CardSummary[]>
   /** A single card by id, as stored in a binder; `undefined` when TCGdex does not know it. */
   getCard(cardId: string): Promise<CardSummary | undefined>
+  /** All cards of a set in number order, with rarity and finishes. */
+  getSetDetails(setId: string): Promise<CardDetail[]>
+  /** Rarity and finishes of one card; `undefined` when TCGdex does not know it. */
+  getCardDetail(cardId: string): Promise<CardDetail | undefined>
   /** One page of cards matching the query; pages start at 1. */
   queryCards(query: CardQuery, page: number): Promise<CardPage>
   getRarities(): Promise<string[]>

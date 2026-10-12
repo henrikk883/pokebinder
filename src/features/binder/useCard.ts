@@ -1,5 +1,31 @@
 import { useEffect, useState } from 'react'
-import { tcgdex, type CardSummary } from '../../lib/tcgdex'
+import { tcgdex, type CardDetail, type CardSummary } from '../../lib/tcgdex'
+
+/**
+ * Rarity and finishes of a card, for the selection column.
+ * `undefined` while loading or when TCGdex has nothing on the card.
+ */
+export function useCardDetail(cardId: string | undefined): CardDetail | undefined {
+  const [loaded, setLoaded] = useState<{ cardId: string; detail: CardDetail | undefined }>()
+
+  useEffect(() => {
+    if (cardId === undefined) return
+    let cancelled = false
+    tcgdex.getCardDetail(cardId).then(
+      (detail) => {
+        if (!cancelled) setLoaded({ cardId, detail })
+      },
+      () => {
+        if (!cancelled) setLoaded({ cardId, detail: undefined })
+      },
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [cardId])
+
+  return loaded && loaded.cardId === cardId ? loaded.detail : undefined
+}
 
 /** `null`: TCGdex does not know the card, or it could not be loaded. */
 type Resolved = CardSummary | null

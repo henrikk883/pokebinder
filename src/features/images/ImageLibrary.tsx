@@ -3,6 +3,7 @@ import { useRef, useState, type ChangeEvent } from 'react'
 import { de } from '../../i18n/de'
 import { assetStore, assetUrl, useAssetStore } from '../../store/assetStore'
 import { useBinderStore } from '../../store/binderStore'
+import { useEditorStore } from '../../store/editorStore'
 import type { Asset } from '../../types/binder'
 import type { DragSource } from '../binder/dragDrop'
 import { ACCEPTED_IMAGE_TYPES } from './upload'
@@ -52,7 +53,8 @@ function LibraryImage({ asset, number, draggable, onDelete }: LibraryImageProps)
 /** Tab "Eigene Bilder": uploaded images, ready to be dragged into a binder. */
 export function ImageLibrary() {
   const assets = useAssetStore((state) => state.assets)
-  const binderOpen = useBinderStore((state) => state.binder !== null)
+  const editing = useEditorStore((state) => state.mode === 'edit')
+  const binderOpen = useBinderStore((state) => state.binder !== null) && editing
   const [message, setMessage] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
