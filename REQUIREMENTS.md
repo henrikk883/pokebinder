@@ -70,6 +70,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
    - **Lücke einfügen / schließen:** Am gewählten Pocket rücken die Karten ab dort um ein Pocket weiter, damit eine Karte dazwischen passt, oder die folgenden Karten rücken in eine Lücke nach – jeweils bis zur nächsten Lücke, auch über Seiten.
    - **Mehrere Karten auf einmal:** Mit Strg-Klick, Umschalt-Klick oder dem Umschalter „Mehrere auswählen“ lassen sich mehrere Pockets wählen und gemeinsam verschieben (eine ziehen, die anderen kommen mit), leeren oder als vorhanden bzw. fehlend markieren.
    - Variante und Sprache einer Karte lassen sich in der rechten Spalte ändern.
+   - „Varianten prüfen“ (Menü „Mehr“) findet Karten in einer Variante, die es von ihnen nicht gibt, und stellt sie nach Rückfrage auf ihre Grundvariante um.
 8. **Sortieren.** Ein Befehl sortiert die Karten einer Seite oder des ganzen Binders nach Set und Nummer oder nach Pokédex-Nummer.
 9. **Eigene Bilder.** Bild hochladen (JPG, PNG, WebP; höchstens 2000 px Kantenlänge) und in einen oder mehrere zusammenhängende Pockets legen.
    - Größe frei in Pockets (Breite × Höhe) oder ganze Seite; auf einer Doppelseite auch über die Ringe hinweg. Bilder überlappen sich nicht.
@@ -226,6 +227,5 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-2. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-3. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+2. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

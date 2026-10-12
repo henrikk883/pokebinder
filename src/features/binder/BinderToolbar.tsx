@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { chronologicalSetIds, tcgdexFor } from '../../lib/tcgdex'
-import { useBinderStore } from '../../store/binderStore'
+import { binderStore, useBinderStore } from '../../store/binderStore'
 import { confirmDialog, promptDialog } from '../../store/dialogStore'
 import { useEditorStore } from '../../store/editorStore'
 import { LAYOUTS, type Binder, type CardRef, type Layout } from '../../types/binder'
@@ -10,6 +10,7 @@ import { PngMenu } from '../export/PngMenu'
 import { MasterSetSettingsDialog } from '../masterset/MasterSetSettingsDialog'
 import { cardLangs, countCards } from './binderModel'
 import { createCardComparator, createDexComparator, type CardComparator } from './sorting'
+import { applyVariantFixes, loadVariantFixes } from './variantFix'
 import { buildSpreads, pageNumbersOf, type Spread } from './spreads'
 
 const buttonClass =
@@ -122,6 +123,33 @@ function MoreMenu({ binder }: { binder: Binder }) {
   const replaceContent = useBinderStore((state) => state.replaceContent)
   const [open, setOpen] = useState(false)
   const [adjusting, setAdjusting] = useState(false)
+  const [checking, setChecking] = useState(false)
+
+  /** Looks for cards in a finish they do not exist in and, after a question, puts them right. */
+  async function handleVariants() {
+    setOpen(false)
+    setChecking(true)
+    const editor = useEditorStore.getState()
+    try {
+      const fixes = await loadVariantFixes(binder)
+      if (fixes.length === 0) {
+        editor.setNotice(de.variantFix.allFine)
+        return
+      }
+      const agreed = await confirmDialog({
+        title: de.variantFix.title(fixes.length),
+        text: de.variantFix.text,
+        confirmLabel: de.variantFix.confirm,
+      })
+      // the binder as it is now: it may have changed while the question was open
+      const current = binderStore.getState().binder
+      if (agreed && current) replaceContent(applyVariantFixes(current, fixes))
+    } catch {
+      editor.setNotice(de.variantFix.failed)
+    } finally {
+      setChecking(false)
+    }
+  }
 
   async function handleRename() {
     setOpen(false)
@@ -181,6 +209,9 @@ function MoreMenu({ binder }: { binder: Binder }) {
               {de.masterSet.adjust}
             </button>
           )}
+          <button type="button" role="menuitem" disabled={checking} onClick={handleVariants} className={menuItemClass}>
+            {checking ? de.variantFix.checking : de.variantFix.menu}
+          </button>
           <p className={menuHeadingClass}>{de.binder.layout}</p>
           {LAYOUTS.map((layout) => (
             <button

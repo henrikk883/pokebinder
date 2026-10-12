@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import type { Locator, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 
@@ -590,7 +591,7 @@ test('the toolbar fits in one row; rarely used actions sit under "Mehr"', async 
   expect(Math.abs((await top(heading)) - (await top(addPage)))).toBeLessThan(12)
 
   await page.getByRole('button', { name: 'Mehr', exact: true }).click()
-  await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen'])
+  await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen', 'Varianten prüfen'])
   await expect(page.getByRole('menuitemradio')).toHaveText(['2 × 2', '✓3 × 3', '4 × 4'])
 })
 
@@ -888,4 +889,62 @@ test('the progress is also shown set by set, for binders that mix sets', async (
 
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
+})
+
+test('"Varianten prüfen" puts cards right that lie in the binder in a finish they do not exist in', async ({ page }) => {
+  await createBinder(page, 'Varianten')
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  await drag(page, tile(page, 'sv03.5-006'), pocket(page, 1, 1))
+  // Glurak-ex only exists as holo, and that is how it lands
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-variant', 'holo')
+  const check = async () => {
+    await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Varianten prüfen' }).click()
+  }
+
+  // nothing to put right
+  await check()
+  await expect(page.getByRole('alert')).toHaveText('Alle Karten liegen in einer Variante im Binder, die es gibt.')
+
+  // A binder from the time before the app looked the finishes up: the same card as
+  // "normal". Made here by a backup whose finish was changed by hand.
+  await saved(page)
+  await page.getByRole('button', { name: 'Backup' }).click()
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('menuitem', { name: 'Nur diesen Binder als JSON exportieren' }).click()
+  const exported = await readFile(await (await downloadPromise).path(), 'utf8')
+  const old = exported
+    .replace('"variant": "holo"', '"variant": "normal"')
+    .replace(/"id": "[^"]+",\s+"name": "Varianten"/, '"id": "aus-alter-zeit",\n    "name": "Alter Binder"')
+  expect(old).toContain('"variant": "normal"')
+  expect(old).toContain('aus-alter-zeit')
+  await page.getByLabel('Backup-Datei auswählen').setInputFiles({
+    name: 'alt.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(old),
+  })
+  await expect(page.getByRole('heading', { name: 'Alter Binder' })).toBeVisible()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-variant', 'normal')
+
+  // found, asked about, and left alone when the answer is no
+  await check()
+  const question = page.getByRole('alertdialog', { name: '1 Karte liegt in einer Variante im Binder, die es nicht gibt' })
+  await expect(question).toContainText('Grundvariante')
+  await question.getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-variant', 'normal')
+
+  // put right on request; the card stays what it is otherwise
+  await check()
+  await question.getByRole('button', { name: 'Korrigieren' }).click()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-variant', 'holo')
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'true')
+
+  // one step back undoes it, and it is stored
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-variant', 'normal')
+  await page.getByRole('button', { name: 'Wiederholen' }).click()
+  await saved(page)
+  await page.reload()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-variant', 'holo')
 })

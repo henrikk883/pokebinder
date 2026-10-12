@@ -373,3 +373,6 @@ Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket
 
 ## 2026-10-12 – Fortschritt nach Set
 Knopf „Nach Set“ in der Fortschrittsleiste unter dem Binder öffnet ein Fenster mit einer Zeile je Set: Name, vorhanden / gesamt, Zahl der fehlenden und ein Balken. Gezählt werden wie beim Gesamtfortschritt die Pockets des Binders (nicht das ganze Set, eine doppelt eingelegte Karte zählt doppelt). Reihenfolge: wie die Sets im Binder zuerst vorkommen. Bei gemischten Sprachen zählt ein Set je Sprache und trägt deren Kürzel; Karten ohne erkennbares Set stehen am Ende.
+
+## 2026-10-12 – Varianten prüfen
+Menü „Mehr“ → „Varianten prüfen“ sucht im offenen Binder Karten, die in einer Variante liegen, die es von ihnen nicht gibt (typisch: „Normal“ bei einer Karte, die nur als Holo existiert, aus der Zeit vor der automatischen Erkennung). Nach einer Rückfrage mit der Anzahl werden sie auf ihre Grundvariante gestellt (Normal, sonst Holo); Besitz-Markierung und Stückzahl bleiben. Ein Schritt „Rückgängig“ nimmt alles zurück. Karten, deren Varianten TCGdex nicht kennt, und Varianten, die es gibt (auch bewusst gewählte wie Reverse), bleiben unberührt. Ohne Fund sagt ein Hinweis, dass alles stimmt.

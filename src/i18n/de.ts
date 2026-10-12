@@ -358,6 +358,16 @@ export const de = {
     emptyList: 'Diese Liste ist leer. Im Info-Fenster einer Karte legst du fest, auf welchen Listen sie steht.',
     count: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} gemerkt`,
   },
+  variantFix: {
+    menu: 'Varianten prüfen',
+    checking: 'Varianten werden geprüft …',
+    title: (count: number) =>
+      count === 1 ? '1 Karte liegt in einer Variante im Binder, die es nicht gibt' : `${count} Karten liegen in einer Variante im Binder, die es nicht gibt`,
+    text: 'Zum Beispiel als „Normal“, obwohl es die Karte nur als Holo gibt. Sie werden auf ihre Grundvariante umgestellt (Normal, sonst Holo). Besitz-Markierungen und Stückzahlen bleiben.',
+    confirm: 'Korrigieren',
+    allFine: 'Alle Karten liegen in einer Variante im Binder, die es gibt.',
+    failed: 'Die Varianten konnten nicht geprüft werden. Besteht eine Internetverbindung?',
+  },
   multi: {
     toggle: 'Mehrere auswählen',
     toggleHint: 'Jeder Klick auf ein Pocket wählt es dazu oder ab. Am PC geht das auch mit Strg-Klick, mit Umschalt-Klick ein ganzer Bereich.',
