@@ -13,8 +13,14 @@ export type CardDragSource =
     }
   | { kind: 'pocket'; position: SlotPosition; cardId: string; lang: CardLang }
 
-/** What is being dragged: a card, or an image from the library. */
-export type DragSource = CardDragSource | { kind: 'asset'; assetId: string }
+/**
+ * What is being dragged: a card, an image from the library, or an image that already lies
+ * on a page, grabbed at one of the pockets it is behind.
+ */
+export type DragSource =
+  | CardDragSource
+  | { kind: 'asset'; assetId: string }
+  | { kind: 'image'; position: SlotPosition; assetId: string }
 
 export interface DropTarget {
   kind: 'pocket'
@@ -24,7 +30,7 @@ export interface DropTarget {
 export function isDragSource(value: unknown): value is DragSource {
   if (typeof value !== 'object' || value === null) return false
   const kind = (value as { kind?: unknown }).kind
-  return kind === 'search' || kind === 'pocket' || kind === 'asset'
+  return kind === 'search' || kind === 'pocket' || kind === 'asset' || kind === 'image'
 }
 
 export function isDropTarget(value: unknown): value is DropTarget {

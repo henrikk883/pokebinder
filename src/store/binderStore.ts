@@ -22,6 +22,7 @@ import { applyDrop, type DragSource, type DropTarget } from '../features/binder/
 import { createCardComparator } from '../features/binder/sorting'
 import {
   changePlacement,
+  moveImage,
   normalizeImages,
   placeImage,
   removeImage,
@@ -229,6 +230,9 @@ export function createBinderStore(deps: BinderStoreDeps) {
         if (source.kind === 'asset') {
           const { pageId, slotIndex: fromSlot } = target.position
           return get().placeImage(pageId, source.assetId, { fromSlot, spanCols: 1, spanRows: 1 })
+        }
+        if (source.kind === 'image') {
+          return attempt((binder) => moveImage(binder, source.position, target.position))
         }
         change((binder) => applyDrop(binder, source, target))
         return null

@@ -38,16 +38,19 @@ function PageSide({ binder, page }: { binder: Binder; page: Page }) {
             className="relative grid gap-[calc(var(--u)*8)]"
             style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
           >
-            {page.slots.map((slot) => (
-              <Pocket
-                key={slot.index}
-                pageId={page.id}
-                pageNumber={pageNumber}
-                slot={slot}
-                opening={pocketOpening(page.openingSide, page.index, slot.index, binder.layout)}
-                overImage={imageAt(binder, page.index, slot.index) !== undefined}
-              />
-            ))}
+            {page.slots.map((slot) => {
+              const assetId = imageAt(binder, page.index, slot.index)?.image.assetId
+              return (
+                <Pocket
+                  key={slot.index}
+                  pageId={page.id}
+                  pageNumber={pageNumber}
+                  slot={slot}
+                  opening={pocketOpening(page.openingSide, page.index, slot.index, binder.layout)}
+                  {...(assetId === undefined ? {} : { imageAssetId: assetId })}
+                />
+              )
+            })}
           </div>
         </div>
       </div>

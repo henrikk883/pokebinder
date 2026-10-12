@@ -5,7 +5,14 @@ import {
   withPages,
   type ModelContext,
 } from '../binder/binderModel'
-import type { Binder, BinderCover, ImageCrop, Page, PlacedImage } from '../../types/binder'
+import type {
+  Binder,
+  BinderCover,
+  ImageCrop,
+  Page,
+  PlacedImage,
+  SlotPosition,
+} from '../../types/binder'
 
 /** Where an image sits: first pocket and how many pockets it covers in each direction. */
 export interface Placement {
@@ -190,6 +197,73 @@ export function changePlacement(
               }
             : image,
         ),
+      ctx,
+    ),
+  }
+}
+
+/**
+ * Where a pocket lies on its spread, counted in pockets from the top left of the left-hand
+ * page. Page 1 and every odd page lie on the right.
+ */
+function spreadCell(binder: Binder, cell: Cell): { spread: number; column: number; row: number } {
+  const { cols } = layoutDimensions(binder.layout)
+  const onTheRight = cell.pageIndex % 2 === 0
+  return {
+    spread: Math.ceil(cell.pageIndex / 2),
+    column: (cell.slotIndex % cols) + (onTheRight ? cols : 0),
+    row: Math.floor(cell.slotIndex / cols),
+  }
+}
+
+/**
+ * Moves the image behind the pocket `grabbed` so that this part of it comes to lie behind
+ * the pocket `target`, as when it is dragged there. Size and crop stay; the image may end
+ * up on the other page of the spread. Cards in the pockets stay where they are.
+ */
+export function moveImage(
+  binder: Binder,
+  grabbed: SlotPosition,
+  target: SlotPosition,
+  ctx: ModelContext = defaultContext,
+): PlacementResult {
+  const grabbedPage = findPage(binder, grabbed.pageId)
+  const targetPage = findPage(binder, target.pageId)
+  const found = imageAt(binder, grabbedPage.index, grabbed.slotIndex)
+  if (!found) return { ok: true, binder }
+  const { image, page: owner } = found
+  const { rows, cols } = layoutDimensions(binder.layout)
+
+  const from = spreadCell(binder, { pageIndex: grabbedPage.index, slotIndex: grabbed.slotIndex })
+  const to = spreadCell(binder, { pageIndex: targetPage.index, slotIndex: target.slotIndex })
+  const origin = spreadCell(binder, { pageIndex: owner.index, slotIndex: image.fromSlot })
+  const column = origin.column + to.column - from.column
+  const row = origin.row + to.row - from.row
+  if (column < 0 || column >= 2 * cols || row < 0 || row >= rows) return { ok: false, error: 'outOfBounds' }
+
+  // the page the image starts on: left of the rings or right of them
+  const onTheRight = column >= cols
+  const nextOwner = binder.pages[onTheRight ? to.spread * 2 : to.spread * 2 - 1]
+  if (!nextOwner) return { ok: false, error: 'outOfBounds' }
+  const placement: Placement = {
+    fromSlot: row * cols + (onTheRight ? column - cols : column),
+    spanCols: image.spanCols,
+    spanRows: image.spanRows,
+  }
+  if (nextOwner.id === owner.id && placement.fromSlot === image.fromSlot) return { ok: true, binder }
+
+  const error = checkPlacement(binder, nextOwner.index, placement, image.id)
+  if (error) return { ok: false, error }
+  const moved: PlacedImage = { ...image, fromSlot: placement.fromSlot }
+  return {
+    ok: true,
+    binder: withPages(
+      binder,
+      binder.pages.map((page) => {
+        const others = page.images.filter((entry) => entry.id !== image.id)
+        if (page.id === nextOwner.id) return { ...page, images: [...others, moved] }
+        return page.id === owner.id ? { ...page, images: others } : page
+      }),
       ctx,
     ),
   }

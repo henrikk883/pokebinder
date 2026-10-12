@@ -13,6 +13,7 @@ import {
   imageAt,
   imagePieces,
   maxSpan,
+  moveImage,
   normalizeImages,
   placeImage,
   removeImage,
@@ -233,6 +234,87 @@ describe('changing images', () => {
     const next = removeImage(placed, pageId(0), imageId, ctx)
 
     expect(imagesOn(next, 0).map((image) => image.assetId)).toEqual(['other'])
+  })
+})
+
+describe('moveImage', () => {
+  const at = (pageIndex: number, slotIndex: number) => ({ pageId: pageId(pageIndex), slotIndex })
+
+  it('moves an image by the way from the pocket it is grabbed at to the pocket it is dropped on', () => {
+    // 2 × 2 in the top left corner of page 1, grabbed at its bottom right pocket
+    const placed = place(binder, 0, { fromSlot: 0, spanCols: 2, spanRows: 2 })
+    const before = imagesOn(placed, 0)[0]
+    const crop = { x: 0.2, y: 0.7, zoom: 2 }
+    const cropped = setImageCrop(placed, pageId(0), before?.id ?? '', crop, ctx)
+
+    const next = expectOk(moveImage(cropped, at(0, 4), at(0, 8), ctx))
+
+    // one pocket to the right and one down; size, crop and identity stay
+    expect(imagesOn(next, 0)).toEqual([{ ...before, fromSlot: 4, crop }])
+  })
+
+  it('leaves the cards in their pockets', () => {
+    let placed = place(binder, 0, { fromSlot: 0, spanCols: 1, spanRows: 1 })
+    placed = setCard(placed, at(0, 1), { cardId: 'sv03.5-025', lang: 'de', variant: 'normal' }, true, ctx)
+
+    const next = expectOk(moveImage(placed, at(0, 0), at(0, 1), ctx))
+
+    expect(imagesOn(next, 0)[0]?.fromSlot).toBe(1)
+    expect(next.pages[0]?.slots[1]?.cardRef?.cardId).toBe('sv03.5-025')
+  })
+
+  it('moves an image to the other page of the spread, in both directions', () => {
+    const placed = place(binder, 1, { fromSlot: 3, spanCols: 2, spanRows: 1 })
+    const imageId = imagesOn(placed, 1)[0]?.id
+
+    const right = expectOk(moveImage(placed, at(1, 3), at(2, 0), ctx))
+    expect(imagesOn(right, 1)).toEqual([])
+    expect(imagesOn(right, 2)).toMatchObject([{ id: imageId, fromSlot: 0, spanCols: 2, spanRows: 1 }])
+
+    const back = expectOk(moveImage(right, at(2, 1), at(1, 8), ctx))
+    expect(imagesOn(back, 2)).toEqual([])
+    expect(imagesOn(back, 1)).toMatchObject([{ id: imageId, fromSlot: 7 }])
+  })
+
+  it('lets an image reach across the rings, and takes one that does back onto one page', () => {
+    const placed = place(binder, 1, { fromSlot: 0, spanCols: 2, spanRows: 1 })
+
+    // its left pocket goes to the last column of the left page: the right one lands on page 3
+    const across = expectOk(moveImage(placed, at(1, 0), at(1, 2), ctx))
+    expect(imagesOn(across, 1)[0]?.fromSlot).toBe(2)
+    expect(imageAt(across, 2, 0)?.image.id).toBe(imagesOn(across, 1)[0]?.id)
+
+    // grabbed at the part on page 3 and pulled one pocket to the right: now all on page 3
+    const over = expectOk(moveImage(across, at(2, 0), at(2, 1), ctx))
+    expect(imagesOn(over, 1)).toEqual([])
+    expect(imagesOn(over, 2)[0]?.fromSlot).toBe(0)
+  })
+
+  it('refuses a move over the edge of the page or of the binder', () => {
+    const placed = place(binder, 0, { fromSlot: 0, spanCols: 2, spanRows: 2 })
+
+    // page 1 has no page to its left, and nothing to its right
+    expect(moveImage(placed, at(0, 1), at(0, 0), ctx)).toEqual({ ok: false, error: 'outOfBounds' })
+    expect(moveImage(placed, at(0, 0), at(0, 2), ctx)).toEqual({ ok: false, error: 'outOfBounds' })
+    expect(moveImage(placed, at(0, 0), at(0, 6), ctx)).toEqual({ ok: false, error: 'outOfBounds' })
+    // a right-hand page ends at the edge of the binder
+    const onTheRight = place(binder, 2, { fromSlot: 0, spanCols: 2, spanRows: 1 })
+    expect(moveImage(onTheRight, at(2, 0), at(2, 2), ctx)).toEqual({ ok: false, error: 'outOfBounds' })
+  })
+
+  it('refuses a move onto another image, but not onto its own old place', () => {
+    let placed = place(binder, 0, { fromSlot: 0, spanCols: 2, spanRows: 1 })
+    placed = place(placed, 0, { fromSlot: 5, spanCols: 1, spanRows: 1 }, 'other')
+
+    expect(moveImage(placed, at(0, 0), at(0, 4), ctx)).toEqual({ ok: false, error: 'overlap' })
+    expect(imagesOn(expectOk(moveImage(placed, at(0, 0), at(0, 1), ctx)), 0)).toHaveLength(2)
+  })
+
+  it('changes nothing when dropped where it was grabbed, or when there is no image', () => {
+    const placed = place(binder, 0, { fromSlot: 0, spanCols: 2, spanRows: 1 })
+
+    expect(expectOk(moveImage(placed, at(0, 1), at(0, 1), ctx))).toBe(placed)
+    expect(expectOk(moveImage(placed, at(0, 8), at(0, 7), ctx))).toBe(placed)
   })
 })
 

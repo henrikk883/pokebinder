@@ -98,7 +98,9 @@ export function CardDragLayer({ children }: { children: ReactNode }) {
       <DragOverlay dropAnimation={null}>
         {dragging?.kind === 'search' && <Preview card={dragging.card} lang={dragging.lang} />}
         {dragging?.kind === 'pocket' && <PocketPreview cardId={dragging.cardId} lang={dragging.lang} />}
-        {dragging?.kind === 'asset' && <AssetPreview assetId={dragging.assetId} />}
+        {(dragging?.kind === 'asset' || dragging?.kind === 'image') && (
+          <AssetPreview assetId={dragging.assetId} />
+        )}
       </DragOverlay>
     </DndContext>
   )

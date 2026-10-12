@@ -127,6 +127,7 @@ export function ImageControls({ binder, page, slot }: ImageControlsProps) {
       >
         {de.images.remove}
       </button>
+      <p className="text-xs text-muted">{de.images.moveHint}</p>
 
       {cropping && (
         <CropDialog

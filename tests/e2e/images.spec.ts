@@ -241,6 +241,72 @@ test('images may not overlap', async ({ page }) => {
   await expect(imagesOn(page, 1)).toHaveCount(2)
 })
 
+test('an image is moved by dragging it to other pockets, also to the facing page', async ({ page }) => {
+  await createBinder(page, 'Verschieben', 3)
+  await expect(page.getByTestId('spread-label')).toHaveText('Seiten 2 – 3')
+  const covered = (pageNumber: number) =>
+    page
+      .getByRole('region', { name: `Seite ${pageNumber}`, exact: true })
+      .getByTestId('pocket')
+      .evaluateAll((pockets) =>
+        pockets.flatMap((entry, index) => (entry.getAttribute('data-over-image') === 'true' ? [index + 1] : [])),
+      )
+
+  // two pockets wide, in the top left corner of page 2
+  await addImage(page, 2, 1)
+  await page.getByLabel('Breite').selectOption('2')
+  await expect.poll(() => covered(2)).toEqual([1, 2])
+
+  // grabbed at its right pocket and dropped one to the right and one down
+  await drag(page, pocket(page, 2, 2), pocket(page, 2, 6))
+  await expect.poll(() => covered(2)).toEqual([5, 6])
+  await expect(page.getByLabel('Breite')).toHaveValue('2')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+
+  // its left pocket on the last pocket of page 3: the right one would hang over the edge of
+  // the binder. It stays where it was, with a word why.
+  await drag(page, pocket(page, 2, 5), pocket(page, 3, 9))
+  await expect(page.getByRole('alert')).toHaveText('So groß passt das Bild dort nicht hin.')
+  await expect.poll(() => covered(2)).toEqual([5, 6])
+  await expect.poll(() => covered(3)).toEqual([])
+
+  // onto the facing page
+  await drag(page, pocket(page, 2, 5), pocket(page, 3, 7))
+  await expect.poll(() => covered(2)).toEqual([])
+  await expect.poll(() => covered(3)).toEqual([7, 8])
+  await expect(imagesOn(page, 3)).toHaveCount(1)
+
+  // not onto another image
+  await addImage(page, 3, 2, sunset)
+  await drag(page, pocket(page, 3, 7), pocket(page, 3, 1))
+  await expect(page.getByRole('alert')).toHaveText('Dort liegt schon ein anderes Bild.')
+  await expect.poll(() => covered(3)).toEqual([2, 7, 8])
+
+  // a card on the image is what gets dragged there; the image stays
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  const tile = page.getByTestId('card-tile').first()
+  await expect(tile).toBeVisible()
+  await drag(page, tile.locator('> div'), pocket(page, 3, 7))
+  await expect(pocket(page, 3, 7)).not.toHaveAttribute('data-card-id', '')
+  await drag(page, pocket(page, 3, 7), pocket(page, 3, 4))
+  await expect(pocket(page, 3, 4)).not.toHaveAttribute('data-card-id', '')
+  await expect.poll(() => covered(3)).toEqual([2, 7, 8])
+
+  // moving is undone like any other change, and it is stored
+  await drag(page, pocket(page, 3, 8), pocket(page, 3, 9))
+  await expect.poll(() => covered(3)).toEqual([2, 8, 9])
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect.poll(() => covered(3)).toEqual([2, 7, 8])
+  await page.getByRole('button', { name: 'Wiederholen' }).click()
+  await saved(page)
+  await page.reload()
+  // the binder opens on page 1 again
+  if ((await page.getByTestId('spread-label').textContent()) !== 'Seiten 2 – 3') {
+    await page.getByRole('button', { name: 'Weiterblättern' }).click()
+  }
+  await expect.poll(() => covered(3)).toEqual([2, 8, 9])
+})
+
 test('the visible part of an image can be moved and magnified', async ({ page }) => {
   await createBinder(page, 'Ausschnitt')
   await addImage(page, 1, 1)

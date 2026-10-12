@@ -21,8 +21,8 @@ interface PocketProps {
   pageNumber: number
   slot: Slot
   opening: PocketOpening
-  /** An uploaded image lies behind this pocket and should stay visible. */
-  overImage: boolean
+  /** An uploaded image lies behind this pocket and should stay visible: which one. */
+  imageAssetId?: string
 }
 
 function EmptyPocketIcon() {
@@ -126,7 +126,8 @@ function PocketCard({ position, cardRef, owned }: PocketCardProps) {
   )
 }
 
-export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketProps) {
+export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: PocketProps) {
+  const overImage = imageAssetId !== undefined
   const position: SlotPosition = { pageId, slotIndex: slot.index }
   const selected = useEditorStore(
     (state) => state.selection?.pageId === pageId && state.selection.slotIndex === slot.index,
@@ -149,6 +150,15 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketP
   // Only an own image shows here: it is printed, cut out and put in, so its export carries
   // neither the outline of the pocket nor the mark of its opening.
   const bareImage = overImage && !slot.cardRef
+  // The image is moved by dragging it at such a pocket; where a card lies, the card is dragged.
+  const imageSource: DragSource | undefined =
+    imageAssetId !== undefined ? { kind: 'image', position, assetId: imageAssetId } : undefined
+  const imageDrag = useDraggable({
+    id: `image:${pocketId(position)}`,
+    ...(imageSource ? { data: imageSource } : {}),
+    disabled: !bareImage || collecting,
+  })
+  const movesImage = bareImage && !collecting
 
   const label = card
     ? de.binder.pocketWithCard(pageNumber, slot.index + 1, card.name)
@@ -156,7 +166,11 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketP
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node)
+        imageDrag.setNodeRef(node)
+      }}
+      {...(movesImage ? imageDrag.listeners : undefined)}
       role="button"
       tabIndex={0}
       aria-label={label}
@@ -180,7 +194,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, overImage }: PocketP
       data-over-image={overImage}
       className={`relative flex aspect-[63/88] items-center justify-center rounded-pocket outline-offset-2 ${
         overImage ? '' : 'bg-bg/60'
-      } ${bareImage ? '' : frameClass}`}
+      } ${bareImage ? '' : frameClass} ${movesImage ? 'cursor-grab' : ''}`}
     >
       {/* drawn as a part of its own, so that an export can leave it off the picture */}
       {bareImage && (

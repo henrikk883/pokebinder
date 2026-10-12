@@ -270,3 +270,6 @@ Drei Sortierungen: „Zuletzt geändert“ (Standard), „Alphabetisch“ (deuts
 
 ## 2026-10-12 – PNG-Export: Bild-Pockets ohne Öffnungsmarke und Pocket-Rand
 Liegt in einem Pocket ein eigenes Bild (und keine Karte), werden im PNG der Strich für die Pocket-Öffnung und die Umrandung des Pockets weggelassen: Das Bild erscheint als durchgehende Fläche und lässt sich ausdrucken, ausschneiden und einstecken. Am Bildschirm bleiben beide sichtbar, weil sie beim Planen zeigen, wo die Pockets liegen und wo die Karten eingeschoben werden. Pockets mit Karte oder ohne Bild bleiben im Export unverändert. Von Henrik gewünscht.
+
+## 2026-10-12 – Bilder im Binder verschieben
+Ein eingesetztes Bild wird an einem seiner Pockets gegriffen und auf einem anderen Pocket abgelegt; es verschiebt sich um genau diese Strecke, Größe und Zuschnitt bleiben. Das geht auch auf die gegenüberliegende Seite und über die Ringe. Passt es am Ziel nicht (Rand, anderes Bild), bleibt es liegen und der bekannte Hinweis erscheint. Karten bleiben in ihren Pockets; liegt in einem Pocket eine Karte, wird dort wie bisher die Karte gezogen, das Bild greift man an einem leeren Pocket. Im Sammlungsmodus wird nichts verschoben. Von Henrik gewünscht.

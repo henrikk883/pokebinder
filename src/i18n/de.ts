@@ -348,6 +348,7 @@ export const de = {
     pockets: (count: number) => `${count} ${count === 1 ? 'Pocket' : 'Pockets'}`,
     fullPage: 'Ganze Seite',
     remove: 'Bild entfernen',
+    moveHint: 'Zum Verschieben das Bild im Binder an einen anderen Platz ziehen.',
     crop: {
       title: 'Ausschnitt anpassen',
       hint: 'Bild mit der Maus verschieben, mit dem Regler vergrößern.',
