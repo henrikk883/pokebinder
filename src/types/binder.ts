@@ -1,4 +1,5 @@
-export const LAYOUTS = ['2x2', '3x3', '4x4'] as const
+/** Pockets of a page as columns × rows: `3x4` is three across and four down. */
+export const LAYOUTS = ['2x2', '3x3', '3x4', '4x4', '5x4'] as const
 export type Layout = (typeof LAYOUTS)[number]
 
 /**

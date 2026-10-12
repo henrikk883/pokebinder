@@ -390,6 +390,7 @@ export const de = {
     name: 'Name',
     namePlaceholder: 'z. B. Kanto Collection',
     layout: 'Pocket-Layout',
+    layoutHint: 'Spalten × Zeilen: 3 × 4 sind drei Pockets nebeneinander und vier untereinander.',
     lang: 'Sprache der Karten',
     openingSide: 'Öffnung der Pockets',
     create: 'Anlegen',
@@ -398,7 +399,9 @@ export const de = {
   layouts: {
     '2x2': '2 × 2',
     '3x3': '3 × 3',
+    '3x4': '3 × 4',
     '4x4': '4 × 4',
+    '5x4': '5 × 4',
   },
   openingSides: {
     left: 'Öffnung links',

@@ -22,7 +22,11 @@ export interface LayoutDimensions {
 const LAYOUT_DIMENSIONS: Record<Layout, LayoutDimensions> = {
   '2x2': { rows: 2, cols: 2 },
   '3x3': { rows: 3, cols: 3 },
+  // 12 pockets, upright
+  '3x4': { rows: 4, cols: 3 },
   '4x4': { rows: 4, cols: 4 },
+  // 20 pockets, the large binders
+  '5x4': { rows: 4, cols: 5 },
 }
 
 export function layoutDimensions(layout: Layout): LayoutDimensions {

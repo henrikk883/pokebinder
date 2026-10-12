@@ -11,6 +11,7 @@ import {
   setCard,
   setOpeningSide,
   setOwned,
+  layoutDimensions,
   slotsPerPage,
   type ModelContext,
 } from './binderModel'
@@ -55,10 +56,17 @@ describe('createBinder', () => {
     expect(binder).not.toHaveProperty('setId')
   })
 
+  it('reads a layout as columns × rows', () => {
+    expect(layoutDimensions('3x4')).toEqual({ rows: 4, cols: 3 })
+    expect(layoutDimensions('5x4')).toEqual({ rows: 4, cols: 5 })
+  })
+
   it.each([
     ['2x2', 4],
     ['3x3', 9],
+    ['3x4', 12],
     ['4x4', 16],
+    ['5x4', 20],
   ] as const)('gives a %s page %i empty, consecutively numbered pockets', (layout, count) => {
     const created = createBinder({ name: 'Test', layout }, ctx)
     const slots = created.pages[0]?.slots ?? []

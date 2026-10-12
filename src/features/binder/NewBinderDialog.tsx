@@ -136,7 +136,7 @@ export function NewBinderDialog({ onCreate, onCancel }: NewBinderDialogProps) {
 
         <fieldset className="space-y-2 text-sm">
           <legend className="mb-2">{de.newBinder.layout}</legend>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2" title={de.newBinder.layoutHint}>
             {LAYOUTS.map((option) => (
               <label key={option} className={choiceClass}>
                 <input

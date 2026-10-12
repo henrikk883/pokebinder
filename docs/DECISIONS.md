@@ -510,3 +510,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Henriks „nur aufs Handy“ verstehe ich als Benachrichtigung auf dem Handy. Das geht nicht nebenbei: Geprüft wird bisher nur, während die App offen ist. Als eigener Punkt 5b in der Roadmap, mit der nötigen Regeländerung; die Entscheidung liegt bei Henrik.
 - Dateinamen: `WishPriceLine.tsx` und `cardFinder.ts` heißen so, weil sich `WishPrice.tsx`/`wishPrice.ts` bzw. `BinderFind.tsx`/`binderFind.ts` unter Windows nur in der Schreibweise unterschieden hätten.
 - Nachtrag: Henrik hat entschieden, dass der Preisalarm vorerst nur in der offenen App erscheint. Punkt 5b (Benachrichtigung aufs Handy) bleibt in der Roadmap, ist aber zurückgestellt.
+
+## 2026-10-12 – Layouts 3 × 4 und 5 × 4
+- Von Henrik gewählt. Ein Layout liest sich als Spalten × Zeilen: 3 × 4 sind drei Pockets nebeneinander und vier untereinander (12, hochkant), 5 × 4 fünf nebeneinander (20). Bei den bisherigen quadratischen Layouts war das gleichgültig.
+- Alles, was vom Layout abhängt (Öffnungsseiten, Bilder über mehrere Pockets, Miniaturen, Bilddruck, Layoutwechsel), rechnet schon mit Spalten und Zeilen; neu sind nur die beiden Einträge.
+- Die Doppelseite bleibt gleich breit: Bei 5 × 4 sind die Pockets bei gleichem Zoom kleiner, wie schon bei 4 × 4. Wer sie größer will, zoomt.
+- Eine ältere Fassung der App auf einem anderen Gerät kennt die neuen Layouts nicht und lässt solche Binder beim Abgleich liegen, bis sie aktualisiert ist.

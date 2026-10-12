@@ -592,7 +592,7 @@ test('the toolbar fits in one row; rarely used actions sit under "Mehr"', async 
 
   await page.getByRole('button', { name: 'Mehr', exact: true }).click()
   await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen', 'Varianten prüfen', 'Tauschliste (doppelte Karten)'])
-  await expect(page.getByRole('menuitemradio')).toHaveText(['2 × 2', '✓3 × 3', '4 × 4'])
+  await expect(page.getByRole('menuitemradio')).toHaveText(['2 × 2', '✓3 × 3', '3 × 4', '4 × 4', '5 × 4'])
 })
 
 test('sorting by Pokédex number brings the Pokémon in order, trainers last', async ({ page }) => {
@@ -1061,4 +1061,28 @@ test('a card is moved to a page that does not lie open: "Verschieben", turn the 
   await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
   await pocket(page, 1, 3).click()
   await expect(move).toHaveCount(0)
+})
+
+test('a binder can have 12 pockets upright or 20 in the large format, and change between them', async ({ page }) => {
+  await createBinder(page, 'Groß', '5 × 4')
+  const pockets = page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket')
+  await expect(pockets).toHaveCount(20)
+  // five across: the sixth pocket starts the second row, right under the first
+  const [first, fifth, sixth] = await Promise.all([0, 4, 5].map((index) => pockets.nth(index).boundingBox()))
+  if (!first || !fifth || !sixth) throw new Error('pockets are not visible')
+  expect(Math.abs(fifth.y - first.y)).toBeLessThan(2)
+  expect(Math.abs(sixth.x - first.x)).toBeLessThan(2)
+  expect(sixth.y).toBeGreaterThan(first.y + first.height - 1)
+
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await page.getByRole('menuitemradio', { name: '3 × 4' }).click()
+  await expect(pockets).toHaveCount(12)
+  const [one, three, four] = await Promise.all([0, 2, 3].map((index) => pockets.nth(index).boundingBox()))
+  if (!one || !three || !four) throw new Error('pockets are not visible')
+  expect(Math.abs(three.y - one.y)).toBeLessThan(2)
+  expect(Math.abs(four.x - one.x)).toBeLessThan(2)
+
+  // the shelf names the layout
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
+  await expect(page.getByTestId('binder-tile')).toContainText('3 × 4 · 1 Seite')
 })
