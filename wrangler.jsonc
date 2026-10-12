@@ -29,8 +29,8 @@
   "vars": {
     // where collectors sign in (Cloudflare Access, e-mail code)
     "ACCESS_TEAM_DOMAIN": "pokebinder.cloudflareaccess.com",
-    // The tag of the Access application that guards /api/. Empty until that application
-    // exists: until then the API turns every request away.
-    "ACCESS_AUD": ""
+    // The tag of the Access application that guards /api/. Left empty, the API turns
+    // every request away.
+    "ACCESS_AUD": "7b8622135336b9c29e07cc1ee99936cd087ea3440f03385bd45bcd92d5be56ba"
   }
 }
