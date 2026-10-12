@@ -251,12 +251,13 @@ Mit Henrik am 12.10.2026 vereinbart. Die Reihenfolge steht in der Roadmap darunt
 11. **Karten per Kamera abhaken.** Das Handy erkennt eine Karte, die vor die Kamera gehalten wird, und hakt sie im offenen Binder ab bzw. schlägt die passende Karte vor.
 12. **Deck Builder.** Neben den Bindern gibt es Decks zum Spielen: ein zweites Regal unter den Bindern, mit eigenem Symbol; der Bereich „Meine Binder“ heißt dann „Meine Karten“ (Henrik, 12.10.2026). Dort lässt sich ein Deck aus der Kartensuche zusammenstellen. Ein Deck ist eine Liste aus Karten mit Stückzahl, kein Raster aus Pockets; die App zählt mit (60 Karten, höchstens 4 gleichnamige außer Basis-Energien), gruppiert nach Pokémon, Trainer und Energie, zeigt den Wert und was davon schon in den eigenen Bindern liegt. Das Format wählt man je Deck – Standard (voreingestellt), Expanded oder frei – und kann es später ändern. Die App prüft, ob jede Karte im gewählten Format gespielt werden darf (von Henrik gewünscht); TCGdex liefert dafür je Karte „Standard ja/nein“ und „Expanded ja/nein“ (am 12.10.2026 nachgesehen). Decks sind Teil von Backup und Abgleich.
 13. **Vision: gegen Freunde spielen.** Mit einem gebauten Deck gegen das Deck eines Freundes antreten. Bewusst nur als Fernziel notiert: Das wäre ein eigenes, großes Vorhaben (Spielbrett, Regeln, Züge in Echtzeit über den Server) und setzt den Deck Builder und das Teilen mit Freunden voraus.
+14. **Weitere Sammelkartenspiele.** Neben Pokémon lassen sich Binder (und später Decks) auch für andere Spiele anlegen, zum Beispiel Magic: The Gathering, Yu-Gi-Oh!, One Piece oder Lorcana. Je Binder wird das Spiel gewählt; Suche, Sets, Bilder und Preise kommen dann aus der Quelle des jeweiligen Spiels. Welche Spiele, ist offen.
 
 Noch von Henrik zu prüfen: Ausdruck von „Eigene Bilder drucken (PDF)“ nachmessen (63 × 88 mm bei 100 %).
 
 ## Roadmap
 
-Sechs Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher Punkt für Punkt gebaut: Plan, OK, bauen, Lint/Tests/Build, live. Zeitangaben gibt es bewusst keine; „Umfang“ sagt nur, wie groß ein Punkt im Vergleich ist.
+Sieben Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher Punkt für Punkt gebaut: Plan, OK, bauen, Lint/Tests/Build, live. Zeitangaben gibt es bewusst keine; „Umfang“ sagt nur, wie groß ein Punkt im Vergleich ist.
 
 | Etappe | Punkt | Umfang | Baut auf | Vorher zu klären |
 |---|---|---|---|---|
@@ -273,13 +274,15 @@ Sechs Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher 
 | | 13 Vision: gegen Freunde spielen | sehr groß, Fernziel | Punkt 12, Punkt 8 | Erst entscheiden, wenn der Deck Builder benutzt wird; vorher nur notiert |
 | **F – Zurückgestellt** | 10 Englische Oberfläche | mittel | – | Nur sinnvoll, wenn die App über den Freundeskreis hinausgehen soll |
 | | 11 Karten per Kamera | groß, unsicher | Punkt 1 (Kamera am Handy) | Ob es einen Erkennungsdienst gibt, der gut genug und bezahlbar ist; erst eine Machbarkeitsprüfung, dann die Entscheidung |
+| **G – Weitere Spiele** | 14 Weitere Sammelkartenspiele | sehr groß | Binder, später Decks | Welche Spiele zuerst? Für jedes braucht es eine eigene Datenquelle, die Karten, Bilder und möglichst Preise liefert und deren Bedingungen die Nutzung erlauben – das ist je Spiel zu prüfen |
 
 **Regeln, die sich dafür ändern müssten** (jeweils erst mit Henriks OK, wenn der Punkt dran ist):
 
 - **Punkt 8 und 9:** Bisher gehört alles auf dem Server genau einem Sammler; CLAUDE.md beschreibt den Server-Teil nur für den Abgleich der eigenen Geräte. Teilen heißt, dass andere Daten eines Sammlers lesen dürfen. Das braucht eine neue Regel und eine eigene Prüfung der Zugriffe.
 - **Punkt 12:** Das Datenmodell bekommt neben dem Binder eine zweite Art von Sammlung (Deck); CLAUDE.md beschreibt die App bisher nur als Binder-Planer. Server und Backup lernen Decks kennen.
 - **Punkt 13:** Echtzeit zwischen zwei Spielern geht über den bisherigen Server-Teil (Abgleich der eigenen Geräte) weit hinaus.
+- **Punkt 14:** TCGdex kennt nur Pokémon. Jedes weitere Spiel heißt ein weiterer externer Dienst (laut CLAUDE.md nur nach Rückfrage). Das Datenmodell muss das Spiel kennen (`CardRef` nennt bisher nur Karte, Sprache und Variante), Kartenformat und Varianten unterscheiden sich je Spiel, und Name, Startseite und Fußzeilen-Hinweis der App sind bisher ganz auf Pokémon zugeschnitten.
 - **Punkt 10:** „UI-Texte auf Deutsch und nur in `src/i18n/de.ts`“ wird zu „je Sprache eine Datei“.
 - **Punkt 11:** Sehr wahrscheinlich ein weiterer externer Dienst oder eine weitere Abhängigkeit; beides ist laut CLAUDE.md nur nach Rückfrage erlaubt. Kamerabilder verlassen dabei das Gerät, was zum Grundsatz „kein Tracking, alles zuerst lokal“ passen muss.
 
-**Reihenfolge:** A → B → C → D → E. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt bei den Bindern und lohnt sich, sobald die Freunde die App wirklich benutzen. E (Deck Builder, von Henrik am 12.10.2026 gewünscht) ist eine größere Umstellung, weil die App damit mehr wird als ein Binder-Planer; „gegen Freunde spielen“ steht dort nur als Fernziel. **F ist zurückgestellt** (Henrik, 12.10.2026): Englische Oberfläche und Karten per Kamera kommen ganz ans Ende und werden erst angefasst, wenn Henrik sie wieder aufruft.
+**Reihenfolge:** A → B → C → D → E. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt bei den Bindern und lohnt sich, sobald die Freunde die App wirklich benutzen. E (Deck Builder, von Henrik am 12.10.2026 gewünscht) ist eine größere Umstellung, weil die App damit mehr wird als ein Binder-Planer; „gegen Freunde spielen“ steht dort nur als Fernziel. **F ist zurückgestellt** (Henrik, 12.10.2026): Englische Oberfläche und Karten per Kamera werden erst angefasst, wenn Henrik sie wieder aufruft. **G** (weitere Sammelkartenspiele, von Henrik am 12.10.2026 gewünscht) steht als Ausblick am Ende: Es baut am besten auf einem fertigen Deck Builder auf und verändert, was die App im Kern ist.

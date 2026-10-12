@@ -470,3 +470,6 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Kommt für keine einzige Karte ein Preis zurück (kein Netz), bleibt der gemerkte Wert stehen, statt auf 0 zu fallen.
 - Karten ohne Preis zählen im Wert nicht mit; wie viele das sind, sagt weiterhin „Wert berechnen“ im Binder. Im Regal steht es nicht, um die Zeile kurz zu halten.
 - Die gemerkten Werte sind die Grundlage für Punkt 4 (Preisverlauf).
+
+## 2026-10-12 – Weitere Sammelkartenspiele in der Roadmap
+- Von Henrik gewünscht: Punkt 14 „Weitere Sammelkartenspiele“ als Etappe G. Nur aufgenommen, nichts gebaut; welche Spiele und welche Datenquellen, ist offen und je Spiel zu prüfen.
