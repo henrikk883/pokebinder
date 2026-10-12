@@ -317,7 +317,9 @@ export const de = {
   cardmarket: {
     menu: 'Für Cardmarket-Wunschliste …',
     title: (name: string) => `Fehlende Karten für Cardmarket – ${name}`,
-    hint: 'Cardmarket nimmt Wunschlisten als Text an: eine Karte je Zeile, auf Englisch, bei Pokémon mit den Namen ihrer Fähigkeiten und Attacken.',
+    hint: 'Cardmarket nimmt Wunschlisten als Text an: eine Karte je Zeile, auf Englisch, bei Pokémon mit Fähigkeiten und Attacken. Erweiterung und Version in Klammern legen den genauen Druck fest.',
+    caveat:
+      'Zeigt Cardmarket bei einem Eintrag „n versions“ statt eines Drucks, hat es Erweiterung und Version nicht übernommen – dort den Druck von Hand wählen. Zustand und Sprache stellst du in der Wunschliste bei Cardmarket ein.',
     list: 'Liste für Cardmarket',
     empty: 'Es fehlt keine Karte.',
     summary: (lines: number) => (lines === 1 ? '1 Zeile.' : `${lines} Zeilen.`),
@@ -328,7 +330,7 @@ export const de = {
     steps: [
       'Liste kopieren.',
       'Bei Cardmarket unter „Wants“ eine Wunschliste anlegen oder öffnen und „Deckliste hinzufügen“ wählen.',
-      'Den Text einfügen und bestätigen. Cardmarket zeigt, welche Zeilen es erkannt hat.',
+      'Den Text in eine leere Wunschliste einfügen und bestätigen. Cardmarket zeigt, welche Zeilen es erkannt hat.',
     ],
     copy: 'Liste kopieren',
     copied: 'Kopiert',

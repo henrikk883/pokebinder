@@ -89,6 +89,7 @@ export function CardmarketDialog({ binder, onClose }: { binder: Binder; onClose:
                 <li key={step}>{step}</li>
               ))}
             </ol>
+            <p className="text-xs text-muted">{de.cardmarket.caveat}</p>
           </>
         )}
 

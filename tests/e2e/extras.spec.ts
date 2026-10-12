@@ -397,7 +397,7 @@ test.describe('the worth of the collection on the shelf', () => {
 })
 
 test.describe('the missing cards for Cardmarket', () => {
-  test('come as the text its wants list takes: English name, abilities and attacks, one card per line', async ({
+  test('come as the text its wants list takes: English name, abilities and attacks, version and expansion', async ({
     page,
     context,
   }) => {
@@ -409,14 +409,19 @@ test.describe('the missing cards for Cardmarket', () => {
 
     // the three cards whose English data is recorded; the binder holds them in German
     const list = dialog.getByRole('textbox', { name: 'Liste für Cardmarket' })
+    // "151" holds several prints of each of them: the plain card is the first, so V.1
     await expect(list).toHaveValue(
-      ['1x Bulbasaur Leech Seed', '1x Ivysaur Leech Seed Vine Whip', '1x Venusaur ex Tranquil Flower Dangerous Toxwhip'].join('\n'),
+      [
+        '1x Bulbasaur Leech Seed (V.1) (151)',
+        '1x Ivysaur Leech Seed Vine Whip (V.1) (151)',
+        '1x Venusaur ex Tranquil Flower Dangerous Toxwhip (V.1) (151)',
+      ].join('\n'),
     )
     await expect(dialog.getByTestId('cardmarket-summary')).toHaveText(/^3 Zeilen\. 204 fehlende Karten stehen nicht drin/)
 
     await dialog.getByRole('button', { name: 'Liste kopieren' }).click()
     await expect(dialog.getByRole('button', { name: 'Kopiert' })).toBeVisible()
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('1x Ivysaur Leech Seed Vine Whip')
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('1x Ivysaur Leech Seed Vine Whip (V.1) (151)')
     await dialog.getByRole('button', { name: 'Schließen' }).click()
 
     // a card that is there is not asked for
@@ -425,6 +430,8 @@ test.describe('the missing cards for Cardmarket', () => {
     await expect(pocket(page, 1, 2)).toHaveAttribute('data-owned', 'true')
     await page.getByRole('button', { name: 'Was fehlt?', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Für Cardmarket-Wunschliste …' }).click()
-    await expect(list).toHaveValue(['1x Bulbasaur Leech Seed', '1x Venusaur ex Tranquil Flower Dangerous Toxwhip'].join('\n'))
+    await expect(list).toHaveValue(
+      ['1x Bulbasaur Leech Seed (V.1) (151)', '1x Venusaur ex Tranquil Flower Dangerous Toxwhip (V.1) (151)'].join('\n'),
+    )
   })
 })

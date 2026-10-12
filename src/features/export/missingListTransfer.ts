@@ -1,4 +1,10 @@
-import { cardmarketCardOf, cardmarketLines, type RawListedCard } from './cardmarketList'
+import {
+  cardmarketCardOf,
+  cardmarketLines,
+  versionAmong,
+  type CardmarketCard,
+  type RawListedCard,
+} from './cardmarketList'
 import { de } from '../../i18n/de'
 import {
   cardImageSources,
@@ -177,17 +183,48 @@ export async function loadCardmarketList(
   const missing = binder.pages.flatMap((page) =>
     page.slots.flatMap((slot) => (slot.cardRef && !slot.owned ? [slot.cardRef] : [])),
   )
+  const english = tcgdexFor('en')
+  /** The card in English as Cardmarket's list names it; asked for once per card. */
+  const listed = new Map<string, Promise<{ card: CardmarketCard; setId: string | undefined } | undefined>>()
+  const look = (cardId: string) => {
+    let known = listed.get(cardId)
+    if (!known) {
+      known = english.getEnglishCard(cardId).then((raw) => {
+        if (typeof raw !== 'object' || raw === null) return undefined
+        const card = cardmarketCardOf(raw as RawListedCard)
+        return card ? { card, setId: (raw as RawListedCard).set?.id ?? undefined } : undefined
+      })
+      listed.set(cardId, known)
+    }
+    return known
+  }
+
   const cards = await mapWithConcurrency(
     missing,
     8,
-    async (ref) => {
-      const raw = await tcgdexFor(ref.lang).getEnglishCard(ref.cardId)
-      return typeof raw === 'object' && raw !== null ? cardmarketCardOf(raw as RawListedCard) : undefined
+    async (ref): Promise<CardmarketCard | undefined> => {
+      const found = await look(ref.cardId)
+      if (!found) return undefined
+      const { card, setId } = found
+      if (setId === undefined) return card
+      // Which print it is among the cards of that name in its set, in the order of their
+      // numbers: that is how Cardmarket numbers its versions.
+      const setCards = await english.getSetCards(setId).catch(() => [])
+      const sameName = setCards.filter((entry) => entry.name === card.name)
+      if (sameName.length < 2) return card
+      const prints = await Promise.all(
+        sameName.map(async (entry) => {
+          const moves = entry.id === ref.cardId ? card.moves : (await look(entry.id).catch(() => undefined))?.card.moves
+          return moves === undefined ? { id: entry.id } : { id: entry.id, moves }
+        }),
+      )
+      const version = versionAmong(ref.cardId, card.moves, prints)
+      return version === undefined ? card : { ...card, version }
     },
     onProgress,
   )
-  const listed = cards.filter((card) => card !== undefined)
-  return { lines: cardmarketLines(listed), skipped: cards.length - listed.length }
+  const known = cards.filter((card) => card !== undefined)
+  return { lines: cardmarketLines(known), skipped: cards.length - known.length }
 }
 
 export function slugOf(name: string): string {
