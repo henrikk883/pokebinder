@@ -3,6 +3,7 @@ import { de } from '../../i18n/de'
 import type { Binder } from '../../types/binder'
 import { countProgress } from './binderModel'
 import { loadBinderValue, type BinderValue } from './binderValue'
+import { SetProgressDialog } from './SetProgressDialog'
 
 type Valuation =
   | { status: 'loading'; done: number; total: number }
@@ -61,6 +62,7 @@ function BinderWorth({ binder }: { binder: Binder }) {
 
 /** How much of the binder is collected: "142 / 191 Karten gesammelt · 49 fehlen". */
 export function ProgressBar({ binder }: { binder: Binder }) {
+  const [bySet, setBySet] = useState(false)
   const { total, owned, missing } = countProgress(binder)
   if (total === 0) return null
 
@@ -78,7 +80,15 @@ export function ProgressBar({ binder }: { binder: Binder }) {
         <div className="h-full rounded-full bg-accent" style={{ width: `${(owned / total) * 100}%` }} />
       </div>
       <span className="text-muted">{de.progress.missing(missing)}</span>
+      <button
+        type="button"
+        onClick={() => setBySet(true)}
+        className="h-8 rounded-control border border-line bg-raised px-3 text-xs hover:border-accent"
+      >
+        {de.setProgress.open}
+      </button>
       <BinderWorth binder={binder} />
+      {bySet && <SetProgressDialog binder={binder} onClose={() => setBySet(false)} />}
     </div>
   )
 }

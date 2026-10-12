@@ -84,6 +84,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
 11. **Fehlende Karten markieren.** Ein Klick auf eine Karte im Modus „Sammlung“, der Knopf auf der Karte oder der Umschalter „Vorhanden / Fehlt“ markiert sie; fehlende Karten erscheinen schwarz-weiß.
     - Im Modus „Sammlung“ ist die Suche eingeklappt und eine Zeile über dem Binder erklärt, was ein Klick bewirkt.
     - Fortschritt pro Binder sichtbar, z. B. 142 / 191 Karten.
+    - Auf Wunsch auch nach Set aufgeschlüsselt („Nach Set“): für jedes Set im Binder vorhanden / gesamt und ein Balken.
     - **Stückzahl:** Für eine vorhandene Karte lässt sich festhalten, wie oft sie da ist; im Binder zeigt ein Schildchen die Zahl. Daraus entsteht die **Tauschliste** (Menü „Fehlliste“): alle überzähligen Exemplare mit Preis je Stück und Summe.
 12. **Preise.** Für die gewählte Karte zeigt die App den Cardmarket-Preistrend; „Wert berechnen“ summiert den Binder.
 13. **Holo-Effekt.** Folienkarten, die ich besitze, schimmern unter der Maus.
@@ -225,7 +226,6 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Fortschritt pro Set** in gemischten Bindern.
-2. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-3. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-4. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+2. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+3. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

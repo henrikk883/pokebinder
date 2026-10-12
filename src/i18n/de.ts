@@ -117,6 +117,15 @@ export const de = {
     undo: 'Rückgängig',
     redo: 'Wiederholen',
   },
+  setProgress: {
+    open: 'Nach Set',
+    title: 'Fortschritt nach Set',
+    hint: 'Wie weit jedes Set in diesem Binder gesammelt ist. Gezählt werden die Karten, die im Binder liegen, nicht das ganze Set.',
+    empty: 'In diesem Binder liegt noch keine Karte.',
+    unknownSet: 'Unbekanntes Set',
+    count: (owned: number, total: number) => `${owned} / ${total}`,
+    bar: (set: string) => `Fortschritt ${set}`,
+  },
   progress: {
     collected: (owned: number, total: number) => `${owned} / ${total} Karten gesammelt`,
     missing: (count: number) => (count === 1 ? '1 fehlt' : `${count} fehlen`),

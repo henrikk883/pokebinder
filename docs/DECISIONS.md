@@ -370,3 +370,6 @@ Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket
 - Verschieben: Zieht man eine der ausgewählten Karten, kommen die anderen mit. Jede rückt in Leserichtung um gleich viele Pockets weiter (oder zurück), auch über Seiten; die Abstände bleiben. Karten, die am Ziel liegen, rücken in die frei werdenden Pockets. Würde eine Karte über den Binder hinausreichen, bleibt alles liegen und ein Hinweis erscheint.
 - Besitz-Markierungen und Stückzahlen wandern mit. Im Modus „Sammlung“ gibt es keine Mehrfachauswahl: Dort bedeutet ein Klick „vorhanden / fehlt“.
 - Leere Pockets lassen sich mit auswählen, zählen bei den Aktionen aber nicht.
+
+## 2026-10-12 – Fortschritt nach Set
+Knopf „Nach Set“ in der Fortschrittsleiste unter dem Binder öffnet ein Fenster mit einer Zeile je Set: Name, vorhanden / gesamt, Zahl der fehlenden und ein Balken. Gezählt werden wie beim Gesamtfortschritt die Pockets des Binders (nicht das ganze Set, eine doppelt eingelegte Karte zählt doppelt). Reihenfolge: wie die Sets im Binder zuerst vorkommen. Bei gemischten Sprachen zählt ein Set je Sprache und trägt deren Kürzel; Karten ohne erkennbares Set stehen am Ende.

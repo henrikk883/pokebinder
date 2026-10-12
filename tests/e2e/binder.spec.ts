@@ -847,3 +847,45 @@ test('several pockets are selected together and moved, marked and emptied as one
   await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
   await expect(mode).toHaveCount(0)
 })
+
+test('the progress is also shown set by set, for binders that mix sets', async ({ page }) => {
+  await createBinder(page, 'Gemischt')
+  // nothing to count yet: no progress, no button
+  await expect(page.getByRole('button', { name: 'Nach Set' })).toHaveCount(0)
+
+  // two cards of "151" and one promo, the promo still missing
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  await page.getByRole('button', { name: 'Mehr laden' }).click()
+  await expect(page.getByRole('button', { name: 'Mehr laden' })).toBeHidden()
+  await drag(page, tile(page, 'sv03.5-006'), pocket(page, 1, 1))
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+  const promo = tile(page, 'smp-SM158')
+  await promo.scrollIntoViewIfNeeded()
+  await drag(page, promo, pocket(page, 1, 2))
+  await expect(pocket(page, 1, 2)).toHaveAttribute('data-card-id', 'smp-SM158')
+  await pocket(page, 1, 2).hover()
+  await pocket(page, 1, 2).getByRole('button', { name: 'Als fehlend markieren' }).click()
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('')
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  await drag(page, tile(page, 'sv03.5-001'), pocket(page, 1, 3))
+  await expect(pocket(page, 1, 3)).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await expect(page.getByTestId('progress')).toContainText('2 / 3 Karten gesammelt')
+
+  await page.getByRole('button', { name: 'Nach Set' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Fortschritt nach Set' })
+  const rows = dialog.getByTestId('set-progress')
+  // in the order the sets first appear in the binder
+  await expect(rows).toHaveCount(2)
+  await expect(rows.nth(0)).toHaveAttribute('data-set-id', 'sv03.5')
+  await expect(rows.nth(0)).toContainText('151')
+  await expect(rows.nth(0)).toContainText('2 / 2')
+  await expect(rows.nth(0)).not.toContainText('fehl')
+  await expect(rows.nth(0).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2')
+  await expect(rows.nth(1)).toHaveAttribute('data-set-id', 'smp')
+  await expect(rows.nth(1)).toContainText('0 / 1 · 1 fehlt')
+  await expect(rows.nth(1).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0')
+
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+})
