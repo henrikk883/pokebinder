@@ -395,3 +395,40 @@ test('a complete binder gets a checklist that says nothing is missing', async ({
   expect(pdf.getPageCount()).toBe(1)
   expect(pdf.getForm().getFields()).toEqual([])
 })
+
+test('a master set binder carries the logo of its set on its cover until a picture is chosen', async ({ page }) => {
+  const dialog = await startMasterSet(page, /^151/)
+  await create(page, dialog, '151')
+
+  // on the inside of the cover, beside page 1
+  const inside = page.getByTestId('cover-logo')
+  await expect(inside).toBeVisible()
+  await expect(inside).toHaveAttribute('src', /sv03[.]5[/]logo[.]webp$/)
+  await expect.poll(() => inside.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
+
+  // and on the shelf; a binder that is of no set shows its title as before
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
+  await expect(page.getByTestId('binder-cover-logo')).toHaveAttribute('src', /sv03[.]5[/]logo[.]webp$/)
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  const plain = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await plain.getByLabel('Name').fill('Bunt')
+  await plain.getByRole('button', { name: 'Anlegen' }).click()
+  await expect(page.getByRole('heading', { name: 'Bunt' })).toBeVisible()
+  await expect(page.getByTestId('cover-logo')).toHaveCount(0)
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
+  await expect(page.getByTestId('binder-tile')).toHaveCount(2)
+  await expect(page.getByTestId('binder-cover-logo')).toHaveCount(1)
+  // nothing about the logo is stored with the binder
+  const stored = await page.evaluate(
+    () =>
+      new Promise<string>((resolve) => {
+        const open = indexedDB.open('pokebinder')
+        open.onsuccess = () => {
+          const all = open.result.transaction('binders').objectStore('binders').getAll()
+          all.onsuccess = () => resolve(JSON.stringify((all.result as { cover: unknown }[]).map((binder) => binder.cover)))
+        }
+      }),
+  )
+  expect(stored).not.toContain('logo')
+  expect(stored).not.toContain('assetId')
+})

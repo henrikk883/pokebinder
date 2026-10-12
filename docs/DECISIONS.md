@@ -535,3 +535,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 ## 2026-10-12 – Fehlerliste
 - Von Henrik gewünscht, weil jetzt drei Freunde die App nutzen: `docs/BUGS.md` sammelt gemeldete Fehler mit Nummer, Stand und dem, was zum Nachstellen nötig ist. Erster Eintrag B-001 (Seiten mit vielen grauen Karten laden langsam), aufgenommen, noch nicht untersucht.
 - Nachtrag zu Punkt 15: Die CSV von Cardmarket ist Pflicht (Henrik). Gebaut wird weiterhin nicht; vorher braucht es eine echte Beispieldatei, weil ich die Spalten der Cardmarket-Exporte nicht verlässlich kenne.
+
+## 2026-10-12 – Set-Logo als Cover von Master-Set-Bindern
+- Von Henrik gewünscht: Ein Master-Set-Binder ohne eigenes Cover-Bild zeigt das Logo seines Sets – im Regal, auf der Cover-Innenseite und in der geteilten Ansicht. Ein eigenes Cover-Bild geht vor; entfernt man es, kommt das Logo zurück.
+- Gespeichert wird dafür nichts: Der Binder kennt sein Set, das Logo wird beim Anzeigen von TCGdex geholt (8–33 KB, vorgehalten wie die Kartenbilder) – wo es keines in der Sprache des Binders gibt, das englische. Kein Eintrag in der Bilder-Bibliothek, nichts im Backup, nichts beim Abgleich.
+- Das Logo ist ein querformatiger Schriftzug: Es steht auf dem Cover, es füllt es nicht. Lädt es nicht (kein Netz), steht dort wie bisher der Titel.
+- Im PNG-Export einer Seite spielt die Cover-Innenseite keine Rolle; das Logo ist dort vorsorglich ausgenommen.

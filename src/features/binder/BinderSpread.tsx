@@ -7,6 +7,7 @@ import { useAssetUrl } from '../../store/assetStore'
 import { imageAt } from '../images/imageModel'
 import { PlacedImageLayer } from '../images/PlacedImageLayer'
 import { layoutDimensions, pocketOpening } from './binderModel'
+import { useSetLogo } from './useSetLogo'
 import { Pocket } from './Pocket'
 import type { Spread } from './spreads'
 
@@ -86,6 +87,7 @@ function PageSide({ binder, page }: { binder: Binder; page: Page }) {
 
 function CoverInside({ binder }: { binder: Binder }) {
   const imageUrl = useAssetUrl(binder.cover.assetId)
+  const logoUrl = useSetLogo(binder)
 
   return (
     <section className={sideClass} aria-label={de.binder.coverInside}>
@@ -97,6 +99,16 @@ function CoverInside({ binder }: { binder: Binder }) {
             data-testid="cover-image"
             draggable={false}
             className="absolute inset-0 size-full object-cover"
+          />
+        )}
+        {!imageUrl && logoUrl && (
+          <img
+            src={logoUrl}
+            alt=""
+            data-testid="cover-logo"
+            data-export-hide
+            draggable={false}
+            className="absolute inset-x-[15%] top-[18%] max-h-[30%] w-[70%] object-contain"
           />
         )}
         <p

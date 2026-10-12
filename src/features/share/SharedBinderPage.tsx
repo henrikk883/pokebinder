@@ -7,6 +7,7 @@ import type { Binder, Page, Slot } from '../../types/binder'
 import { countProgress, layoutDimensions } from '../binder/binderModel'
 import { buildSpreads, clampSpread, pageNumbersOf, type Spread } from '../binder/spreads'
 import { useCard } from '../binder/useCard'
+import { useSetLogo } from '../binder/useSetLogo'
 import { PlacedImageLayer } from '../images/PlacedImageLayer'
 import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
@@ -62,11 +63,14 @@ function SharedPage({ binder, page }: { binder: Binder; page: Page }) {
 
 function SharedCover({ binder }: { binder: Binder }) {
   const imageUrl = useAssetUrl(binder.cover.assetId)
+  const logoUrl = useSetLogo(binder)
 
   return (
     <div className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden rounded-control border border-dashed border-line">
       {imageUrl ? (
         <img src={imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+      ) : logoUrl ? (
+        <img src={logoUrl} alt="" className="max-h-[35%] w-3/4 object-contain" />
       ) : (
         <span className="px-3 text-center text-lg font-semibold text-muted">{binder.cover.title}</span>
       )}
