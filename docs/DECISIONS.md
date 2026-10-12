@@ -335,3 +335,10 @@ Im Modus „Sammlung“ wird nichts hineingezogen, deshalb ist die Suche dort ei
 
 ## 2026-10-12 – Summe einer Merkliste
 Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket-Preistrends ihrer Karten, mit der Zahl der Karten ohne Preis. Neben dem Binder steht sie unten an der Liste, auf der Seite „Karten“ neben der Kartenzahl. Eine Liste merkt Karten, keine Varianten; gerechnet wird deshalb mit der Grundvariante jeder Karte (normal, sonst Holo) – so, wie sie auch im Binder landet. Nach einer Änderung der Liste wird die Summe erst auf Wunsch neu berechnet. Von Henrik gewünscht.
+
+## 2026-10-12 – Geräte abgleichen: Einspielen fragt nach, Merklisten im Backup
+- Beim Einspielen einer Backup-Datei vergleicht die App jeden Binder mit dem auf dem Gerät (über `updatedAt`): neu, in der Datei neuer, auf diesem Gerät neuer, unverändert.
+- Würde ein Binder des Geräts ersetzt, erscheint vorher ein Fenster mit allen Bindern der Datei, ihrem Stand und beiden Zeitpunkten. Vorangekreuzt ist, was neu oder in der Datei neuer ist; ein Binder, den das Gerät in neuerer Fassung hat, bleibt ohne Haken. Ohne Überschneidung (nur neue oder unveränderte Binder) wird wie bisher ohne Rückfrage eingespielt.
+- Verglichen wird der ganze Binder, nicht einzelne Karten: Die gewählte Fassung ersetzt die andere vollständig. Ein Zusammenführen von Änderungen beider Seiten gibt es nicht.
+- „Alles sichern“ enthält jetzt auch die Merklisten (Feld `watchlists`, Format-Version bleibt 1; ältere Dateien ohne das Feld bleiben lesbar). Beim Einspielen werden sie zusammengeführt: Listen mit derselben Kennung bekommen die fehlenden Karten dazu, unbekannte Listen kommen hinzu, der Name einer Liste bleibt, wie er auf dem Gerät ist. Es wird nichts entfernt – eine auf einem Gerät gelöschte Karte oder Liste kommt beim Abgleich zurück.
+- Regal-Reihenfolge und eingeklappte Spalten bleiben Sache des Geräts und wandern nicht mit.

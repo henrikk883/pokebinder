@@ -4,7 +4,16 @@ import { de } from '../../i18n/de'
 import { binderStore, useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { BackupError, backupReminder, type BackupReminder } from './backup'
-import { downloadBackup, downloadFullBackup, importBackup, lastFullBackup } from './backupTransfer'
+import {
+  applyImport,
+  downloadBackup,
+  downloadFullBackup,
+  lastFullBackup,
+  readBackupFile,
+  type PendingImport,
+} from './backupTransfer'
+import { ImportDialog } from './ImportDialog'
+import { replacesSomething, suggestedImport } from './importPlan'
 
 const itemClass =
   'block w-full rounded-control px-3 py-2 text-left text-sm hover:bg-raised disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent'
@@ -43,6 +52,7 @@ export function BackupMenu() {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastBackup, setLastBackup] = useState(lastFullBackup)
+  const [pending, setPending] = useState<PendingImport | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const reminder = useBackupReminder(lastBackup)
 
@@ -75,14 +85,31 @@ export function BackupMenu() {
     setOpen(false)
     setError(null)
     try {
-      const binders = await importBackup(file)
-      const [only] = binders
-      // one binder is opened right away; several are shown in the list
-      if (binders.length === 1 && only) binderStore.getState().openBinder(only)
-      else binderStore.getState().closeBinder()
-      useEditorStore.getState().refreshBinderList()
+      const read = await readBackupFile(file)
+      // a file that would replace binders of this device is shown first
+      if (replacesSomething(read.entries)) setPending(read)
+      else await store(read, suggestedImport(read.entries))
     } catch (cause) {
       setError(cause instanceof BackupError ? de.backup.errors[cause.code] : de.backup.importFailed)
+    }
+  }
+
+  async function store(read: PendingImport, binderIds: string[]) {
+    setPending(null)
+    try {
+      await applyImport(read, binderIds)
+      const [only] = read.entries
+      // A file with one binder opens that binder, as this device now has it; with several,
+      // they are shown on the shelf. Either way nothing stale stays open.
+      const opened =
+        read.entries.length === 1 && only
+          ? (await binderRepository.listBinders()).find((binder) => binder.id === only.binder.id)
+          : undefined
+      if (opened) binderStore.getState().openBinder(opened)
+      else binderStore.getState().closeBinder()
+      useEditorStore.getState().refreshBinderList()
+    } catch {
+      setError(de.backup.importFailed)
     }
   }
 
@@ -153,6 +180,14 @@ export function BackupMenu() {
         onChange={handleImport}
         className="hidden"
       />
+      {pending && (
+        <ImportDialog
+          entries={pending.entries}
+          withWatchlists={pending.watchlists !== undefined}
+          onImport={(binderIds) => store(pending, binderIds)}
+          onCancel={() => setPending(null)}
+        />
+      )}
     </div>
   )
 }

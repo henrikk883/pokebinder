@@ -166,7 +166,7 @@ export const de = {
   },
   backup: {
     button: 'Backup',
-    saveAll: 'Alles sichern (alle Binder und Bilder)',
+    saveAll: 'Alles sichern (Binder, Bilder, Merklisten)',
     export: 'Nur diesen Binder als JSON exportieren',
     import: 'Aus JSON importieren',
     neverSaved: 'Noch nie gesichert',
@@ -347,6 +347,20 @@ export const de = {
     emptyQuick: 'Noch nichts gemerkt. Der Stern auf einer Karte setzt sie auf diese Liste.',
     emptyList: 'Diese Liste ist leer. Im Info-Fenster einer Karte legst du fest, auf welchen Listen sie steht.',
     count: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} gemerkt`,
+  },
+  importDialog: {
+    title: 'Backup einspielen',
+    hint: 'Einige Binder aus der Datei gibt es auf diesem Gerät schon. Angekreuzte Binder werden durch die Fassung aus der Datei ersetzt.',
+    kinds: {
+      new: 'Neu, noch nicht auf diesem Gerät',
+      newer: 'In der Datei neuer',
+      older: 'Auf diesem Gerät neuer',
+      same: 'Unverändert',
+    },
+    versions: (file: string, device: string) => `Datei: ${file} · dieses Gerät: ${device}`,
+    watchlists: 'Die Merklisten aus der Datei werden mit denen auf diesem Gerät zusammengeführt.',
+    cancel: 'Abbrechen',
+    confirm: (count: number) => (count === 1 ? '1 Binder einspielen' : `${count} Binder einspielen`),
   },
   cardInfo: {
     open: (name: string) => `Infos zu ${name}`,

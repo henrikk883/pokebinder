@@ -300,6 +300,30 @@ describe('full backup', () => {
     expect(restored.assets).toHaveLength(2)
   })
 
+  it('carries the "Merklisten" and reads files without them', async () => {
+    const watchlists = [
+      { id: 'quick', name: '', cards: [{ cardId: 'sv03.5-025', lang: 'de' as const, savedAt: '2026-10-12T10:00:00.000Z' }] },
+      { id: 'buy', name: 'Kaufen', cards: [] },
+    ]
+
+    const withLists = parseAnyBackup(JSON.stringify(await createFullBackup([buildBinder()], [], undefined, watchlists)))
+    const without = parseAnyBackup(JSON.stringify(await createFullBackup([buildBinder()], [])))
+
+    expect(withLists.watchlists).toEqual(watchlists)
+    expect(without.watchlists).toBeUndefined()
+    // a single binder's backup never holds lists
+    expect(parseAnyBackup(serializeBackup(await createBackup(buildBinder(), []))).watchlists).toBeUndefined()
+  })
+
+  it('leaves out lists it cannot read instead of refusing the file', async () => {
+    const file = { ...(await createFullBackup([buildBinder()], [])), watchlists: [{ id: 'buy' }, 'text', { id: 'ok', name: 'Gut', cards: 'x' }] }
+
+    expect(parseAnyBackup(JSON.stringify(file)).watchlists).toEqual([
+      { id: 'quick', name: '', cards: [] },
+      { id: 'ok', name: 'Gut', cards: [] },
+    ])
+  })
+
   it('rejects what is no backup, a newer version, and damaged binders', async () => {
     const full = await createFullBackup([buildBinder()], [])
 

@@ -14,6 +14,7 @@ import {
   type Slot,
 } from '../../types/binder'
 import { slotsPerPage } from '../binder/binderModel'
+import { parseWatchlists, type Watchlist } from '../search/watchlist'
 
 export const BACKUP_FORMAT = 'pokebinder-backup'
 export const BACKUP_VERSION = 1
@@ -298,24 +299,29 @@ export function parseBackup(json: string): BackupContent {
 export const FULL_BACKUP_FORMAT = 'pokebinder-full-backup'
 export const FULL_BACKUP_VERSION = 1
 
-/** Everything the app stores: all binders and the whole image library. */
+/** Everything the app stores: all binders, the whole image library and the "Merklisten". */
 export interface FullBackupFile {
   format: typeof FULL_BACKUP_FORMAT
   version: typeof FULL_BACKUP_VERSION
   exportedAt: string
   binders: Binder[]
   assets: BackupAsset[]
+  /** Missing in files written before the lists were part of the backup. */
+  watchlists?: Watchlist[]
 }
 
 export interface FullBackupContent {
   binders: Binder[]
   assets: Asset[]
+  /** Only there when the file holds lists; a single binder's backup never does. */
+  watchlists?: Watchlist[]
 }
 
 export async function createFullBackup(
   binders: Binder[],
   assets: Asset[],
   exportedAt: string = new Date().toISOString(),
+  watchlists?: Watchlist[],
 ): Promise<FullBackupFile> {
   return {
     format: FULL_BACKUP_FORMAT,
@@ -323,6 +329,7 @@ export async function createFullBackup(
     exportedAt,
     binders,
     assets: await encodeAssets(assets),
+    ...(watchlists ? { watchlists } : {}),
   }
 }
 
@@ -345,6 +352,8 @@ export function parseAnyBackup(json: string): FullBackupContent {
   return {
     binders: readArray(raw.binders, 'binders').map(readBinder),
     assets: readAssets(raw.assets),
+    // read leniently, like the lists kept in the browser: what cannot be read is left out
+    ...(Array.isArray(raw.watchlists) ? { watchlists: parseWatchlists(JSON.stringify(raw.watchlists)) } : {}),
   }
 }
 

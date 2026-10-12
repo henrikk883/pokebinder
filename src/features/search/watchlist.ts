@@ -81,6 +81,22 @@ export function removeList(lists: readonly Watchlist[], listId: string): Watchli
   return lists.filter((list) => list.id !== listId)
 }
 
+/**
+ * Brings the lists of another device together with those of this one. A list both have
+ * keeps its name here and gets the cards it lacks; lists only the other has are added.
+ * Nothing is taken off a list by this: what was removed on one device comes back.
+ */
+export function mergeWatchlists(local: readonly Watchlist[], incoming: readonly Watchlist[]): Watchlist[] {
+  const merged = local.map((list) => {
+    const other = incoming.find((entry) => entry.id === list.id)
+    if (!other) return list
+    const added = other.cards.filter((card) => !isSaved(list.cards, card.cardId, card.lang))
+    return added.length === 0 ? list : { ...list, cards: [...list.cards, ...added] }
+  })
+  const unknown = incoming.filter((list) => !local.some((entry) => entry.id === list.id))
+  return [...merged, ...unknown]
+}
+
 function parseCards(raw: unknown): SavedCard[] {
   if (!Array.isArray(raw)) return []
   const cards: SavedCard[] = []

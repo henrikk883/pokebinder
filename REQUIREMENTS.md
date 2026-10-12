@@ -101,7 +101,9 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
 ### Speichern
 
 18. **Speichern.** Alles wird automatisch lokal gespeichert und ist nach Neuladen unverändert da.
-19. **Backup.** „Alles sichern“ schreibt alle Binder und Bilder in eine JSON-Datei; einzelne Binder lassen sich ebenfalls exportieren. Import ersetzt Binder mit derselben ID und lässt alle anderen stehen.
+19. **Backup.** „Alles sichern“ schreibt alle Binder, Bilder und Merklisten in eine JSON-Datei; einzelne Binder lassen sich ebenfalls exportieren.
+    - **Einspielen mit Abgleich:** Die App vergleicht jeden Binder der Datei mit dem auf dem Gerät. Würde ein Binder ersetzt, fragt sie vorher und zeigt, welche Seite die neuere Fassung hat; vorangekreuzt ist, was neu oder in der Datei neuer ist. Binder, die nicht in der Datei stehen, bleiben unberührt.
+    - Merklisten aus der Datei werden mit denen des Geräts zusammengeführt.
     - Die App erinnert an die Sicherung, wenn die letzte älter als 14 Tage ist.
     - Über das Backup wandern Binder von einem Gerät zum anderen; eine automatische Synchronisation gibt es nicht.
 
@@ -175,7 +177,7 @@ Die App speichert nur Verweise auf Karten (Karten-ID + Sprache + Variante), nie 
 
 Welche Varianten eine Karte hat, liest die App aus den TCGdex-Kartendaten; daraus entstehen beim Master Set die Holo-Pockets.
 
-Nicht im Binder gespeichert, sondern nur im Browser des Geräts: Sortierung und eigene Reihenfolge des Regals, Merklisten, eingeklappte Spalten, Zeitpunkt der letzten Gesamtsicherung.
+Nicht im Binder gespeichert, sondern nur im Browser des Geräts: Sortierung und eigene Reihenfolge des Regals, eingeklappte Spalten, Zeitpunkt der letzten Gesamtsicherung. Die Merklisten liegen ebenfalls im Browser, wandern aber mit „Alles sichern“ mit.
 
 ## Tech-Stack
 
@@ -219,12 +221,11 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Geräte abgleichen:** Import, der erkennt, welche Fassung eines Binders neuer ist, und vor dem Ersetzen fragt. Dabei kommen die Merklisten mit ins Backup.
-2. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
-3. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
-4. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
-5. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
-6. **Fortschritt pro Set** in gemischten Bindern.
-7. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-8. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-9. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
+2. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
+3. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
+4. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
+5. **Fortschritt pro Set** in gemischten Bindern.
+6. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+7. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+8. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

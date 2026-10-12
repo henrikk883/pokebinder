@@ -188,3 +188,153 @@ test.describe('finish of a card from the search', () => {
     await expect(pocket(page, 1, 1)).toHaveAttribute('data-variant', 'normal')
   })
 })
+
+test.describe('bringing devices in line', () => {
+  /** Saves everything to a file and returns where it lies. */
+  async function saveAll(page: Page): Promise<string> {
+    await saved(page)
+    await page.getByRole('button', { name: 'Backup' }).click()
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByRole('menuitem', { name: /^Alles sichern/ }).click()
+    return (await downloadPromise).path()
+  }
+  const readFileIn = (page: Page, path: string) => page.getByLabel('Backup-Datei auswählen').setInputFiles(path)
+
+  test('a file that would replace a binder asks first and says which side is newer', async ({ page }) => {
+    await createBinder(page, 'Abgleich')
+    await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+    await drag(page, tile(page, 'sv03.5-006'), pocket(page, 1, 5))
+    await expect(pocket(page, 1, 5)).toHaveAttribute('data-card-id', 'sv03.5-006')
+    const older = await saveAll(page)
+
+    // the same version on both sides: nothing to ask, nothing changes
+    await readFileIn(page, older)
+    await expect(page.getByRole('dialog', { name: 'Backup einspielen' })).toHaveCount(0)
+    await expect(pocket(page, 1, 5)).toHaveAttribute('data-card-id', 'sv03.5-006')
+
+    // this device moves on: a second card
+    await drag(page, tile(page, 'sv03.5-006'), pocket(page, 1, 1))
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+    const newer = await saveAll(page)
+
+    // the older file is offered, but not ticked: this device has the later version
+    await readFileIn(page, older)
+    const dialog = page.getByRole('dialog', { name: 'Backup einspielen' })
+    const entry = dialog.getByTestId('import-entry')
+    await expect(entry).toHaveCount(1)
+    await expect(entry).toHaveAttribute('data-kind', 'older')
+    await expect(entry).toContainText('Abgleich')
+    await expect(entry).toContainText('Auf diesem Gerät neuer')
+    await expect(entry).toContainText(/Datei: .+ · dieses Gerät: .+/)
+    await expect(dialog.getByRole('checkbox', { name: 'Abgleich' })).not.toBeChecked()
+    await expect(dialog.getByRole('button', { name: '0 Binder einspielen' })).toBeVisible()
+
+    // cancelling leaves everything as it is
+    await dialog.getByRole('button', { name: 'Abbrechen' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+
+    // so does confirming without a tick
+    await readFileIn(page, older)
+    await dialog.getByRole('button', { name: '0 Binder einspielen' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+
+    // ticked, the older version replaces the one of this device
+    await readFileIn(page, older)
+    await dialog.getByRole('checkbox', { name: 'Abgleich' }).check()
+    await dialog.getByRole('button', { name: '1 Binder einspielen' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page.getByRole('heading', { name: 'Abgleich' })).toBeVisible()
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', '')
+    await expect(pocket(page, 1, 5)).toHaveAttribute('data-card-id', 'sv03.5-006')
+
+    // now the file with the second card is the newer one: ticked from the start
+    await readFileIn(page, newer)
+    await expect(entry).toHaveAttribute('data-kind', 'newer')
+    await expect(entry).toContainText('In der Datei neuer')
+    await expect(dialog.getByRole('checkbox', { name: 'Abgleich' })).toBeChecked()
+    await dialog.getByRole('button', { name: '1 Binder einspielen' }).click()
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+    await page.reload()
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+  })
+
+  test('binders new to this device come in beside the ones that are asked about', async ({ page }) => {
+    await createBinder(page, 'Beide')
+    await toList(page).click()
+    await createBinder(page, 'Nur in der Datei')
+    const file = await saveAll(page)
+
+    // "Beide" changes here, the other binder is deleted here
+    await toList(page).click()
+    await page.getByRole('button', { name: 'Beide umbenennen' }).click()
+    await page.getByRole('dialog', { name: 'Binder umbenennen' }).getByLabel('Name').fill('Beide, geändert')
+    await page.getByRole('dialog', { name: 'Binder umbenennen' }).getByRole('button', { name: 'Umbenennen' }).click()
+    await page.getByRole('button', { name: 'Nur in der Datei löschen' }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Löschen', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Nur in der Datei öffnen' })).toHaveCount(0)
+
+    await readFileIn(page, file)
+    const dialog = page.getByRole('dialog', { name: 'Backup einspielen' })
+    await expect(dialog.getByTestId('import-entry')).toHaveCount(2)
+    await expect(dialog.locator('[data-kind="older"]')).toContainText('Beide')
+    await expect(dialog.locator('[data-kind="new"]')).toContainText('Neu, noch nicht auf diesem Gerät')
+    await expect(dialog.getByRole('checkbox', { name: 'Nur in der Datei' })).toBeChecked()
+    await dialog.getByRole('button', { name: '1 Binder einspielen' }).click()
+
+    // the new one is there, the changed one kept its change
+    await expect(page.getByRole('button', { name: 'Nur in der Datei öffnen' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Beide, geändert öffnen' })).toBeVisible()
+  })
+
+  test('the "Merklisten" travel in the file and are merged with those of the device', async ({ page }) => {
+    await createBinder(page, 'Listen')
+    await page.getByRole('button', { name: 'Set', exact: true }).click()
+    await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+    const results = page.getByTestId('search-results')
+    const star = async (cardId: string) => {
+      const found = results.locator(`[data-card-id="${cardId}"]`)
+      await found.scrollIntoViewIfNeeded()
+      await found.hover()
+      await found.getByRole('button', { name: /merken$/ }).click()
+    }
+    await star('sv03.5-001')
+    // a list of its own with the second card
+    const second = results.locator('[data-card-id="sv03.5-002"]')
+    await second.hover()
+    await second.getByRole('button', { name: /^Infos zu/ }).click()
+    await page.getByRole('dialog').getByLabel('Name einer neuen Liste').fill('Kaufen')
+    await page.getByRole('dialog').getByRole('button', { name: 'Anlegen' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Schließen' }).click()
+    const file = await saveAll(page)
+    const stored = JSON.parse(await readFile(file, 'utf8')) as { watchlists: { name: string; cards: unknown[] }[] }
+    expect(stored.watchlists.map((list) => [list.name, list.cards.length])).toEqual([
+      ['', 1],
+      ['Kaufen', 1],
+    ])
+
+    // another device: no lists yet except one card noted there
+    await page.evaluate(() => localStorage.removeItem('pokebinder:watchlists'))
+    await page.reload()
+    await expect(page.getByTestId('spread-label')).toBeVisible()
+    await expect(page.getByTestId('saved-count')).toHaveCount(0)
+    await page.getByRole('button', { name: 'Set', exact: true }).click()
+    await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+    await star('sv03.5-003')
+
+    await readFileIn(page, file)
+    // the binder is the same on both sides, so nothing is asked; the lists come in all the same
+    await expect(page.getByRole('dialog', { name: 'Backup einspielen' })).toHaveCount(0)
+    await page.getByRole('tab', { name: /^Merkliste/ }).click()
+    const chooser = page.getByTestId('column-left').getByRole('combobox', { name: 'Merkliste' })
+    // what was noted here stays, what the file brings is added
+    await expect(chooser.locator('option')).toHaveText(['Schnellmerken (2)', 'Kaufen (1)'])
+    await expect(page.getByTestId('saved-count')).toHaveText('3')
+
+    // reading the same file again adds nothing twice
+    await readFileIn(page, file)
+    await page.getByRole('tab', { name: /^Merkliste/ }).click()
+    await expect(chooser.locator('option')).toHaveText(['Schnellmerken (2)', 'Kaufen (1)'])
+  })
+})

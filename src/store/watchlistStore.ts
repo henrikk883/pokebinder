@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import {
   addList,
+  mergeWatchlists,
   parseWatchlists,
   QUICK_LIST_ID,
   removeList,
@@ -46,6 +47,8 @@ export interface WatchlistState {
   rename: (listId: string, name: string) => void
   /** Removes a list with what is on it; the quick list cannot be removed. */
   remove: (listId: string) => void
+  /** Takes in the lists of a backup: see `mergeWatchlists`. */
+  merge: (lists: readonly Watchlist[]) => void
 }
 
 export const useWatchlistStore = create<WatchlistState>()((set, get) => {
@@ -68,6 +71,7 @@ export const useWatchlistStore = create<WatchlistState>()((set, get) => {
       return id
     },
     rename: (listId, name) => update(renameList(get().lists, listId, name)),
+    merge: (lists) => update(mergeWatchlists(get().lists, lists)),
     remove: (listId) => {
       update(removeList(get().lists, listId))
       if (get().activeListId === listId) set({ activeListId: QUICK_LIST_ID })

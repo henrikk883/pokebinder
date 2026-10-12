@@ -3,6 +3,7 @@ import {
   addList,
   isSaved,
   listsWith,
+  mergeWatchlists,
   parseWatchlist,
   parseWatchlists,
   QUICK_LIST_ID,
@@ -127,5 +128,40 @@ describe('parseWatchlist', () => {
     expect(parseWatchlist(JSON.stringify([pikachu]))).toEqual([pikachu])
     expect(parseWatchlist(null)).toEqual([])
     expect(parseWatchlist('{"cardId":"x"}')).toEqual([])
+  })
+})
+
+describe('mergeWatchlists', () => {
+  const bisasam: SavedCard = { cardId: 'sv03.5-001', lang: 'de', savedAt: '2026-10-13T09:00:00.000Z' }
+
+  it('adds to a list both sides have the cards it lacks, after its own', () => {
+    const merged = mergeWatchlists([quick([pikachu])], [quick([glurak, pikachu])])
+
+    expect(merged).toEqual([quick([pikachu, glurak])])
+  })
+
+  it('adds lists only the other side has, and keeps the ones only this side has', () => {
+    const mine: Watchlist = { id: 'michi', name: 'Michi-Binder', cards: [bisasam] }
+
+    const merged = mergeWatchlists([quick(), mine], [quick(), buy([glurak])])
+
+    expect(merged).toEqual([quick(), mine, buy([glurak])])
+  })
+
+  it('keeps the name a list has on this side', () => {
+    const merged = mergeWatchlists([quick(), buy([pikachu])], [quick(), { id: 'buy', name: 'Einkauf', cards: [glurak] }])
+
+    expect(merged[1]).toEqual({ id: 'buy', name: 'Kaufen', cards: [pikachu, glurak] })
+  })
+
+  it('changes nothing when the other side brings nothing new', () => {
+    const local = [quick([pikachu]), buy([glurak])]
+
+    const merged = mergeWatchlists(local, [quick([pikachu]), buy()])
+
+    expect(merged).toEqual(local)
+    // untouched lists stay the very same objects, so nothing is redrawn or recalculated
+    expect(merged[0]).toBe(local[0])
+    expect(mergeWatchlists(local, [])).toEqual(local)
   })
 })
