@@ -519,8 +519,9 @@ test('the shelf is ordered by last change, by name or by hand; the choice is rem
 
   // remembered after a reload, and a click still opens a binder
   await page.reload()
-  // the app comes back with the binder that was open last
-  if (!(await sort.isVisible())) await toList()
+  // the app comes back with the binder changed last; wait for it before going to the shelf
+  await expect(page.getByTestId('spread-label')).toBeVisible()
+  await toList()
   await expect(sort).toHaveValue('custom')
   await expect.poll(shelf).toEqual(['Zebra', 'Apfel', 'Mitte'])
 

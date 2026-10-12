@@ -301,9 +301,8 @@ test('an image is moved by dragging it to other pockets, also to the facing page
   await saved(page)
   await page.reload()
   // the binder opens on page 1 again
-  if ((await page.getByTestId('spread-label').textContent()) !== 'Seiten 2 – 3') {
-    await page.getByRole('button', { name: 'Weiterblättern' }).click()
-  }
+  await expect(page.getByTestId('spread-label')).toHaveText('Seite 1')
+  await page.getByRole('button', { name: 'Weiterblättern' }).click()
   await expect.poll(() => covered(3)).toEqual([2, 8, 9])
 })
 
