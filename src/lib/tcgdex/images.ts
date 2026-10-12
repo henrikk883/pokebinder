@@ -68,6 +68,16 @@ export function pokemontcgCardImages(
   )
 }
 
+export interface SubstituteImage {
+  url: string
+  /**
+   * The address must be checked before it is shown. pokemontcg.io answers "not found"
+   * together with a picture of a card back, which a browser would display as if it were
+   * the card. TCGdex answers without a picture, so there a failed load is enough.
+   */
+  mustVerify: boolean
+}
+
 /**
  * Pictures to show for a card, best first: the scan in the card's language; without one,
  * the English scan of TCGdex and then those of pokemontcg.io. Which of the stand-ins exist
@@ -77,16 +87,36 @@ export function cardImageSources(
   card: Pick<CardSummary, 'localId' | 'image'>,
   set: Pick<SetSummary, 'id' | 'seriesId'> | undefined,
   size: CardImageSize,
-): { own: string | undefined; substitutes: string[] } {
+): { own: string | undefined; substitutes: SubstituteImage[] } {
   if (card.image) return { own: cardImageUrl(card.image, size), substitutes: [] }
   if (!set) return { own: undefined, substitutes: [] }
   return {
     own: undefined,
     substitutes: [
-      cardImageUrl(englishCardImage(card, set), size),
-      ...pokemontcgCardImages(card, set, size),
+      { url: cardImageUrl(englishCardImage(card, set), size), mustVerify: false },
+      ...pokemontcgCardImages(card, set, size).map((url) => ({ url, mustVerify: true })),
     ],
   }
+}
+
+// Checked once per address; the answer does not change while the app is open.
+const verified = new Map<string, Promise<boolean>>()
+
+/**
+ * Whether a picture really exists at an address, judged by the status of the answer and
+ * not by whether something displayable came back. The picture is fetched in full, so the
+ * browser has it at hand when it is shown, and a picture kept for offline use still counts.
+ */
+export function imageExists(url: string): Promise<boolean> {
+  let answer = verified.get(url)
+  if (!answer) {
+    answer = fetch(url).then(
+      (response) => response.ok,
+      () => false,
+    )
+    verified.set(url, answer)
+  }
+  return answer
 }
 
 export function setLogoUrl(logo: string, format: 'webp' | 'png' = 'webp'): string {

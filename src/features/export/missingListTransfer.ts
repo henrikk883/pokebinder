@@ -37,7 +37,8 @@ async function loadCard(cardId: string, lang: CardLang): Promise<LoadedCard | un
   const card: LoadedCard = {
     name: detail.name,
     localId: detail.localId,
-    images: own ? [own] : substitutes,
+    // every picture is fetched here and judged by the status of the answer
+    images: own ? [own] : substitutes.map((substitute) => substitute.url),
   }
   if (set) {
     card.setId = set.id

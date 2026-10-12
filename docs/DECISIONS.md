@@ -232,6 +232,9 @@ Zweite Gruppe im Menü „Sortieren“, für eine Seite oder den ganzen Binder. 
 ## 2026-10-12 – Zweite Bildquelle: pokemontcg.io
 Für Karten, von denen TCGdex weder ein deutsches noch ein englisches Bild hat, lädt die App das englische Bild von `images.pokemontcg.io`. Reihenfolge: Bild in der Kartensprache, englisches Bild von TCGdex, englisches Bild von pokemontcg.io, grauer Platzhalter. Zählung vom 12.10.2026 über alle 144 deutschen Sets: von 18.980 Karten sind 747 bei TCGdex ganz ohne Bild, 538 davon gibt es dort (Glitzer-Tresor, Majestät der Drachen, Galar-Galerie, Trainer-Galerien, SM-Promos); 209 bleiben ohne (vor allem MEP-Promos, „30 Jahre“, EX-Icognito). Die Set-Kennung wird nach fester Regel umgeschrieben (`sv03.5` → `sv3pt5`, Ausnahmen in einer kleinen Tabelle); eine falsche Vermutung führt nur zum Platzhalter. Abgerufen werden ausschließlich Bilddateien. Gilt auch für PNG-Export, Platzhalter-Druck und den Bild-Cache. Japanische Sets werden dort nicht angefragt. Von Henrik freigegeben; die Ausnahme steht in CLAUDE.md.
 
+## 2026-10-12 – Bilder der zweiten Quelle werden vor dem Anzeigen geprüft
+pokemontcg.io antwortet bei einer unbekannten Karte mit „404“ und schickt trotzdem ein Bild mit (einen Kartenrücken). Der Browser zeigt so ein Bild an, als wäre es die Karte; der graue Platzhalter mit dem Namen fiel dadurch weg, und der PNG-Export blieb an diesen Bildern hängen. Darum fragt die App jede Adresse dieser Quelle erst ab (`imageExists`) und zeigt das Bild nur bei einer echten „200“-Antwort, sonst den Platzhalter. Bei TCGdex ist das nicht nötig, dort kommt bei „nicht gefunden“ kein Bild. Von Henrik gemeldet.
+
 ## 2026-10-12 – Playwright-Tests auf eigenem Port
 Die Tests starten ihren Server auf Port 5174. Auf 5173 läuft die App selbst; ein dort laufender älterer Stand war von den Tests versehentlich mitbenutzt worden.
 

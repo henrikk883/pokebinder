@@ -19,6 +19,7 @@ export {
   cardImageSources,
   cardImageUrl,
   englishCardImage,
+  imageExists,
   pokemontcgCardImages,
   pokemontcgSetId,
   setLogoUrl,

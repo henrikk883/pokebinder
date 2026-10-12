@@ -102,7 +102,8 @@ async function mockTcgdex(page: Page): Promise<Tcgdex> {
     const headers = { 'access-control-allow-origin': '*' }
     if (state.offline) return route.abort('internetdisconnected')
     if (!state.otherImages.has(url)) {
-      return route.fulfill({ status: 404, contentType: 'text/plain', headers, body: 'not found' })
+      // like the real server: "not found" comes with a picture (of a card back) all the same
+      return route.fulfill({ status: 404, contentType: 'image/png', headers, body: PIXEL })
     }
     return route.fulfill({ contentType: 'image/png', headers, body: PIXEL })
   })

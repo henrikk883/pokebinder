@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { de } from '../../i18n/de'
 import {
   cardImageSources,
+  imageExists,
   type CardImageSize,
   type CardSummary,
   type SetSummary,
@@ -27,11 +28,29 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
   // after a page turn or a drop, and one card without an English scan must not hide the
   // English scan of the next.
   const [failed, setFailed] = useState<readonly string[]>([])
+  const [confirmed, setConfirmed] = useState<readonly string[]>([])
   const tone = missing ? 'grayscale' : ''
   // The long search lists load their small pictures as they scroll into view. Binder pages
   // load theirs at once, so that a page is complete when it is exported.
   const loading = size === 'small' ? 'lazy' : 'eager'
   const { own, substitutes } = cardImageSources(card, set, size)
+  const substitute = own ? undefined : substitutes.find((candidate) => !failed.includes(candidate.url))
+  const unchecked =
+    substitute?.mustVerify && !confirmed.includes(substitute.url) ? substitute.url : undefined
+
+  // A source that answers "not found" with a picture has to be asked before it is shown.
+  useEffect(() => {
+    if (unchecked === undefined) return
+    let cancelled = false
+    imageExists(unchecked).then((exists) => {
+      if (cancelled) return
+      if (exists) setConfirmed((known) => [...known, unchecked])
+      else setFailed((known) => [...known, unchecked])
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [unchecked])
 
   if (own) {
     return (
@@ -49,20 +68,24 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
     )
   }
 
-  const substitute = substitutes.find((url) => !failed.includes(url))
+  if (unchecked !== undefined) {
+    // still asking whether the stand-in exists; an export of the page waits for the answer
+    return <div data-pending="" className={`${frameClass} bg-raised`} />
+  }
+
   if (substitute !== undefined) {
     return (
       <img
         // a fresh element per address, so a failed load never sticks to the next one
-        key={substitute}
+        key={substitute.url}
         crossOrigin="anonymous"
-        src={substitute}
+        src={substitute.url}
         alt={de.search.substituteImage(card.name)}
         title={de.search.substituteHint}
         loading={loading}
         decoding="async"
         draggable={false}
-        onError={() => setFailed((known) => [...known, substitute])}
+        onError={() => setFailed((known) => [...known, substitute.url])}
         className={`${frameClass} bg-raised object-cover ${tone}`}
       />
     )

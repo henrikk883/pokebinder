@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   cardImageSources,
   cardImageUrl,
   englishCardImage,
+  imageExists,
   pokemontcgCardImages,
   pokemontcgSetId,
 } from './images'
@@ -86,11 +87,12 @@ describe('cardImageSources', () => {
     expect(cardImageSources({ localId: 'GG01' }, set, 'large')).toEqual({
       own: undefined,
       substitutes: [
-        'https://assets.tcgdex.net/en/swsh/swsh12.5gg/GG01/high.webp',
-        'https://images.pokemontcg.io/swsh12pt5gg/GG01_hires.png',
+        { url: 'https://assets.tcgdex.net/en/swsh/swsh12.5gg/GG01/high.webp', mustVerify: false },
+        // answers "not found" with a picture of a card back, so it is checked before shown
+        { url: 'https://images.pokemontcg.io/swsh12pt5gg/GG01_hires.png', mustVerify: true },
       ],
     })
-    expect(cardImageSources({ localId: 'GG01' }, set, 'small').substitutes[0]).toBe(
+    expect(cardImageSources({ localId: 'GG01' }, set, 'small').substitutes[0]?.url).toBe(
       cardImageUrl(englishCardImage({ localId: 'GG01' }, set), 'small'),
     )
   })
@@ -100,5 +102,48 @@ describe('cardImageSources', () => {
       own: undefined,
       substitutes: [],
     })
+  })
+})
+
+describe('imageExists', () => {
+  const original = globalThis.fetch
+
+  afterEach(() => {
+    vi.stubGlobal('fetch', original)
+  })
+
+  it('goes by the status of the answer, not by whether a picture came back', async () => {
+    // pokemontcg.io sends a picture of a card back along with its "not found"
+    const fetched = vi.fn((url: string) =>
+      Promise.resolve(
+        new Response('picture', {
+          status: url.includes('missing') ? 404 : 200,
+          headers: { 'content-type': 'image/png' },
+        }),
+      ),
+    )
+    vi.stubGlobal('fetch', fetched)
+
+    expect(await imageExists('https://images.pokemontcg.io/smp/missing.png')).toBe(false)
+    expect(await imageExists('https://images.pokemontcg.io/smp/there.png')).toBe(true)
+  })
+
+  it('takes an address that cannot be reached as having no picture', async () => {
+    vi.stubGlobal('fetch', () => Promise.reject(new Error('offline')))
+
+    expect(await imageExists('https://images.pokemontcg.io/smp/unreachable.png')).toBe(false)
+  })
+
+  it('asks once per address', async () => {
+    const fetched = vi.fn(() => Promise.resolve(new Response('picture')))
+    vi.stubGlobal('fetch', fetched)
+
+    await Promise.all([
+      imageExists('https://images.pokemontcg.io/smp/once.png'),
+      imageExists('https://images.pokemontcg.io/smp/once.png'),
+    ])
+    await imageExists('https://images.pokemontcg.io/smp/once.png')
+
+    expect(fetched).toHaveBeenCalledTimes(1)
   })
 })
