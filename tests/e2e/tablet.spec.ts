@@ -270,3 +270,31 @@ test('pages are put in another order by finger, in the strip of thumbnails', asy
   await page.getByRole('button', { name: 'Seite 1', exact: true }).tap()
   await expect(page.getByTestId('spread-label')).toHaveText('Seite 1')
 })
+
+test('several cards are selected by taps and carried along together by finger', async ({ page }) => {
+  await createBinder(page, 'Gruppe')
+  await searchFor(page, 'Glurak')
+  const tiles = page.getByTestId('card-tile')
+  await holdAndDrag(page, tiles.nth(0).locator('> div'), pocket(page, 1, 1))
+  await holdAndDrag(page, tiles.nth(1).locator('> div'), pocket(page, 1, 2))
+  await expect(pocket(page, 1, 2)).not.toHaveAttribute('data-card-id', '')
+  const first = await pocket(page, 1, 1).getAttribute('data-card-id')
+  const second = await pocket(page, 1, 2).getAttribute('data-card-id')
+
+  // no keys to hold on a tablet: a mode in which every tap adds a pocket
+  // Pocket 2 is selected already, from the card that was just dropped there.
+  await expect(pocket(page, 1, 2)).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: 'Mehrere auswählen' }).tap()
+  await pocket(page, 1, 1).tap()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('aria-pressed', 'true')
+  await expect(pocket(page, 1, 2)).toHaveAttribute('aria-pressed', 'true')
+
+  await holdAndDrag(page, pocket(page, 1, 1), pocket(page, 1, 7))
+  await expect(pocket(page, 1, 7)).toHaveAttribute('data-card-id', first ?? '')
+  await expect(pocket(page, 1, 8)).toHaveAttribute('data-card-id', second ?? '')
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', '')
+
+  // what can be done with them is in the column that folds away
+  await page.getByRole('button', { name: 'Auswahl einblenden' }).tap()
+  await expect(page.getByTestId('multi-selection')).toContainText('2 Pockets ausgewählt, 2 Karten')
+})

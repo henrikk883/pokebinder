@@ -10,8 +10,10 @@ import {
   movePage,
   changeLayout,
   clearSlot,
+  clearSlots,
   createBinder,
   moveCard,
+  moveCards,
   removePage,
   renameBinder,
   setCard,
@@ -19,6 +21,7 @@ import {
   setCardLang,
   setOpeningSide,
   setOwned,
+  setOwnedMany,
   setVariant,
   sortCards,
   type NewBinderInput,
@@ -90,6 +93,13 @@ export interface BinderState {
   setCard: (position: SlotPosition, cardRef: CardRef, owned?: boolean) => void
   clearSlot: (position: SlotPosition) => void
   moveCard: (from: SlotPosition, to: SlotPosition) => void
+  /**
+   * Moves several cards together, as when one of them is dragged from `dragged` to
+   * `target`. Returns where they now are, or `null` if they do not fit into the binder.
+   */
+  moveCards: (positions: SlotPosition[], dragged: SlotPosition, target: SlotPosition) => SlotPosition[] | null
+  clearSlots: (positions: SlotPosition[]) => void
+  setOwnedMany: (positions: SlotPosition[], owned: boolean) => void
   /** Makes room at a pocket: its card and those behind it move one pocket on. */
   insertGap: (position: SlotPosition) => void
   /** Closes the gap at an empty pocket: the cards behind it move one pocket back. */
@@ -245,6 +255,16 @@ export function createBinderStore(deps: BinderStoreDeps) {
         change((binder) => setCard(binder, position, cardRef, owned)),
       clearSlot: (position) => change((binder) => clearSlot(binder, position)),
       moveCard: (from, to) => change((binder) => moveCard(binder, from, to)),
+      moveCards: (positions, dragged, target) => {
+        const { binder } = get()
+        if (!binder) return null
+        const result = moveCards(binder, positions, dragged, target)
+        if (!result) return null
+        if (result.binder !== binder) commit(binder, result.binder)
+        return result.moved
+      },
+      clearSlots: (positions) => change((binder) => clearSlots(binder, positions)),
+      setOwnedMany: (positions, owned) => change((binder) => setOwnedMany(binder, positions, owned)),
       insertGap: (position) => change((binder) => insertGap(binder, position)),
       closeGap: (position) => change((binder) => closeGap(binder, position)),
       setOwned: (position, owned) => change((binder) => setOwned(binder, position, owned)),

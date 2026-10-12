@@ -2,7 +2,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import type { PointerEvent } from 'react'
 import { de } from '../../i18n/de'
 import { setIdOfCard } from '../../lib/tcgdex'
-import { useBinderStore } from '../../store/binderStore'
+import { binderStore, useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import {
   DEFAULT_LANG,
@@ -13,9 +13,11 @@ import {
 } from '../../types/binder'
 import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
-import { copiesOf } from './binderModel'
+import { copiesOf, pocketsBetween } from './binderModel'
 import { pocketId, type DragSource, type DropTarget } from './dragDrop'
 import { useCard } from './useCard'
+
+const samePocket = (a: SlotPosition, b: SlotPosition) => a.pageId === b.pageId && a.slotIndex === b.slotIndex
 
 interface PocketProps {
   pageId: string
@@ -147,8 +149,11 @@ function PocketCard({ position, cardRef, owned, copies, selected }: PocketCardPr
 export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: PocketProps) {
   const overImage = imageAssetId !== undefined
   const position: SlotPosition = { pageId, slotIndex: slot.index }
-  const selected = useEditorStore(
-    (state) => state.selection?.pageId === pageId && state.selection.slotIndex === slot.index,
+  const selected = useEditorStore((state) =>
+    // of several pockets selected together, each one shows it
+    (state.multi.length > 0 ? state.multi : state.selection ? [state.selection] : []).some(
+      (other) => other.pageId === pageId && other.slotIndex === slot.index,
+    ),
   )
   const select = useEditorStore((state) => state.select)
   const clearSlot = useBinderStore((state) => state.clearSlot)
@@ -156,7 +161,24 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
   const collecting = useEditorStore((state) => state.mode === 'collection')
   const card = useCard(slot.cardRef?.cardId, slot.cardRef?.lang ?? DEFAULT_LANG)
 
-  function handleClick() {
+  function handleClick(modifiers: { toggle: boolean; range: boolean } = { toggle: false, range: false }) {
+    const editor = useEditorStore.getState()
+    const binder = binderStore.getState().binder
+    // Several pockets are selected with Ctrl (one more or less), with Shift (all from the
+    // one selected last to this one), or in the mode that does the first without a key.
+    // Not while ticking off the collection, where a click has its own meaning.
+    if (!collecting && modifiers.range && editor.selection && binder) {
+      const range = pocketsBetween(binder, editor.selection, position)
+      // the pocket clicked is the one selected last: the next range starts from it
+      const ordered = range[0] && samePocket(range[0], position) ? [...range].reverse() : range
+      const kept = editor.multi.filter((other) => !ordered.some((entry) => samePocket(entry, other)))
+      editor.selectMany([...kept, ...ordered])
+      return
+    }
+    if (!collecting && (modifiers.toggle || editor.multiMode)) {
+      editor.toggleSelect(position)
+      return
+    }
     select(position)
     // in collection mode a click says "I have this card" or takes it back
     if (collecting && slot.cardRef) setOwned(position, !slot.owned)
@@ -198,7 +220,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
       data-owned={slot.cardRef ? String(slot.owned) : undefined}
       data-variant={slot.cardRef?.variant}
       data-lang={slot.cardRef?.lang}
-      onClick={handleClick}
+      onClick={(event) => handleClick({ toggle: event.ctrlKey || event.metaKey, range: event.shiftKey })}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()

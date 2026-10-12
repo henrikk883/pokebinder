@@ -29,6 +29,8 @@ export function PageControls({ spread, spreadCount }: PageControlsProps) {
   const showSpread = useEditorStore((state) => state.showSpread)
   const mode = useEditorStore((state) => state.mode)
   const setMode = useEditorStore((state) => state.setMode)
+  const multiMode = useEditorStore((state) => state.multiMode)
+  const setMultiMode = useEditorStore((state) => state.setMultiMode)
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -48,6 +50,19 @@ export function PageControls({ spread, spreadCount }: PageControlsProps) {
           </button>
         ))}
       </div>
+      {mode === 'edit' && (
+        <button
+          type="button"
+          aria-pressed={multiMode}
+          title={de.multi.toggleHint}
+          onClick={() => setMultiMode(!multiMode)}
+          className={`h-10 rounded-control border px-3 text-sm ${
+            multiMode ? 'border-accent bg-accent text-white' : 'border-line bg-raised hover:border-accent'
+          }`}
+        >
+          {de.multi.toggle}
+        </button>
+      )}
 
       <div className="flex items-center gap-3">
         <button

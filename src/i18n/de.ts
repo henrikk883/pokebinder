@@ -349,6 +349,18 @@ export const de = {
     emptyList: 'Diese Liste ist leer. Im Info-Fenster einer Karte legst du fest, auf welchen Listen sie steht.',
     count: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} gemerkt`,
   },
+  multi: {
+    toggle: 'Mehrere auswählen',
+    toggleHint: 'Jeder Klick auf ein Pocket wählt es dazu oder ab. Am PC geht das auch mit Strg-Klick, mit Umschalt-Klick ein ganzer Bereich.',
+    count: (pockets: number, cards: number) =>
+      `${pockets} Pockets ausgewählt, ${cards === 1 ? '1 Karte' : `${cards} Karten`}`,
+    allOwned: 'Alle vorhanden',
+    allMissing: 'Alle fehlen',
+    clear: 'Pockets leeren',
+    deselect: 'Auswahl aufheben',
+    moveHint: 'Zum Verschieben eine der ausgewählten Karten ziehen: Die anderen kommen mit und behalten ihren Abstand.',
+    noRoom: 'Dorthin passen die ausgewählten Karten nicht: Sie würden über den Binder hinausreichen.',
+  },
   trade: {
     menu: 'Tauschliste (doppelte Karten)',
     title: (name: string) => `Tauschliste – ${name}`,

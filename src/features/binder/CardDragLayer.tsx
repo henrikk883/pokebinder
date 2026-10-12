@@ -65,6 +65,18 @@ export function CardDragLayer({ children }: { children: ReactNode }) {
     if (!isDragSource(dragged) || !isDropTarget(target)) return
 
     let source = dragged
+    const editor = useEditorStore.getState()
+    const grabbed = source.kind === 'pocket' ? source.position : undefined
+    if (
+      grabbed &&
+      editor.multi.some((other) => other.pageId === grabbed.pageId && other.slotIndex === grabbed.slotIndex)
+    ) {
+      const moved = binderStore.getState().moveCards(editor.multi, grabbed, target.position)
+      // the cards stay selected where they now lie, ready for the next step
+      if (moved) editor.selectMany(moved)
+      else editor.setNotice(de.multi.noRoom)
+      return
+    }
     if (source.kind === 'search') {
       // A card from the search arrives in the finish it really has: one that only exists
       // as holo is placed as holo. The finishes of its set are usually known already.

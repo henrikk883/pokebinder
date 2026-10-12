@@ -179,10 +179,20 @@ export function SelectionPanel() {
   const select = useEditorStore((state) => state.select)
   const collecting = useEditorStore((state) => state.mode === 'collection')
   const selection = useEditorStore((state) => state.selection)
+  const multi = useEditorStore((state) => state.multi)
+  const clearSlots = useBinderStore((state) => state.clearSlots)
+  const setOwnedMany = useBinderStore((state) => state.setOwnedMany)
   const [editingCover, setEditingCover] = useState(false)
 
-  const page = selection ? binder?.pages.find((entry) => entry.id === selection.pageId) : undefined
-  const slot = selection ? page?.slots[selection.slotIndex] : undefined
+  // several pockets have actions of their own; the details of a single one would mislead
+  const several = multi.length > 1
+  const page = selection && !several ? binder?.pages.find((entry) => entry.id === selection.pageId) : undefined
+  const slot = selection && !several ? page?.slots[selection.slotIndex] : undefined
+  const selectedCards = several
+    ? multi.filter(
+        (position) => binder?.pages.find((entry) => entry.id === position.pageId)?.slots[position.slotIndex]?.cardRef,
+      ).length
+    : 0
 
   /** Turns to where the selected page lies after it moved, and keeps its pocket selected. */
   function follow(toIndex: number) {
@@ -195,7 +205,41 @@ export function SelectionPanel() {
     <section className="space-y-6 p-4">
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">{de.selection.title}</h2>
-        {page && slot ? (
+        {several ? (
+          <div data-testid="multi-selection" className="space-y-3">
+            <p className="text-sm">{de.multi.count(multi.length, selectedCards)}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                disabled={selectedCards === 0}
+                onClick={() => setOwnedMany(multi, true)}
+                className={pageButtonClass}
+              >
+                {de.multi.allOwned}
+              </button>
+              <button
+                type="button"
+                disabled={selectedCards === 0}
+                onClick={() => setOwnedMany(multi, false)}
+                className={pageButtonClass}
+              >
+                {de.multi.allMissing}
+              </button>
+            </div>
+            <button
+              type="button"
+              disabled={selectedCards === 0}
+              onClick={() => clearSlots(multi)}
+              className="flex h-10 w-full items-center justify-center rounded-control border border-danger/70 text-sm text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:border-line disabled:text-muted disabled:hover:bg-transparent"
+            >
+              {de.multi.clear}
+            </button>
+            <button type="button" onClick={() => select(null)} className={outlineButtonClass}>
+              {de.multi.deselect}
+            </button>
+            <p className="text-xs text-muted">{de.multi.moveHint}</p>
+          </div>
+        ) : page && slot ? (
           <SelectedCard page={page} slot={slot} />
         ) : (
           <p className="text-sm text-muted">{de.selection.empty}</p>

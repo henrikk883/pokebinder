@@ -179,7 +179,7 @@ test('an existing master set can be changed afterwards: promos, holo variants, s
   await expect(page.getByTestId('progress')).toContainText('2 / 204 Karten gesammelt')
 
   // the dialog opens with what the binder was built with
-  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Master Set anpassen' }).click()
   const settings = page.getByRole('dialog', { name: 'Master Set anpassen' })
   await expect(settings.getByTestId('master-set-summary')).toHaveText(
@@ -213,7 +213,7 @@ test('an existing master set can be changed afterwards: promos, holo variants, s
 
   // and back: the promos and reverse holos are deleted, the rest moves up
   await page.reload()
-  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Master Set anpassen' }).click()
   await expect(settings.getByRole('switch', { name: /Promos/ })).toBeChecked()
   await expect(settings.getByRole('switch', { name: /Mit Holo-Varianten/ })).toBeChecked()
@@ -236,7 +236,7 @@ test('cancelling the change leaves the master set as it is, and empty binders ha
   const dialog = await startMasterSet(page, /^151/)
   await create(page, dialog, '151')
 
-  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Master Set anpassen' }).click()
   const settings = page.getByRole('dialog', { name: 'Master Set anpassen' })
   await settings.getByRole('switch', { name: /Promos/ }).check()
@@ -248,7 +248,7 @@ test('cancelling the change leaves the master set as it is, and empty binders ha
   await page.getByRole('dialog').getByLabel('Name').fill('Leer')
   await page.getByRole('dialog').getByRole('button', { name: 'Anlegen' }).click()
   await expect(page.getByRole('heading', { name: 'Leer', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
   await expect(page.getByRole('menuitem', { name: 'Binder umbenennen' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Master Set anpassen' })).toHaveCount(0)
 })

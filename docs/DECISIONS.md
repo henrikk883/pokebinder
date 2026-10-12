@@ -363,3 +363,10 @@ Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket
 - „Fehlliste“ → „Tauschliste (doppelte Karten)“: jede Karte mit den Exemplaren über das eine im Binder hinaus, Preistrend je Stück und Summe. Dieselbe Ansicht wie die Einkaufsliste, ohne Budget.
 - „Wert berechnen“ zählt jedes Exemplar einer vorhandenen Karte.
 - Gezählt wird pro Pocket in einem Binder. Dieselbe Karte in zwei Pockets oder zwei Bindern wird nicht zusammengezählt.
+
+## 2026-10-12 – Mehrere Karten auf einmal
+- Auswählen: Strg-Klick (am Mac ⌘) nimmt ein Pocket zur Auswahl dazu oder heraus, Umschalt-Klick wählt alles vom zuletzt gewählten bis zum angeklickten Pocket, auch über die Doppelseite. Ohne Tastatur gibt es den Umschalter „Mehrere auswählen“ neben „Bearbeiten / Sammlung“: Solange er an ist, wählt jeder Klick ein Pocket dazu oder ab. Ein normaler Klick wählt wieder ein einzelnes Pocket; Umblättern hebt die Auswahl auf.
+- Ab zwei Pockets zeigt die rechte Spalte statt der Karten-Details: „Alle vorhanden“, „Alle fehlen“, „Pockets leeren“, „Auswahl aufheben“. Entf leert alle, Esc hebt die Auswahl auf.
+- Verschieben: Zieht man eine der ausgewählten Karten, kommen die anderen mit. Jede rückt in Leserichtung um gleich viele Pockets weiter (oder zurück), auch über Seiten; die Abstände bleiben. Karten, die am Ziel liegen, rücken in die frei werdenden Pockets. Würde eine Karte über den Binder hinausreichen, bleibt alles liegen und ein Hinweis erscheint.
+- Besitz-Markierungen und Stückzahlen wandern mit. Im Modus „Sammlung“ gibt es keine Mehrfachauswahl: Dort bedeutet ein Klick „vorhanden / fehlt“.
+- Leere Pockets lassen sich mit auswählen, zählen bei den Aktionen aber nicht.

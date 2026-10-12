@@ -32,8 +32,12 @@ function useEditorKeys(spreadCount: number) {
       const current = clampSpread(editor.spreadIndex, spreadCount)
       if (event.key === 'ArrowLeft') editor.showSpread(clampSpread(current - 1, spreadCount))
       else if (event.key === 'ArrowRight') editor.showSpread(clampSpread(current + 1, spreadCount))
-      else if (event.key === 'Delete' && editor.selection) {
+      else if (event.key === 'Delete' && editor.multi.length > 1) {
+        binderStore.getState().clearSlots(editor.multi)
+      } else if (event.key === 'Delete' && editor.selection) {
         binderStore.getState().clearSlot(editor.selection)
+      } else if (event.key === 'Escape' && editor.multi.length > 1) {
+        editor.select(null)
       }
     }
     window.addEventListener('keydown', handleKey)

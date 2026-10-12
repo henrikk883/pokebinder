@@ -535,3 +535,85 @@ export function closeGap(binder: Binder, position: SlotPosition, ctx: ModelConte
   }
   return writeSlots(binder, writes, ctx)
 }
+
+/** The pockets from one to another in reading order, both included, whichever comes first. */
+export function pocketsBetween(binder: Binder, from: SlotPosition, to: SlotPosition): SlotPosition[] {
+  const pockets = pocketsInOrder(binder)
+  const a = pockets.findIndex((pocket) => samePosition(pocket.position, from))
+  const b = pockets.findIndex((pocket) => samePosition(pocket.position, to))
+  if (a < 0 || b < 0) return []
+  return pockets.slice(Math.min(a, b), Math.max(a, b) + 1).map((pocket) => pocket.position)
+}
+
+/** Empties several pockets at once. */
+export function clearSlots(
+  binder: Binder,
+  positions: readonly SlotPosition[],
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const filled = positions.filter((position) => findSlot(binder, position).cardRef)
+  if (filled.length === 0) return binder
+  return writeSlots(
+    binder,
+    filled.map((position) => ({ position, content: { owned: false } })),
+    ctx,
+  )
+}
+
+/** Marks the cards in several pockets as owned or missing; empty pockets are passed over. */
+export function setOwnedMany(
+  binder: Binder,
+  positions: readonly SlotPosition[],
+  owned: boolean,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const writes = positions.flatMap((position) => {
+    const slot = findSlot(binder, position)
+    // marking as missing forgets how many copies there were, as for a single card
+    return slot.cardRef && slot.owned !== owned ? [{ position, content: { cardRef: slot.cardRef, owned } }] : []
+  })
+  return writes.length === 0 ? binder : writeSlots(binder, writes, ctx)
+}
+
+/**
+ * Moves several cards together, as when one of them is dragged from \`dragged\` to
+ * \`target\`: each goes as many pockets on (or back) in reading order as that one does, so
+ * they keep their distances. Cards that lie where they land move into the pockets that
+ * become free, in reading order. Returns the binder and where the moved cards now are, or
+ * \`null\` if one of them would land outside the binder.
+ */
+export function moveCards(
+  binder: Binder,
+  positions: readonly SlotPosition[],
+  dragged: SlotPosition,
+  target: SlotPosition,
+  ctx: ModelContext = defaultContext,
+): { binder: Binder; moved: SlotPosition[] } | null {
+  const pockets = pocketsInOrder(binder)
+  const indexOf = (position: SlotPosition) => pockets.findIndex((pocket) => samePosition(pocket.position, position))
+  const step = indexOf(target) - indexOf(dragged)
+  // only pockets with a card take part, each once, in reading order
+  const from = [...new Set(positions.map(indexOf))]
+    .filter((index) => index >= 0 && pockets[index]?.slot.cardRef)
+    .sort((a, b) => a - b)
+  const to = from.map((index) => index + step)
+  if (to.some((index) => index < 0 || index >= pockets.length)) return null
+  const moved = to.flatMap((index) => (pockets[index] ? [pockets[index].position] : []))
+  if (step === 0 || from.length === 0) return { binder, moved }
+
+  const freed = from.filter((index) => !to.includes(index))
+  const displaced = to.filter((index) => !from.includes(index))
+  const writes: { position: SlotPosition; content: SlotContent }[] = []
+  from.forEach((source, k) => {
+    const origin = pockets[source]
+    const destination = pockets[to[k] ?? -1]
+    if (origin && destination) writes.push({ position: destination.position, content: contentOf(origin.slot) })
+  })
+  // what lay in the way takes the places that became free; where nothing lay, they stay empty
+  freed.forEach((index, k) => {
+    const place = pockets[index]
+    const other = pockets[displaced[k] ?? -1]
+    if (place) writes.push({ position: place.position, content: other ? contentOf(other.slot) : { owned: false } })
+  })
+  return { binder: writeSlots(binder, writes, ctx), moved }
+}

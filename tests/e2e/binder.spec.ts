@@ -373,7 +373,7 @@ test('changing the layout redistributes the cards after a question', async ({ pa
   }
 
   // the layout sits in the menu "Mehr", with the current one ticked
-  const more = page.getByRole('button', { name: 'Mehr' })
+  const more = page.getByRole('button', { name: 'Mehr', exact: true })
   await more.click()
   await expect(page.getByRole('menuitemradio', { name: '2 × 2' })).toHaveAttribute('aria-checked', 'true')
   await page.getByRole('menuitemradio', { name: '3 × 3' }).click()
@@ -546,7 +546,7 @@ test('a binder is renamed in the editor and in the list; undo takes the name bac
   await createBinder(page, 'Kanto')
   await expect(page.getByRole('region', { name: 'Cover-Innenseite' })).toContainText('Kanto')
 
-  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Binder umbenennen' }).click()
   const prompt = page.getByRole('dialog', { name: 'Binder umbenennen' })
   await expect(prompt.getByLabel('Name')).toHaveValue('Kanto')
@@ -564,7 +564,7 @@ test('a binder is renamed in the editor and in the list; undo takes the name bac
   await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
 
   // an empty name or "cancel" changes nothing
-  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Binder umbenennen' }).click()
   await prompt.getByRole('button', { name: 'Abbrechen' }).click()
   await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
@@ -589,7 +589,7 @@ test('the toolbar fits in one row; rarely used actions sit under "Mehr"', async 
   expect(Math.abs((await top(page.getByRole('button', { name: 'Sortieren' }))) - (await top(addPage)))).toBeLessThan(2)
   expect(Math.abs((await top(heading)) - (await top(addPage)))).toBeLessThan(12)
 
-  await page.getByRole('button', { name: 'Mehr' }).click()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
   await expect(page.getByRole('menuitem')).toHaveText(['Binder umbenennen'])
   await expect(page.getByRole('menuitemradio')).toHaveText(['2 × 2', '✓3 × 3', '4 × 4'])
 })
@@ -756,4 +756,94 @@ test('a gap is made between cards and closed again; the cards behind it move alo
   await pocket(page, 1, 1).click()
   await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
   await expect(insert).toHaveCount(0)
+})
+
+test('several pockets are selected together and moved, marked and emptied as one', async ({ page }) => {
+  await createBinder(page, 'Mehrere')
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const ids = ['sv03.5-001', 'sv03.5-002', 'sv03.5-003']
+  for (const [index, id] of ids.entries()) {
+    await drag(page, tile(page, id), pocket(page, 1, index + 1))
+    await expect(pocket(page, 1, index + 1)).toHaveAttribute('data-card-id', id)
+  }
+  /** Card ids of the page in reading order, "" for an empty pocket. */
+  const cards = () =>
+    page.getByTestId('pocket').evaluateAll((pockets) => pockets.map((entry) => entry.getAttribute('data-card-id')))
+  const selected = () =>
+    page
+      .getByTestId('pocket')
+      .evaluateAll((pockets) => pockets.flatMap((entry, index) => (entry.getAttribute('aria-pressed') === 'true' ? [index + 1] : [])))
+  const panel = page.getByTestId('multi-selection')
+
+  // Ctrl adds a pocket to the selection and takes it out again
+  await pocket(page, 1, 1).click()
+  await expect(panel).toHaveCount(0)
+  await pocket(page, 1, 2).click({ modifiers: ['ControlOrMeta'] })
+  await expect.poll(selected).toEqual([1, 2])
+  await expect(panel).toContainText('2 Pockets ausgewählt, 2 Karten')
+  // the details of a single card make room for what can be done with all
+  await expect(page.getByTestId('selected-rarity')).toHaveCount(0)
+  await pocket(page, 1, 2).click({ modifiers: ['ControlOrMeta'] })
+  await expect.poll(selected).toEqual([1])
+  await expect(panel).toHaveCount(0)
+
+  // Shift takes everything from the pocket selected last to the one clicked
+  await pocket(page, 1, 3).click({ modifiers: ['Shift'] })
+  await expect.poll(selected).toEqual([1, 2, 3])
+  await expect(panel).toContainText('3 Pockets ausgewählt, 3 Karten')
+
+  // one of them dragged two pockets on: all three go along
+  await drag(page, pocket(page, 1, 1), pocket(page, 1, 3))
+  await expect.poll(cards).toEqual(['', '', ids[0], ids[1], ids[2], '', '', '', ''])
+  await expect.poll(selected).toEqual([3, 4, 5])
+
+  // past the end of the binder they do not fit: nothing moves, and a word says why
+  await drag(page, pocket(page, 1, 3), pocket(page, 1, 9))
+  await expect(page.getByRole('alert')).toHaveText(/passen die ausgewählten Karten nicht/)
+  await expect.poll(cards).toEqual(['', '', ids[0], ids[1], ids[2], '', '', '', ''])
+
+  // all marked as missing, and as there again
+  await panel.getByRole('button', { name: 'Alle fehlen' }).click()
+  await expect(page.locator('[data-testid="pocket"][data-owned="false"]')).toHaveCount(3)
+  await panel.getByRole('button', { name: 'Alle vorhanden' }).click()
+  await expect(page.locator('[data-testid="pocket"][data-owned="true"]')).toHaveCount(3)
+
+  // a plain click selects one pocket again
+  await pocket(page, 1, 4).click()
+  await expect.poll(selected).toEqual([4])
+  await expect(panel).toHaveCount(0)
+
+  // without a keyboard: the mode in which every click adds or removes a pocket
+  const mode = page.getByRole('button', { name: 'Mehrere auswählen' })
+  await mode.click()
+  await expect(mode).toHaveAttribute('aria-pressed', 'true')
+  await pocket(page, 1, 3).click()
+  await pocket(page, 1, 9).click()
+  await expect.poll(selected).toEqual([3, 4, 9])
+  await expect(panel).toContainText('3 Pockets ausgewählt, 2 Karten')
+  await mode.click()
+
+  // emptied together, by button or by the Delete key; one step back brings them all
+  await panel.getByRole('button', { name: 'Pockets leeren' }).click()
+  await expect.poll(cards).toEqual(['', '', '', '', ids[2], '', '', '', ''])
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect.poll(cards).toEqual(['', '', ids[0], ids[1], ids[2], '', '', '', ''])
+  await pocket(page, 1, 3).click()
+  await pocket(page, 1, 5).click({ modifiers: ['Shift'] })
+  await page.keyboard.press('Delete')
+  await expect.poll(cards).toEqual(['', '', '', '', '', '', '', '', ''])
+
+  // "Auswahl aufheben" and Escape let go of the selection
+  await expect.poll(selected).toEqual([3, 4, 5])
+  await page.keyboard.press('Escape')
+  await expect.poll(selected).toEqual([])
+  await pocket(page, 1, 1).click()
+  await pocket(page, 1, 2).click({ modifiers: ['ControlOrMeta'] })
+  await panel.getByRole('button', { name: 'Auswahl aufheben' }).click()
+  await expect.poll(selected).toEqual([])
+
+  // while cards are ticked off a click keeps its meaning there
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  await expect(mode).toHaveCount(0)
 })
