@@ -387,3 +387,53 @@ test('a card is noted on lists of its own from its info; lists are made, renamed
   await expect(list.getByTestId('card-tile')).toHaveCount(1)
   await expect(page.getByTestId('saved-count')).toHaveText('1')
 })
+
+test('a list adds up what its cards would cost, beside the binder and on the page "Karten"', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  await page.getByRole('dialog').getByLabel('Name').fill('Kosten')
+  await page.getByRole('button', { name: 'Anlegen' }).click()
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const results = page.getByTestId('search-results')
+  for (const id of ['sv03.5-001', 'sv03.5-009']) {
+    const tile = results.locator(`[data-card-id="${id}"]`)
+    await tile.scrollIntoViewIfNeeded()
+    await tile.hover()
+    await tile.getByRole('button', { name: /merken$/ }).click()
+  }
+  /** "Summe: 1.234,50 €" → 1234.5 */
+  const euros = (text: string) =>
+    Number((/Summe: ([0-9.,]+) €/.exec(text)?.[1] ?? '').replaceAll('.', '').replace(',', '.'))
+
+  // beside the binder the sum stands at the bottom of the list, worked out on request
+  await page.getByRole('tab', { name: /^Merkliste/ }).click()
+  const worth = page.getByTestId('list-worth')
+  await expect(worth.getByTestId('list-value')).toHaveCount(0)
+  await worth.getByRole('button', { name: 'Wert berechnen' }).click()
+  await expect(worth.getByTestId('list-value')).toHaveText(/^Summe: [0-9.]+,[0-9]{2} €/)
+  const total = euros((await worth.getByTestId('list-value').textContent()) ?? '')
+  expect(total).toBeGreaterThan(0)
+  // the sum takes the place of the button
+  await expect(worth.getByRole('button', { name: 'Wert berechnen' })).toHaveCount(0)
+
+  // a changed list has no sum until it is asked for again
+  const noted = page.getByTestId('watchlist').locator('[data-card-id="sv03.5-009"]')
+  await noted.getByRole('button', { name: /von der Merkliste nehmen$/ }).click()
+  await expect(worth.getByTestId('list-value')).toHaveCount(0)
+  await worth.getByRole('button', { name: 'Wert berechnen' }).click()
+  await expect(worth.getByTestId('list-value')).toHaveText(/^Summe: [0-9.]+,[0-9]{2} €/)
+  expect(euros((await worth.getByTestId('list-value').textContent()) ?? '')).toBeLessThanOrEqual(total)
+
+  // the same on the page "Karten", beside the number of cards
+  await page.getByRole('banner').getByRole('button', { name: 'Karten' }).click()
+  await page.getByTestId('page').getByRole('tab', { name: /^Merkliste/ }).click()
+  const wide = page.getByTestId('browse-watchlist')
+  await wide.getByRole('button', { name: 'Wert berechnen' }).click()
+  await expect(wide.getByTestId('list-value')).toHaveText(/^Summe: [0-9.]+,[0-9]{2} €/)
+
+  // an empty list has nothing to add up
+  await wide.getByRole('button', { name: /von der Merkliste nehmen$/ }).click()
+  await expect(wide.getByRole('button', { name: 'Wert berechnen' })).toHaveCount(0)
+  await expect(wide).toContainText('Noch nichts gemerkt.')
+})

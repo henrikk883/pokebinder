@@ -332,3 +332,6 @@ Im Modus „Sammlung“ wird nichts hineingezogen, deshalb ist die Suche dort ei
 - Im Reiter „Merkliste“ neben dem Binder und auf der Seite „Karten“ wählt man die angezeigte Liste aus (mit Anzahl); daneben „Neue Liste“, „Umbenennen“, „Löschen“ (mit Rückfrage). Beide Stellen zeigen dieselbe gewählte Liste.
 - Der Stern ist gefüllt, wenn die Karte auf „Schnellmerken“ steht, und nur farbig umrandet, wenn sie ausschließlich auf einer anderen Liste steht. Die Zahl am Reiter zählt verschiedene gemerkte Karten über alle Listen.
 - Gespeichert im `localStorage` (`pokebinder:watchlists`), noch nicht im Backup; das kommt mit „Geräte abgleichen“.
+
+## 2026-10-12 – Summe einer Merkliste
+Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket-Preistrends ihrer Karten, mit der Zahl der Karten ohne Preis. Neben dem Binder steht sie unten an der Liste, auf der Seite „Karten“ neben der Kartenzahl. Eine Liste merkt Karten, keine Varianten; gerechnet wird deshalb mit der Grundvariante jeder Karte (normal, sonst Holo) – so, wie sie auch im Binder landet. Nach einer Änderung der Liste wird die Summe erst auf Wunsch neu berechnet. Von Henrik gewünscht.

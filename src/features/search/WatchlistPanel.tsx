@@ -7,6 +7,7 @@ import { useActiveList, useWatchlistStore } from '../../store/watchlistStore'
 import { useCard } from '../binder/useCard'
 import { CardTile } from './CardTile'
 import { listName } from './listName'
+import { ListWorth } from './ListWorth'
 import { useReadyCatalog } from './useCatalog'
 import { QUICK_LIST_ID, type SavedCard } from './watchlist'
 
@@ -150,9 +151,13 @@ export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap
           </p>
         ) : (
           <>
-            <p role="status" className="mb-3 text-xs text-muted">
-              {de.watchlist.count(cards.length)}
-            </p>
+            <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+              <p role="status" className="text-xs text-muted">
+                {de.watchlist.count(cards.length)}
+              </p>
+              {/* on the wide page beside the count; beside the binder at the bottom, like the binder's value */}
+              {wide && <ListWorth key={active.id} cards={cards} />}
+            </div>
             <ul className={gridClass}>
               {cards.map((saved) => (
                 <SavedTile
@@ -168,6 +173,14 @@ export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap
           </>
         )}
       </div>
+      {!wide && cards.length > 0 && (
+        <div
+          data-testid="list-worth"
+          className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-line px-4 py-2 text-sm"
+        >
+          <ListWorth key={active.id} cards={cards} />
+        </div>
+      )}
       {draggable && cards.length > 0 && (
         <p className="shrink-0 border-t border-line px-4 py-2 text-xs text-muted">{de.search.dragHint}</p>
       )}

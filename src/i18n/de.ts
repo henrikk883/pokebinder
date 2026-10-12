@@ -342,6 +342,8 @@ export const de = {
     deleteTitle: (name: string) => `Liste „${name}“ löschen?`,
     deleteText: 'Die Liste wird mit allem, was darauf steht, gelöscht. Die Karten in deinen Bindern bleiben.',
     onOtherList: 'Steht auf einer Merkliste',
+    total: (amount: number) => `Summe: ${formatEuro(amount)} €`,
+    totalHint: 'Cardmarket-Preistrend, jede Karte in ihrer Grundvariante (normal, sonst Holo).',
     emptyQuick: 'Noch nichts gemerkt. Der Stern auf einer Karte setzt sie auf diese Liste.',
     emptyList: 'Diese Liste ist leer. Im Info-Fenster einer Karte legst du fest, auf welchen Listen sie steht.',
     count: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} gemerkt`,
