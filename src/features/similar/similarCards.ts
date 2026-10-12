@@ -1,4 +1,4 @@
-import { colourDistance, similarColours, type ColourIndex } from './similarColours'
+import { colourDistance, type ColourIndex } from './similarColours'
 
 /**
  * What an image model sees in the cards of the high rarities, worked out ahead by
@@ -45,31 +45,56 @@ export function lookLikeness(looks: LookIndex, a: number, b: number): number {
 }
 
 /**
- * The cards of the high rarities most like `cardId`, the most alike first: by what the
- * image model sees and by their colours together. Where the model has not looked at the
- * card asked about (a common card, or no `looks` at all) the colours alone decide.
- * `undefined` where nothing is known of that card.
+ * The cards of the high rarities that fit `cardIds` best, the best first: by what the image
+ * model sees and by their colours together, added up over the cards asked with. Asking
+ * with several cards of one mood finds more of that mood than asking with one. Where the
+ * model has not looked at a card asked with (a common card, or no `looks` at all) its
+ * colours alone count. The cards asked with and those in `without` are left out.
+ * `undefined` where nothing is known of any of the cards.
  */
+export function cardsFitting(
+  colours: ColourIndex,
+  looks: LookIndex | undefined,
+  cardIds: readonly string[],
+  count: number,
+  without: readonly string[] = [],
+): string[] | undefined {
+  const colourAt = new Map(colours.ids.map((id, position) => [id, position]))
+  const lookAt = new Map((looks?.ids ?? []).map((id, position) => [id, position]))
+  const asked = [...new Set(cardIds)].flatMap((id) => {
+    const colour = colourAt.get(id)
+    return colour === undefined ? [] : [{ colour, look: lookAt.get(id) }]
+  })
+  if (asked.length === 0) return undefined
+
+  const left = new Set([...cardIds, ...without])
+  const others: { id: string; likeness: number }[] = []
+  colours.ids.slice(0, colours.rare).forEach((id, position) => {
+    if (left.has(id)) return
+    const look = lookAt.get(id)
+    let likeness = 0
+    for (const card of asked) {
+      const byColour = 1 - colourDistance(colours.signatures, card.colour, position)
+      if (!looks || card.look === undefined) {
+        likeness += byColour
+        continue
+      }
+      const byLook = look === undefined ? UNKNOWN_LIKENESS : lookLikeness(looks, card.look, look)
+      likeness += byLook * (1 - COLOUR_WEIGHT) + byColour * COLOUR_WEIGHT
+    }
+    others.push({ id, likeness })
+  })
+  // equally fitting cards stay in the order of the index, so the answer is always the same
+  others.sort((a, b) => b.likeness - a.likeness)
+  return others.slice(0, count).map((entry) => entry.id)
+}
+
+/** The cards of the high rarities most like one card; see `cardsFitting`. */
 export function similarCards(
   colours: ColourIndex,
   looks: LookIndex | undefined,
   cardId: string,
   count: number,
 ): string[] | undefined {
-  const ownLook = looks ? looks.ids.indexOf(cardId) : -1
-  if (!looks || ownLook === -1) return similarColours(colours, cardId, count)
-  const ownColour = colours.ids.indexOf(cardId)
-  if (ownColour === -1) return undefined
-
-  const lookAt = new Map(looks.ids.map((id, position) => [id, position]))
-  const others: { id: string; likeness: number }[] = []
-  colours.ids.slice(0, colours.rare).forEach((id, position) => {
-    if (position === ownColour) return
-    const look = lookAt.get(id)
-    const byLook = look === undefined ? UNKNOWN_LIKENESS : lookLikeness(looks, ownLook, look)
-    const byColour = 1 - colourDistance(colours.signatures, ownColour, position)
-    others.push({ id, likeness: byLook * (1 - COLOUR_WEIGHT) + byColour * COLOUR_WEIGHT })
-  })
-  others.sort((a, b) => b.likeness - a.likeness)
-  return others.slice(0, count).map((entry) => entry.id)
+  return cardsFitting(colours, looks, [cardId], count)
 }

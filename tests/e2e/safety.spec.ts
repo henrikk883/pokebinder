@@ -64,7 +64,7 @@ test.describe('saving everything', () => {
     await pocket(page, 1, 1).click()
     await page.getByLabel('Bild hinzufügen').setInputFiles(pngFile('wald.png', makePng(200, 200, [20, 120, 40])))
     await expect(pocket(page, 1, 1)).toHaveAttribute('data-over-image', 'true')
-    await page.getByRole('tab', { name: 'Eigene Bilder' }).click()
+    await page.getByRole('tab', { name: 'Bilder' }).click()
     await page.getByLabel('Bilddateien auswählen').setInputFiles(pngFile('lose.png', makePng(100, 100, [200, 30, 30])))
     await expect(page.getByTestId('library-image')).toHaveCount(2)
     await toList(page).click()
@@ -95,7 +95,7 @@ test.describe('saving everything', () => {
     // several binders came back: they are listed, none is opened unasked
     await expect(page.getByRole('button', { name: 'Kanto öffnen' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Johto öffnen' })).toBeVisible()
-    await page.getByRole('tab', { name: 'Eigene Bilder' }).click()
+    await page.getByRole('tab', { name: 'Bilder' }).click()
     await expect(page.getByTestId('library-image')).toHaveCount(2)
     await page.getByRole('button', { name: 'Kanto öffnen' }).click()
     await expect(pocket(page, 1, 5)).toHaveAttribute('data-card-id', 'sv03.5-006')

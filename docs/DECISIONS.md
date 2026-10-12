@@ -627,3 +627,11 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Zehn Farben: Rot, Orange, Gelb, Grün, Türkis, Blau, Violett, Pink, Schwarz, Weiß. Eine Karte hat eine Farbe, wenn mindestens ein Viertel ihres Bildes diese Farbe hat (aus der Farbkennung); eine Karte kann so zu zwei Farben gehören.
 - Nur Farbe: die Karten der hohen Seltenheiten mit dem größten Anteil dieser Farbe zuerst, höchstens 144. Thema und Farbe: die Karten des Themas, die diese Farbe haben, in der Reihenfolge des Themas.
 - Braun und Gold gibt es nicht als eigene Farbe: Die Farbkennung trennt sie nicht sauber von dunklem Orange und Gelb.
+
+## 2026-10-12 – Größere Bildmodelle verglichen; „Passend“ neben dem Binder
+- Henrik fand die Treffer „okay, aber eher mittel“ und wollte aufwändigere Auswertungen ausprobieren. Verglichen an seiner Herbstseite (neun Karten; wie viele der acht anderen stehen unter den ersten 24, von 72): jetziges Modell mit Farben 25; CLIP Large mit Farben 22–26; CLIP Base/16 17–20; SigLIP 21; DINOv2 8; alle Modelle zusammen 26; Vergleich über ein „Stimmungsprofil“ aus 72 Beschreibungen 16–21. Größere Modelle bringen also nichts; das Modell bleibt.
+- Geholfen hat nur, mit mehreren Karten gleichzeitig zu fragen: von 35 % der übrigen Karten unter den ersten 24 (eine Karte) auf 42 % (drei) und 47 % (fünf).
+- Daraus gebaut: Reiter „Passend“ in der Spalte neben dem Binder. Gefragt wird mit allen Karten der aufgeschlagenen Seiten; die Ähnlichkeiten werden addiert. Karten, die schon irgendwo im Binder liegen, werden nicht vorgeschlagen. Die Vorschläge lassen sich wie Suchtreffer in den Binder ziehen und passen sich an, sobald eine Karte dazukommt.
+- Damit vier Reiter in die schmale Spalte passen, heißt „Eigene Bilder“ dort nur noch „Bilder“.
+- Vorgemerkt, nicht gebaut (Henrik, 12.10.2026): jede Karte von einem großen Sprachmodell beschreiben lassen (Stichworte zu Jahreszeit, Ort, Stimmung) für eine freie Textsuche. Braucht einen bezahlten Dienst und einen API-Schlüssel; erst an etwa 50 Karten Kosten und Nutzen testen.
+- Nebenbei: Ein Test zum Teilen-Link schlug zufällig fehl, wenn der zufällige Link auf „x“ endete (der Test tauschte das letzte Zeichen gegen „x“). Der Test ist korrigiert; am Server war nichts falsch.

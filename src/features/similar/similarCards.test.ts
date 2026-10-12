@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { lookLikeness, similarCards, type LookIndex } from './similarCards'
+import { cardsFitting, lookLikeness, similarCards, type LookIndex } from './similarCards'
 import { SIGNATURE_LENGTH, type ColourIndex } from './similarColours'
 
 /** Cards given by one colour bin each; the first `rare` are of the high rarities. */
@@ -53,5 +53,35 @@ describe('similarCards', () => {
   it('offers cards of the high rarities only, and has no answer for an unknown card', () => {
     expect(similarCards(colours, looks, 'query', 9)).not.toContain('common')
     expect(similarCards(colours, looks, 'sv2a-001', 3)).toBeUndefined()
+  })
+})
+
+describe('cardsFitting', () => {
+  // two moods: "a" cards point one way and are of colour 1, "b" cards the other way and of colour 9
+  const colours = coloursOf({ a1: 1, a2: 1, a3: 1, b1: 9, b2: 9, between: 5, common: 1 }, 6)
+  const looks = looksOf({ a1: [100, 0], a2: [95, 10], a3: [90, 20], b1: [0, 100], b2: [10, 95], between: [70, 70] })
+
+  it('adds up over the cards asked with and leaves them out of the answer', () => {
+    expect(cardsFitting(colours, looks, ['a1', 'a2'], 2)).toEqual(['a3', 'between'])
+    expect(cardsFitting(colours, looks, ['b1'], 1)).toEqual(['b2'])
+  })
+
+  it('finds cards of both moods when asked with one of each', () => {
+    expect(cardsFitting(colours, looks, ['a1', 'b1'], 4)).toEqual(['a3', 'a2', 'b2', 'between'])
+  })
+
+  it('leaves out the cards named, e.g. those in the binder already', () => {
+    expect(cardsFitting(colours, looks, ['a1', 'a2'], 2, ['a3'])).toEqual(['between', 'b2'])
+  })
+
+  it('counts a card the model has not looked at by its colours, and skips cards nothing is known of', () => {
+    expect(cardsFitting(colours, looks, ['common', 'sv2a-001'], 3)).toEqual(['a1', 'a2', 'a3'])
+    expect(cardsFitting(colours, looks, ['sv2a-001'], 3)).toBeUndefined()
+    expect(cardsFitting(colours, looks, [], 3)).toBeUndefined()
+  })
+
+  it('counts a card asked with twice only once', () => {
+    // counted twice, the first mood would push the card of the other one to the end
+    expect(cardsFitting(colours, looks, ['b1', 'a1', 'a1'], 4)).toEqual(['a3', 'a2', 'b2', 'between'])
   })
 })

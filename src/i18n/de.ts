@@ -262,8 +262,9 @@ export const de = {
     title: 'Karten suchen',
     tabs: {
       cards: 'Karten',
-      images: 'Eigene Bilder',
+      images: 'Bilder',
       saved: 'Merkliste',
+      fitting: 'Passend',
     },
     placeholder: 'Name, Set oder Nummer',
     setFilter: 'Set',
@@ -688,6 +689,16 @@ export const de = {
     loadingMore: 'Die Karten werden geladen …',
     error: 'Die Auswertung der Karten konnte nicht geladen werden.',
     unknown: 'Diese Karte ist noch nicht ausgewertet. Das betrifft Karten, die es nicht auf Englisch gibt, und ganz neue Karten.',
+  },
+  fitting: {
+    tab: 'Passend',
+    title: (pages: string) => `Passend zu Seite ${pages}`,
+    hint: 'Karten der hohen Seltenheiten, die in Bild und Farben zu den Karten der aufgeschlagenen Seiten passen. Je mehr Karten einer Stimmung dort liegen, desto besser treffen die Vorschläge. Was schon im Binder liegt, fehlt hier.',
+    noBinder: 'Öffne einen Binder: Dann stehen hier Karten, die zu seinen Seiten passen.',
+    noCards: 'Auf den aufgeschlagenen Seiten liegt noch keine Karte. Lege ein paar hin, dann stehen hier passende Vorschläge.',
+    unknown: 'Die Karten dieser Seiten sind noch nicht ausgewertet. Das betrifft Karten, die es nicht auf Englisch gibt, und ganz neue Karten.',
+    loading: 'Passende Karten werden gesucht …',
+    error: 'Die Auswertung der Karten konnte nicht geladen werden.',
   },
   themes: {
     hint: 'Karten nach Stimmung und Farbe: Ein Bildmodell hat die Karten der hohen Seltenheiten vorab den Themen zugeordnet, die passendste zuerst. Das trifft meistens, aber nicht immer. Thema und Farbe lassen sich einzeln oder zusammen wählen.',

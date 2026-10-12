@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 
 const SIGNATURE_LENGTH = 52
@@ -216,4 +216,55 @@ test('a card whose colours are not known says so', async ({ page }) => {
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('button', { name: 'Ähnliche Karten' }).click()
   await expect(dialog).toContainText('Diese Karte ist noch nicht ausgewertet.')
+})
+
+async function drag(page: Page, from: Locator, to: Locator) {
+  await from.scrollIntoViewIfNeeded()
+  const start = await from.boundingBox()
+  const end = await to.boundingBox()
+  if (!start || !end) throw new Error('Drag source or target is not visible')
+  const x = start.x + start.width / 2
+  const y = start.y + start.height / 2
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x + 12, y + 12, { steps: 3 })
+  await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 12 })
+  await page.mouse.up()
+}
+
+test('beside a binder, the cards that fit its open pages are offered and dragged in', async ({ page }) => {
+  // Bisasam and Glumanda are of one colour, Schiggy and Pikachu of another
+  await mockColours(page, { 'sv03.5-001': { 0: 255 }, 'sv03.5-004': { 0: 255 }, 'sv03.5-007': { 36: 255 }, 'sv03.5-025': { 36: 255 } })
+  await mockLooks(page, {})
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await dialog.getByLabel('Name').fill('Stimmung')
+  await dialog.getByRole('button', { name: 'Anlegen' }).click()
+  await expect(page.getByRole('heading', { name: 'Stimmung' })).toBeVisible()
+  const pockets = page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket')
+  const column = page.getByTestId('column-left')
+  const fitting = page.getByTestId('fitting-results')
+
+  // an empty page has nothing to go by
+  await column.getByRole('tab', { name: 'Passend' }).click()
+  await expect(fitting).toContainText('Auf den aufgeschlagenen Seiten liegt noch keine Karte.')
+
+  // with a card on the page, the cards of its colour come first
+  await column.getByRole('tab', { name: 'Karten', exact: true }).click()
+  await column.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  await drag(page, column.locator('[data-testid="card-tile"][data-card-id="sv03.5-007"] img'), pockets.nth(0))
+  await expect(pockets.nth(0)).toHaveAttribute('data-card-id', 'sv03.5-007')
+  await column.getByRole('tab', { name: 'Passend' }).click()
+  await expect(column.getByRole('heading', { name: 'Passend zu Seite 1' })).toBeVisible()
+  const tiles = fitting.getByTestId('card-tile')
+  await expect(tiles).toHaveCount(3)
+  await expect(tiles.first()).toHaveAttribute('data-card-id', 'sv03.5-025')
+
+  // a card offered goes into the binder like one of the search, and is not offered again
+  await drag(page, tiles.first().locator('img'), pockets.nth(1))
+  await expect(pockets.nth(1)).toHaveAttribute('data-card-id', 'sv03.5-025')
+  await expect(tiles).toHaveCount(2)
+  await expect(fitting.locator('[data-card-id="sv03.5-025"]')).toHaveCount(0)
 })

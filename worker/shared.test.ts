@@ -108,7 +108,9 @@ describe('what a link shows', () => {
     expect((await open(`/shared/${token}/assets/forest/more`)).status).toBe(404)
     expect((await open(`/shared/${token}`, 'DELETE')).status).toBe(405)
     expect((await open('/shared/johto')).status).toBe(404)
-    expect((await open(`/shared/${token.slice(0, -1)}x`)).status).toBe(404)
+    // a link that differs in its last character; the token may end in "x" itself
+    const other = `${token.slice(0, -1)}${token.endsWith('x') ? 'y' : 'x'}`
+    expect((await open(`/shared/${other}`)).status).toBe(404)
   })
 
   it('stops working when the link is withdrawn or the binder deleted', async () => {

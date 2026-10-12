@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { mapWithConcurrency, tcgdexFor, type CardSummary } from '../../lib/tcgdex'
 import type { CardLang } from '../../types/binder'
 import { loadColourIndex, loadLookIndex } from './colourIndex'
-import { similarCards } from './similarCards'
+import { cardsFitting, similarCards } from './similarCards'
 import { cardsOfColour, sortByColour, type PictureColour } from './similarColours'
 
 /** How many similar cards are shown at first and added by "Mehr anzeigen", and how many at most. */
@@ -11,6 +11,10 @@ export const SIMILAR_MAX = 96
 /** The same for the cards of a theme; the most is what `scripts/looks/looks.mjs` keeps per theme. */
 export const THEME_STEP = 48
 export const THEME_MAX = 144
+
+/** The same for the cards that fit the open pages of a binder. */
+export const FITTING_STEP = 24
+export const FITTING_MAX = 96
 
 /** Order of the cards of a theme: as they fit the theme, or by the colours of their pictures. */
 export type ThemeOrder = 'fit' | 'colour'
@@ -57,6 +61,18 @@ async function findSimilar(cardId: string, lang: CardLang, count: number): Promi
     status: 'ready',
     cards: await cardsOf(ids.slice(0, count), lang),
     hasMore: ids.length > count && count < SIMILAR_MAX,
+    updating: false,
+  }
+}
+
+async function findFitting(cardIds: readonly string[], without: readonly string[], lang: CardLang, count: number): Promise<FoundCards> {
+  const [colours, looks] = await Promise.all([loadColourIndex(), loadLookIndex().catch(() => undefined)])
+  const ids = cardsFitting(colours, looks, cardIds, count + 1, without)
+  if (!ids) return { status: 'unknown' }
+  return {
+    status: 'ready',
+    cards: await cardsOf(ids.slice(0, count), lang),
+    hasMore: ids.length > count && count < FITTING_MAX,
     updating: false,
   }
 }
@@ -113,6 +129,25 @@ function useFound(group: string | undefined, key: string, find: () => Promise<Fo
 /** The `count` cards of the high rarities that look most like a card. */
 export function useSimilarCards(cardId: string, lang: CardLang, count: number): FoundCards {
   return useFound(`similar:${lang}:${cardId}`, String(count), () => findSimilar(cardId, lang, count))
+}
+
+/**
+ * The `count` cards that fit the cards `cardIds` best, without those in `without`. `place`
+ * names where they lie (a binder): while only its cards change, the answer of before stays
+ * in view. Loading while there is no card to ask with.
+ */
+export function useFittingCards(
+  place: string,
+  cardIds: readonly string[],
+  without: readonly string[],
+  lang: CardLang,
+  count: number,
+): FoundCards {
+  return useFound(
+    cardIds.length === 0 ? undefined : `fitting:${lang}:${place}`,
+    `${count}:${cardIds.join(',')}:${without.join(',')}`,
+    () => findFitting(cardIds, without, lang, count),
+  )
 }
 
 /** The `count` cards that fit a theme, a colour or both best; loading until one of them is chosen. */

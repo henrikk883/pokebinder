@@ -5,6 +5,7 @@ import { useEditorStore } from '../../store/editorStore'
 import { useWatchlistStore } from '../../store/watchlistStore'
 import type { CardLang } from '../../types/binder'
 import { ImageLibrary } from '../images/ImageLibrary'
+import { FittingPanel } from '../similar/FittingPanel'
 import { FilterSelect } from './FilterSelect'
 import { IllustratorInput } from './IllustratorInput'
 import { LanguageSelect } from './LanguageSelect'
@@ -16,7 +17,7 @@ import { savedCardCount } from './watchlist'
 import { useWishAlarms } from './wishPrice'
 import { WatchlistPanel } from './WatchlistPanel'
 
-const tabClass = 'border-b-2 px-2.5 pb-2 text-sm font-medium whitespace-nowrap'
+const tabClass = 'shrink-0 border-b-2 px-2 pb-2 text-sm font-medium whitespace-nowrap'
 
 /**
  * Search in the cards of one language. Names, sets, rarities and types all differ between
@@ -95,9 +96,12 @@ function CardSearch({ lang }: { lang: CardLang }) {
   )
 }
 
-type Tab = 'cards' | 'images' | 'saved'
+type Tab = 'cards' | 'images' | 'saved' | 'fitting'
 
-/** Left column: card search, the library of uploaded images, and the cards noted for later. */
+/**
+ * Left column: card search, the library of uploaded images, the cards noted for later, and
+ * the cards that fit the open pages.
+ */
 export function SearchPanel() {
   const [tab, setTab] = useState<Tab>('cards')
   const searchLang = useEditorStore((state) => state.searchLang)
@@ -108,8 +112,8 @@ export function SearchPanel() {
     <section className="flex h-full flex-col max-md:h-auto">
       <div className="shrink-0 space-y-3 p-4 pb-3">
         <h2 className="text-lg font-semibold">{de.search.title}</h2>
-        <div role="tablist" className="flex border-b border-line">
-          {(['cards', 'images', 'saved'] as const).map((option) => (
+        <div role="tablist" className="flex overflow-x-auto border-b border-line [scrollbar-width:none]">
+          {(['cards', 'images', 'saved', 'fitting'] as const).map((option) => (
             <button
               key={option}
               type="button"
@@ -148,6 +152,12 @@ export function SearchPanel() {
       <div className={tab === 'saved' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
         <WatchlistPanel />
       </div>
+      {/* looks at the binder only while it is shown: it loads files of its own */}
+      {tab === 'fitting' && (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <FittingPanel />
+        </div>
+      )}
     </section>
   )
 }

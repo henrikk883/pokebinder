@@ -67,7 +67,7 @@ test('an image over three pockets with a card on top survives export and re-impo
   await createBinder(page, 'Michi')
 
   // upload into the library and drag it behind the middle row
-  await page.getByRole('tab', { name: 'Eigene Bilder' }).click()
+  await page.getByRole('tab', { name: 'Bilder' }).click()
   await page.getByLabel('Bilddateien auswählen').setInputFiles(forest)
   const libraryImage = page.getByTestId('library-image')
   await expect(libraryImage).toHaveCount(1)
@@ -117,7 +117,7 @@ test('an image over three pockets with a card on top survives export and re-impo
   )
   await page.reload()
   await expect(page.getByText('Noch kein Binder angelegt.')).toBeVisible()
-  await page.getByRole('tab', { name: 'Eigene Bilder' }).click()
+  await page.getByRole('tab', { name: 'Bilder' }).click()
   await expect(page.getByTestId('library-image')).toHaveCount(0)
 
   await page.getByLabel('Backup-Datei auswählen').setInputFiles(backupPath)
@@ -236,7 +236,7 @@ test('images may not overlap', async ({ page }) => {
   await expect(page.getByRole('alert')).toHaveCount(0)
 
   // a library image dropped on a covered pocket is refused as well
-  await page.getByRole('tab', { name: 'Eigene Bilder' }).click()
+  await page.getByRole('tab', { name: 'Bilder' }).click()
   await drag(page, page.getByTestId('library-image').first().locator('img'), pocket(page, 1, 2))
   await expect(page.getByRole('alert')).toHaveText('Dort liegt schon ein anderes Bild.')
   await expect(imagesOn(page, 1)).toHaveCount(2)
@@ -383,7 +383,7 @@ test('the visible part of an image can be moved and magnified', async ({ page })
 test('an image is removed from the page but stays in the library until deleted there', async ({ page }) => {
   await createBinder(page, 'Entfernen')
   await addImage(page, 1, 1)
-  await page.getByRole('tab', { name: 'Eigene Bilder' }).click()
+  await page.getByRole('tab', { name: 'Bilder' }).click()
   const libraryImage = page.getByTestId('library-image')
   await expect(libraryImage).toHaveCount(1)
   await saved(page)
@@ -404,7 +404,7 @@ test('an image is removed from the page but stays in the library until deleted t
   await page.getByRole('button', { name: 'Eigenes Bild 1 löschen' }).click()
   await expect(libraryImage).toHaveCount(0)
   await page.reload()
-  await page.getByRole('tab', { name: 'Eigene Bilder' }).click()
+  await page.getByRole('tab', { name: 'Bilder' }).click()
   await expect(page.getByTestId('library-image')).toHaveCount(0)
 })
 
@@ -458,7 +458,7 @@ test('the cover gets its own title and picture', async ({ page }) => {
 })
 
 test('large photos are scaled down to 2000 px, other files are refused', async ({ page }) => {
-  await page.getByRole('tab', { name: 'Eigene Bilder' }).click()
+  await page.getByRole('tab', { name: 'Bilder' }).click()
   await expect(page.getByText('Noch keine eigenen Bilder.')).toBeVisible()
 
   await page.getByLabel('Bilddateien auswählen').setInputFiles(pngFile('riesig.png', makePng(2600, 1300, [10, 60, 200])))
