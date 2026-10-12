@@ -28,6 +28,10 @@ const requests = [
   'en/cards/sv03.5-001',
   'en/cards/sv03.5-002',
   'en/cards/sv03.5-003',
+  // a name typed in English while German cards are shown: nothing under the name, but the
+  // cards of the Pokémon it stands for (see the query for its Pokédex number below)
+  'de/cards?name=psyduck&pagination:page=1&pagination:itemsPerPage=60',
+  'de/cards?dexId=eq:54&pagination:page=1&pagination:itemsPerPage=60',
   // English and Japanese cards
   'en/series',
   'en/rarities',
@@ -92,6 +96,25 @@ for (const [setId, lang] of [
   await writeFile(`${outDir}${file}`, JSON.stringify(body))
   index[`graphql:${lang}:${setId}`] = file
   console.log(`graphql:${lang}:${setId}`, '->', file)
+}
+
+// Which Pokémon a name stands for, asked in the language the name is in.
+// The query must be the same as `dexIdsQuery` in src/lib/tcgdex/client.ts.
+for (const [lang, name] of [['en', 'psyduck']]) {
+  const query = `{
+  cards(filters: { name: ${JSON.stringify(name)} }, pagination: { page: 1, itemsPerPage: 100 }) @locale(lang: "${lang}") { dexId }
+}`
+  const response = await fetch(`${API}/graphql`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ query }),
+  })
+  const body = await response.json()
+  if (!response.ok || body.errors) throw new Error(`graphql ${name}: ${JSON.stringify(body.errors)}`)
+  const file = `graphql-names-${lang}-${name}.json`
+  await writeFile(`${outDir}${file}`, JSON.stringify(body))
+  index[`graphql:names:${lang}:${name}`] = file
+  console.log(`graphql:names:${lang}:${name}`, '->', file)
 }
 
 await writeFile(`${outDir}index.json`, `${JSON.stringify(index, null, 2)}\n`)

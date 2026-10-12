@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { ResponseCache } from './cache'
-import { CARDS_PER_PAGE, createTcgdexClient, setDetailsQuery, type QueryParam } from './client'
+import {
+  CARDS_PER_PAGE,
+  createTcgdexClient,
+  dexIdsOf,
+  dexIdsQuery,
+  MAX_FOREIGN_POKEMON,
+  setDetailsQuery,
+  type QueryParam,
+} from './client'
 
 const passThrough: ResponseCache = { fetch: (_key, load) => load() }
 
@@ -115,6 +123,48 @@ function setup(cards: unknown[] = []) {
   }
   return { client, calls, queries, cardParams }
 }
+
+describe('which Pokémon a name stands for', () => {
+  it('asks for the Pokédex numbers of the cards carrying the name, in the client\'s language', async () => {
+    const queries: string[] = []
+    const client = createTcgdexClient({
+      lang: 'en',
+      cache: passThrough,
+      transport: async () => [],
+      graphql: async (query) => {
+        queries.push(query)
+        return { cards: [{ dexId: [54] }, { dexId: [54] }, { dexId: [55] }, { dexId: null }, { dexId: [54, 25] }] }
+      },
+    })
+
+    expect(await client.dexIdsOfName('  Psyduck ')).toEqual([54, 55])
+    expect(queries).toEqual([dexIdsQuery('Psyduck', 'en')])
+    expect(queries[0]).toContain('@locale(lang: "en")')
+    // nothing to ask for nothing
+    expect(await client.dexIdsOfName('  ')).toEqual([])
+    expect(queries).toHaveLength(1)
+  })
+
+  it('cannot be broken out of by what is typed', () => {
+    expect(dexIdsQuery('a" }) { id } #', 'en')).toContain('name: "a\\" }) { id } #"')
+  })
+
+  it('puts the most frequent Pokémon first and stops at a handful', () => {
+    const cards = Array.from({ length: 30 }, (_, i) => ({ dexId: [i % 10] }))
+
+    expect(dexIdsOf({ cards: [...cards, { dexId: [7] }] })).toEqual([7, 0, 1, 2, 3, 4].slice(0, MAX_FOREIGN_POKEMON))
+    expect(dexIdsOf({ cards: null })).toEqual([])
+    expect(dexIdsOf(undefined)).toEqual([])
+  })
+
+  it('finds the cards of a Pokémon by its number', async () => {
+    const { client, cardParams } = setup([])
+
+    await client.queryCards({ dexId: 54 }, 1)
+
+    expect(cardParams()).toMatchObject({ dexId: 'eq:54' })
+  })
+})
 
 describe('getCatalog', () => {
   it('lists series newest first with their sets, without the Pocket series', async () => {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { tcgdexFor, type CardSummary } from '../../lib/tcgdex'
-import type { CardLang } from '../../types/binder'
+import { OFFERED_LANGS, type CardLang } from '../../types/binder'
 import { planSearch, runSearch, type SearchPlan } from './searchLogic'
 
 export type CardSearchStatus = 'idle' | 'needsContext' | 'loading' | 'ready' | 'error'
@@ -44,7 +44,9 @@ export function useCardSearch(
   useEffect(() => {
     if (!active) return
     let cancelled = false
-    runSearch(tcgdexFor(lang), plan, page).then(
+    // a name may be typed in another language than the cards are shown in
+    const others = OFFERED_LANGS.filter((other) => other !== lang).map((other) => tcgdexFor(other))
+    runSearch(tcgdexFor(lang), plan, page, others).then(
       ({ cards, hasMore }) => {
         if (cancelled) return
         setResult((previous) => ({

@@ -71,10 +71,14 @@ async function mockTcgdex(page: Page): Promise<Tcgdex> {
     const query = url.pathname.endsWith('/graphql')
       ? ((route.request().postDataJSON() as { query?: string } | null)?.query ?? '')
       : undefined
+    // a question which Pokémon a name stands for names the name, not a set
+    const askedName = query === undefined ? undefined : /filters: \{ name: "([^"]+)" \}/.exec(query)?.[1]
     const key =
       query === undefined
         ? requestKey(url)
-        : `graphql:${/@locale\(lang: "([^"]+)"\)/.exec(query)?.[1] ?? '?'}:${/id: "([^"]+)-"/.exec(query)?.[1] ?? '?'}`
+        : askedName !== undefined
+          ? `graphql:names:${/@locale\(lang: "([^"]+)"\)/.exec(query)?.[1] ?? '?'}:${askedName.toLowerCase()}`
+          : `graphql:${/@locale\(lang: "([^"]+)"\)/.exec(query)?.[1] ?? '?'}:${/id: "([^"]+)-"/.exec(query)?.[1] ?? '?'}`
     state.requests.push(key)
     if (state.offline) return route.abort('internetdisconnected')
     const file = index[key]

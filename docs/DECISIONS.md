@@ -546,3 +546,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Henrik stellt auf seinem großen Bildschirm jedes Mal von 80 % auf 140 %. Der selbst gewählte Zoom wird jetzt je Gerät gemerkt (`pokebinder:zoom`) und gilt für jeden Binder, der danach geöffnet wird – auch nach dem Schließen der App. Je Gerät, nicht im Abgleich: Bildschirm und Handy brauchen verschiedene Werte.
 - Wer nie einen Zoom gewählt hat, bekommt wie bisher den, der zum Platz passt. Ein Klick auf die Prozentzahl zwischen − und + führt dorthin zurück.
 - Am Handy gibt es die Zoom-Knöpfe nicht; dort bleibt es beim automatischen Zoom.
+
+## 2026-10-12 – B-002: Namen in einer anderen Sprache
+- Findet eine Namenssuche nichts, wird der Name in den anderen angebotenen Sprachen nachgeschlagen: Eine GraphQL-Abfrage liefert die Pokédex-Nummern der Karten, die so heißen (`dexIdsOfName`); die Karten kommen dann über `dexId=eq:<Nummer>` in der eingestellten Sprache. Mehrdeutige Namen („char“) stehen für bis zu sechs Pokémon.
+- Nur wenn der Name gar nichts findet – sonst würde jede Suche doppelt fragen, und Treffer aus zwei Wegen müssten gemischt und geblättert werden.
+- Trainer und Energie bleiben außen vor (keine Pokédex-Nummer). Ein Weg über gemeinsame Kartenkennungen wäre möglich, aber eine eigene Erweiterung.
+- Für den Browser-Test sind drei Antworten zusätzlich aufgezeichnet; der Test-Doppelgänger erkennt die neue GraphQL-Abfrage am Namen.

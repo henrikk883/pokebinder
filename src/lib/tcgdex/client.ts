@@ -115,6 +115,31 @@ export function createGraphqlTransport(): GraphqlTransport {
   }
 }
 
+/** How many Pokémon a name typed in another language may stand for at most ("char" → three). */
+export const MAX_FOREIGN_POKEMON = 6
+
+/** Asks which Pokémon carry a name: the Pokédex numbers of the cards the name is found on. */
+export function dexIdsQuery(name: string, lang: CardLang): string {
+  return `{
+  cards(filters: { name: ${JSON.stringify(name)} }, pagination: { page: 1, itemsPerPage: 100 }) @locale(lang: "${lang}") { dexId }
+}`
+}
+
+/** The Pokédex numbers on the cards found, the most frequent first; cards showing several Pokémon are left out. */
+export function dexIdsOf(data: unknown): number[] {
+  const cards = (data as { cards?: { dexId?: number[] | null }[] | null } | null)?.cards ?? []
+  const counts = new Map<number, number>()
+  for (const card of cards) {
+    const [only, ...others] = card.dexId ?? []
+    if (only === undefined || others.length > 0) continue
+    counts.set(only, (counts.get(only) ?? 0) + 1)
+  }
+  return [...counts]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, MAX_FOREIGN_POKEMON)
+    .map(([dexId]) => dexId)
+}
+
 /**
  * Everything about the cards of one set in a single request. Names and rarity come in the
  * card language. The finishes need their fixed English names: western sets share their
@@ -347,6 +372,16 @@ export function createTcgdexClient({
       return raw ? toCard(raw) : undefined
     },
 
+    async dexIdsOfName(name) {
+      const wanted = name.trim()
+      if (wanted === '') return []
+      // kept like any other answer, so that typing on does not ask again
+      const data = await cache.fetch(`${lang}/graphql/dexIds?name=${wanted.toLowerCase()}`, () =>
+        graphql(dexIdsQuery(wanted, lang)),
+      )
+      return dexIdsOf(data)
+    },
+
     async queryCards(query: CardQuery, page: number): Promise<CardPage> {
       const { number, rarity, officialCount, ...rest } = query
 
@@ -377,6 +412,7 @@ export function createTcgdexClient({
         else builder.equal('rarity', rarity)
       }
       if (query.type) builder.like('types', query.type)
+      if (query.dexId !== undefined) builder.equal('dexId', String(query.dexId))
       builder.paginate(complete ? 1 : page, pageSize)
 
       const [raw, { setsById }, rarityIds] = await Promise.all([

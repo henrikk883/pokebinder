@@ -437,3 +437,24 @@ test('a list adds up what its cards would cost, beside the binder and on the pag
   await expect(wide.getByRole('button', { name: 'Wert berechnen' })).toHaveCount(0)
   await expect(wide).toContainText('Noch nichts gemerkt.')
 })
+
+test('a Pokémon is found by its English name while German cards are shown', async ({ page, tcgdex }) => {
+  await page.goto('/')
+  await page.getByRole('searchbox', { name: searchField }).fill('psyduck')
+
+  const tiles = page.getByTestId('card-tile')
+  await expect(tiles.first()).toBeVisible()
+  // the cards come in German: it is Enton that is shown
+  await expect(tiles.filter({ hasText: 'Enton' })).toHaveCount(await tiles.count())
+  await expect(page.locator('[data-card-id="sv03.5-054"]')).toContainText('151 · 054/165')
+  // nothing under the name as typed, so the English data was asked which Pokémon it is
+  expect(tcgdex.requests).toContain('de/cards?name=psyduck&pagination:page=1&pagination:itemsPerPage=60')
+  expect(tcgdex.requests).toContain('graphql:names:en:psyduck')
+  expect(tcgdex.requests).toContain('de/cards?dexId=eq:54&pagination:page=1&pagination:itemsPerPage=60')
+
+  // a name that finds cards as it is asks no other language
+  const before = tcgdex.requests.filter((request) => request.startsWith('graphql:names:')).length
+  await page.getByRole('searchbox', { name: searchField }).fill('Glurak')
+  await expect(tiles.filter({ hasText: 'Glurak' }).first()).toBeVisible()
+  expect(tcgdex.requests.filter((request) => request.startsWith('graphql:names:')).length).toBe(before)
+})

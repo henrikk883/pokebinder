@@ -79,5 +79,8 @@
   "graphql:de:sv08.5": "graphql-set-details-de-sv08.5.json",
   "graphql:de:svp": "graphql-set-details-de-svp.json",
   "graphql:en:sv03.5": "graphql-set-details-en-sv03.5.json",
-  "graphql:ja:SV2a": "graphql-set-details-ja-SV2a.json"
+  "graphql:ja:SV2a": "graphql-set-details-ja-SV2a.json",
+  "de/cards?name=psyduck&pagination:page=1&pagination:itemsPerPage=60": "77-de_cards_name_psyduck_pagination_page_1_pagination_itemsPerP.json",
+  "de/cards?dexId=eq:54&pagination:page=1&pagination:itemsPerPage=60": "78-de_cards_dexId_eq_54_pagination_page_1_pagination_itemsPerPa.json",
+  "graphql:names:en:psyduck": "graphql-names-en-psyduck.json"
 }

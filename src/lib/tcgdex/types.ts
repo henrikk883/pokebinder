@@ -60,6 +60,11 @@ export interface CardQuery {
   setId?: string
   rarity?: string
   type?: string
+  /**
+   * National Pokédex number: every card of that Pokémon, whatever it is called in the
+   * language asked in. Stands in for the name where the name was typed in another language.
+   */
+  dexId?: number
 }
 
 export interface CardPage {
@@ -88,6 +93,12 @@ export interface TcgdexClient {
    * know the card. A request per card, like the price.
    */
   getPlayInfo(cardId: string): Promise<PlayInfo | undefined>
+  /**
+   * Pokédex numbers of the Pokémon whose name in this client's language contains `name`,
+   * the most frequent first; empty for trainers, energy and names nothing matches. This is
+   * how a name typed in one language leads to the cards in another.
+   */
+  dexIdsOfName(name: string): Promise<number[]>
   /** One page of cards matching the query; pages start at 1. */
   queryCards(query: CardQuery, page: number): Promise<CardPage>
   getRarities(): Promise<string[]>

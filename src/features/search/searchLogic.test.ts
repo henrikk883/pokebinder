@@ -93,6 +93,82 @@ describe('planSearch', () => {
   })
 })
 
+describe('a name typed in another language', () => {
+  const enton: CardSummary = { id: 'sv03.5-054', localId: '054', name: 'Enton' }
+  const entoron: CardSummary = { id: 'sv03.5-055', localId: '055', name: 'Entoron' }
+
+  /** German cards: found by German name, or by Pokédex number. */
+  function german(byDexId: Record<number, CardSummary[]>, pageSize = 60) {
+    return {
+      getSetCards: vi.fn(async () => []),
+      queryCards: vi.fn(async (query: { name?: string; dexId?: number; setId?: string }, page: number) => {
+        const all = query.dexId !== undefined ? (byDexId[query.dexId] ?? []) : query.name === 'Enton' ? [enton] : []
+        const cards = all.slice((page - 1) * pageSize, page * pageSize)
+        return { cards, hasMore: all.length > page * pageSize }
+      }),
+    }
+  }
+  const english = (dexIds: number[]) => ({ dexIdsOfName: vi.fn(async () => dexIds) })
+  const plan = (name: string, setId?: string) =>
+    ({ kind: 'query', query: { name, ...(setId ? { setId } : {}) } }) as const
+
+  it('leads to the cards of that Pokémon in the language of the search', async () => {
+    const client = german({ 54: [enton] })
+    const other = english([54])
+
+    expect(await runSearch(client, plan('psyduck'), 1, [other])).toEqual({ cards: [enton], hasMore: false })
+    expect(other.dexIdsOfName).toHaveBeenCalledWith('psyduck')
+    // the other filters stay, the name goes
+    await runSearch(client, plan('psyduck', 'sv03.5'), 1, [other])
+    expect(client.queryCards).toHaveBeenLastCalledWith({ setId: 'sv03.5', dexId: 54 }, 1)
+  })
+
+  it('is not asked about while the name finds something as it is', async () => {
+    const client = german({})
+    const other = english([54])
+
+    expect(await runSearch(client, plan('Enton'), 1, [other])).toEqual({ cards: [enton], hasMore: false })
+    expect(other.dexIdsOfName).not.toHaveBeenCalled()
+  })
+
+  it('may stand for several Pokémon, each card once', async () => {
+    const client = german({ 54: [enton], 55: [entoron, enton] })
+
+    const found = await runSearch(client, plan('duck'), 1, [english([54, 55])])
+
+    expect(found.cards).toEqual([enton, entoron])
+  })
+
+  it('tries the languages in turn and finds nothing where none knows the name', async () => {
+    const client = german({ 54: [enton] })
+    const french = english([])
+    const other = english([54])
+
+    expect((await runSearch(client, plan('psyduck'), 1, [french, other])).cards).toEqual([enton])
+    expect(await runSearch(client, plan('xyzzy'), 1, [french, english([])])).toEqual({ cards: [], hasMore: false })
+    // a language that cannot be asked is like one that knows nothing
+    const broken = { dexIdsOfName: vi.fn(async () => Promise.reject(new Error('offline'))) }
+    expect((await runSearch(client, plan('psyduck'), 1, [broken, other])).cards).toEqual([enton])
+  })
+
+  it('goes on to the next page of that Pokémon, not back to the name', async () => {
+    const many = Array.from({ length: 3 }, (_, i): CardSummary => ({ id: `set-${i}`, localId: String(i), name: 'Enton' }))
+    const client = german({ 54: many }, 2)
+    const other = english([54])
+
+    expect(await runSearch(client, plan('psyduck'), 1, [other])).toEqual({ cards: many.slice(0, 2), hasMore: true })
+    expect(await runSearch(client, plan('psyduck'), 2, [other])).toEqual({ cards: many.slice(2), hasMore: false })
+  })
+
+  it('leaves an empty later page of a name that does find cards alone', async () => {
+    const client = german({ 54: [entoron] })
+    const other = english([54])
+
+    expect(await runSearch(client, plan('Enton'), 2, [other])).toEqual({ cards: [], hasMore: false })
+    expect(other.dexIdsOfName).not.toHaveBeenCalled()
+  })
+})
+
 describe('runSearch', () => {
   const bisasam: CardSummary = { id: 'sv03.5-001', localId: '001', name: 'Bisasam' }
 
