@@ -462,3 +462,4 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Von Henrik gewünscht: ein Deck Builder als neuer Punkt 12 (eigene Etappe E, vor den zurückgestellten Punkten), dazu als Fernziel Punkt 13 „gegen Freunde spielen“. Beides nur aufgenommen, nichts gebaut.
 - Meine Annahmen zum Deck Builder (60 Karten, höchstens 4 gleichnamige, Gruppen Pokémon/Trainer/Energie, Abgleich mit den eigenen Bindern) stehen als Vorschlag in REQUIREMENTS.md und werden geklärt, wenn der Punkt dran ist.
 - Nachtrag, mit Henrik geklärt: Decks bekommen ein zweites Regal unter den Bindern; „Meine Binder“ wird dann zu „Meine Karten“. Die App prüft auch, ob die Karten im Format erlaubt sind – TCGdex liefert je Karte `legal.standard` und `legal.expanded`. Welche Formate zur Wahl stehen, ist noch offen.
+- Nachtrag: Das Format ist je Deck wählbar (Standard voreingestellt, Expanded, frei) und später änderbar.
