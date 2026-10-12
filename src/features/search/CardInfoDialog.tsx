@@ -1,3 +1,4 @@
+import { useState, type FormEvent } from 'react'
 import { de } from '../../i18n/de'
 import type { CardSummary, SetSummary } from '../../lib/tcgdex'
 import { compareVariants, type CardLang, type CardVariant } from '../../types/binder'
@@ -5,6 +6,7 @@ import { useWatchlistStore } from '../../store/watchlistStore'
 import { useCardDetail, useCardLangs, usePrice } from '../binder/useCard'
 import { CardImage } from './CardImage'
 import { isSaved } from './watchlist'
+import { listName } from './listName'
 
 interface CardInfoDialogProps {
   card: CardSummary
@@ -33,8 +35,19 @@ function VariantPrice({ cardId, variant, lang }: { cardId: string; variant: Card
 export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps) {
   const detail = useCardDetail(card.id, lang)
   const langs = useCardLangs(card.id, lang)
-  const saved = useWatchlistStore((state) => isSaved(state.cards, card.id, lang))
+  const lists = useWatchlistStore((state) => state.lists)
   const toggleSaved = useWatchlistStore((state) => state.toggle)
+  const createList = useWatchlistStore((state) => state.create)
+  const [newList, setNewList] = useState('')
+
+  /** A list made from here is one the card is meant for. */
+  function handleNewList(event: FormEvent) {
+    event.preventDefault()
+    const id = createList(newList)
+    if (!id) return
+    toggleSaved(id, card.id, lang)
+    setNewList('')
+  }
   // nothing is listed until TCGdex has said which finishes the card really exists in
   const variants = [...(detail?.variants ?? [])].sort(compareVariants)
   const number = set ? `${card.localId}/${set.cardCount.official}` : card.localId
@@ -94,19 +107,44 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
             </div>
           </dl>
 
+          <fieldset className="space-y-2">
+            <legend className="text-muted">{de.watchlist.lists}</legend>
+            <div className="flex flex-wrap gap-2">
+              {lists.map((list) => (
+                <label
+                  key={list.id}
+                  className="flex h-9 cursor-pointer items-center gap-2 rounded-control border border-line bg-raised px-3 has-checked:border-accent"
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSaved(list.cards, card.id, lang)}
+                    onChange={() => toggleSaved(list.id, card.id, lang)}
+                    className="size-4 shrink-0 accent-accent"
+                  />
+                  {listName(list)}
+                </label>
+              ))}
+            </div>
+            <form onSubmit={handleNewList} className="flex gap-2">
+              <input
+                type="text"
+                value={newList}
+                onChange={(event) => setNewList(event.target.value)}
+                placeholder={de.watchlist.newListPlaceholder}
+                aria-label={de.watchlist.newListField}
+                className="h-9 min-w-0 flex-1 rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={newList.trim() === ''}
+                className="h-9 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line"
+              >
+                {de.watchlist.create}
+              </button>
+            </form>
+          </fieldset>
+
           <div className="mt-auto flex justify-end gap-3">
-            <button
-              type="button"
-              aria-pressed={saved}
-              onClick={() => toggleSaved(card.id, lang)}
-              className={`h-10 rounded-control px-4 text-sm font-medium ${
-                saved
-                  ? 'bg-accent text-white hover:bg-accent-hover'
-                  : 'border border-line bg-raised hover:border-accent'
-              }`}
-            >
-              {saved ? de.watchlist.saved : de.watchlist.save}
-            </button>
             <button
               type="button"
               autoFocus

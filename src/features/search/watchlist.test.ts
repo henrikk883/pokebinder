@@ -1,13 +1,31 @@
 import { describe, expect, it } from 'vitest'
-import { isSaved, parseWatchlist, toggleSaved, type SavedCard } from './watchlist'
+import {
+  addList,
+  isSaved,
+  listsWith,
+  parseWatchlist,
+  parseWatchlists,
+  QUICK_LIST_ID,
+  removeList,
+  renameList,
+  savedCardCount,
+  toggleInList,
+  toggleSaved,
+  type SavedCard,
+  type Watchlist,
+} from './watchlist'
 
 const pikachu: SavedCard = { cardId: 'sv03.5-025', lang: 'de', savedAt: '2026-10-12T10:00:00.000Z' }
+const glurak: SavedCard = { cardId: 'sv03.5-006', lang: 'de', savedAt: '2026-10-12T11:00:00.000Z' }
+
+const quick = (cards: SavedCard[] = []): Watchlist => ({ id: QUICK_LIST_ID, name: '', cards })
+const buy = (cards: SavedCard[] = []): Watchlist => ({ id: 'buy', name: 'Kaufen', cards })
 
 describe('toggleSaved', () => {
   it('notes a card in front of the others', () => {
     const list = toggleSaved([pikachu], 'sv03.5-006', 'de', '2026-10-12T11:00:00.000Z')
 
-    expect(list).toEqual([{ cardId: 'sv03.5-006', lang: 'de', savedAt: '2026-10-12T11:00:00.000Z' }, pikachu])
+    expect(list).toEqual([glurak, pikachu])
   })
 
   it('takes a noted card off the list again', () => {
@@ -33,29 +51,81 @@ describe('toggleSaved', () => {
   })
 })
 
-describe('parseWatchlist', () => {
-  it('reads what was stored', () => {
-    expect(parseWatchlist(JSON.stringify([pikachu]))).toEqual([pikachu])
+describe('several lists', () => {
+  it('notes a card on the list that is named and leaves the others alone', () => {
+    const lists = toggleInList([quick(), buy()], 'buy', 'sv03.5-025', 'de', pikachu.savedAt)
+
+    expect(lists).toEqual([quick(), buy([pikachu])])
+    expect(toggleInList(lists, 'buy', 'sv03.5-025', 'de', 'later')).toEqual([quick(), buy()])
+    expect(toggleInList(lists, 'nope', 'sv03.5-025', 'de', 'later')).toEqual(lists)
   })
 
-  it('gives an empty list for anything that is not a list', () => {
-    expect(parseWatchlist(null)).toEqual([])
-    expect(parseWatchlist('')).toEqual([])
-    expect(parseWatchlist('not json')).toEqual([])
-    expect(parseWatchlist('{"cardId":"x"}')).toEqual([])
+  it('knows which lists a card is on, and counts a card on two lists once', () => {
+    const lists = [quick([pikachu]), buy([pikachu, glurak])]
+
+    expect(listsWith(lists, 'sv03.5-025', 'de')).toEqual([QUICK_LIST_ID, 'buy'])
+    expect(listsWith(lists, 'sv03.5-006', 'de')).toEqual(['buy'])
+    expect(listsWith(lists, 'sv03.5-025', 'en')).toEqual([])
+    expect(savedCardCount(lists)).toBe(2)
+    expect(savedCardCount([quick()])).toBe(0)
   })
 
-  it('leaves out entries it cannot read and ones that are there twice', () => {
+  it('adds a list at the end, but not one without a name', () => {
+    expect(addList([quick()], 'michi', '  Michi-Binder ')).toEqual([quick(), { id: 'michi', name: 'Michi-Binder', cards: [] }])
+    expect(addList([quick()], 'x', '   ')).toBeUndefined()
+  })
+
+  it('renames and removes lists, but never the quick list', () => {
+    const lists = [quick([pikachu]), buy([glurak])]
+
+    expect(renameList(lists, 'buy', ' Einkauf ')[1]).toMatchObject({ id: 'buy', name: 'Einkauf', cards: [glurak] })
+    expect(renameList(lists, 'buy', '  ')).toEqual(lists)
+    expect(renameList(lists, QUICK_LIST_ID, 'Anders')).toEqual(lists)
+    expect(removeList(lists, 'buy')).toEqual([quick([pikachu])])
+    expect(removeList(lists, QUICK_LIST_ID)).toEqual(lists)
+  })
+})
+
+describe('parseWatchlists', () => {
+  it('reads what was stored, the quick list first', () => {
+    const stored = JSON.stringify([buy([glurak]), quick([pikachu])])
+
+    expect(parseWatchlists(stored)).toEqual([quick([pikachu]), buy([glurak])])
+  })
+
+  it('starts with an empty quick list when nothing is stored', () => {
+    expect(parseWatchlists(null)).toEqual([quick()])
+    expect(parseWatchlists('not json')).toEqual([quick()])
+    expect(parseWatchlists('{"id":"quick"}')).toEqual([quick()])
+  })
+
+  it('takes over the single list of earlier versions as the quick list', () => {
+    const legacy = JSON.stringify([pikachu, glurak])
+
+    expect(parseWatchlists(null, legacy)).toEqual([quick([pikachu, glurak])])
+    // once lists are stored, the old one no longer counts
+    expect(parseWatchlists(JSON.stringify([quick()]), legacy)).toEqual([quick()])
+  })
+
+  it('leaves out lists and cards it cannot read, and ones that are there twice', () => {
     const stored = JSON.stringify([
-      pikachu,
-      { cardId: 'sv03.5-006', lang: 'xx' },
-      { lang: 'de' },
+      quick([pikachu, { cardId: 'x', lang: 'xx', savedAt: '' } as unknown as SavedCard, pikachu]),
+      { id: 'buy', name: 'Kaufen', cards: 'none' },
+      { id: 'buy', name: 'Noch einmal', cards: [] },
+      { id: '', name: 'Ohne Kennung', cards: [] },
+      { id: 'noname', name: '  ', cards: [] },
       'text',
       null,
-      pikachu,
-      { cardId: 'SV2a-006', lang: 'ja' },
     ])
 
-    expect(parseWatchlist(stored)).toEqual([pikachu, { cardId: 'SV2a-006', lang: 'ja', savedAt: '' }])
+    expect(parseWatchlists(stored)).toEqual([quick([pikachu]), buy()])
+  })
+})
+
+describe('parseWatchlist', () => {
+  it('reads the cards of the single list of earlier versions', () => {
+    expect(parseWatchlist(JSON.stringify([pikachu]))).toEqual([pikachu])
+    expect(parseWatchlist(null)).toEqual([])
+    expect(parseWatchlist('{"cardId":"x"}')).toEqual([])
   })
 })

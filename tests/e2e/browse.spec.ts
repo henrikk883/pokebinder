@@ -76,6 +76,11 @@ test('on the page "Karten" a click opens the info and the star notes the card', 
   await expect(list).toContainText('2 Karten gemerkt')
   await expect(list.getByTestId('card-tile')).toHaveCount(2)
 
+  // the list is chosen here as beside the binder
+  await expect(page.getByTestId('page').getByRole('combobox', { name: 'Merkliste' }).locator('option')).toHaveText([
+    'Schnellmerken (2)',
+  ])
+
   // taken off the list with the same star
   await list.locator('[data-card-id="sv03.5-001"]').getByRole('button', { name: 'Bisasam von der Merkliste nehmen' }).click()
   await expect(list.getByTestId('card-tile')).toHaveCount(1)

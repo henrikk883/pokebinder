@@ -229,20 +229,22 @@ test('the info button on a card opens a closer look: picture, languages, finishe
   await expect(page.getByTestId('pocket').first()).toHaveAttribute('data-card-id', 'sv03.5-001')
 })
 
-test('cards are noted from their info and wait on the "Merkliste" to be dragged into a binder', async ({ page }) => {
+test('the star notes into "Schnellmerken"; the list waits beside the binder to be dragged from', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Neuer Binder' }).click()
   await page.getByRole('dialog').getByLabel('Name').fill('Merken')
   await page.getByRole('button', { name: 'Anlegen' }).click()
   const savedTab = page.getByRole('tab', { name: /^Merkliste/ })
   const list = page.getByTestId('watchlist')
+  const chooser = page.getByTestId('column-left').getByRole('combobox', { name: 'Merkliste' })
 
-  // nothing noted yet
+  // nothing noted yet; the quick list is the one shown
   await savedTab.click()
   await expect(list).toContainText('Noch nichts gemerkt.')
+  await expect(chooser.locator('option')).toHaveText(['Schnellmerken (0)'])
   await expect(page.getByTestId('saved-count')).toHaveCount(0)
 
-  // note the first card of "151" from its info
+  // the star of the first card of "151"
   await page.getByRole('tab', { name: 'Karten' }).click()
   await page.getByRole('button', { name: 'Set', exact: true }).click()
   await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
@@ -251,21 +253,23 @@ test('cards are noted from their info and wait on the "Merkliste" to be dragged 
   // not noted: its star only shows when the card is pointed at
   await expect(found.getByRole('button', { name: 'Bisasam merken' })).toHaveCSS('opacity', '0')
   await found.hover()
-  await found.getByRole('button', { name: 'Infos zu Bisasam' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Bisasam' })
-  await dialog.getByRole('button', { name: 'Merken' }).click()
-  await expect(dialog.getByRole('button', { name: 'Gemerkt' })).toHaveAttribute('aria-pressed', 'true')
-  await dialog.getByRole('button', { name: 'Schließen' }).click()
-
-  // the search result is marked, the tab counts
+  await found.getByRole('button', { name: 'Bisasam merken' }).click()
   await page.mouse.move(5, 5)
   await expect(found.getByRole('button', { name: 'Bisasam von der Merkliste nehmen' })).toHaveCSS('opacity', '1')
   await expect(page.getByTestId('saved-count')).toHaveText('1')
+
+  // its info shows the list it is on
+  await found.hover()
+  await found.getByRole('button', { name: 'Infos zu Bisasam' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Bisasam' })
+  await expect(dialog.getByRole('checkbox', { name: 'Schnellmerken' })).toBeChecked()
+  await dialog.getByRole('button', { name: 'Schließen' }).click()
 
   // on the list it can be dragged into the binder like a search result
   await savedTab.click()
   const noted = list.locator('[data-testid="card-tile"][data-card-id="sv03.5-001"]')
   await expect(list).toContainText('1 Karte gemerkt')
+  await expect(chooser.locator('option')).toHaveText(['Schnellmerken (1)'])
   await expect(noted).toContainText('151 · 001/165')
   const from = await noted.locator('img').boundingBox()
   const to = await page.getByTestId('pocket').first().boundingBox()
@@ -286,12 +290,100 @@ test('cards are noted from their info and wait on the "Merkliste" to be dragged 
   await savedTab.click()
   await expect(noted).toBeVisible()
 
-  // taken off the list again from the same button
-  await noted.hover()
-  await noted.getByRole('button', { name: 'Infos zu Bisasam' }).click()
-  await dialog.getByRole('button', { name: 'Gemerkt' }).click()
-  // the card leaves the list, and its info, opened from there, goes with it
-  await expect(dialog).toBeHidden()
+  // taken off the list again with the star
+  await noted.getByRole('button', { name: 'Bisasam von der Merkliste nehmen' }).click()
   await expect(list).toContainText('Noch nichts gemerkt.')
   await expect(page.getByTestId('saved-count')).toHaveCount(0)
+})
+
+test('a card is noted on lists of its own from its info; lists are made, renamed and deleted', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  await page.getByRole('dialog').getByLabel('Name').fill('Listen')
+  await page.getByRole('button', { name: 'Anlegen' }).click()
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const results = page.getByTestId('search-results')
+  const first = results.locator('[data-card-id="sv03.5-001"]')
+  const second = results.locator('[data-card-id="sv03.5-002"]')
+  await expect(first).toBeVisible()
+  const dialog = page.getByRole('dialog')
+  const chooser = page.getByTestId('column-left').getByRole('combobox', { name: 'Merkliste' })
+  const list = page.getByTestId('watchlist')
+
+  // a new list made from the info of a card holds that card
+  await first.hover()
+  await first.getByRole('button', { name: 'Infos zu Bisasam' }).click()
+  await expect(dialog.getByRole('checkbox')).toHaveCount(1)
+  await expect(dialog.getByRole('button', { name: 'Anlegen' })).toBeDisabled()
+  await dialog.getByLabel('Name einer neuen Liste').fill('Kaufen')
+  await dialog.getByRole('button', { name: 'Anlegen' }).click()
+  await expect(dialog.getByRole('checkbox', { name: 'Kaufen' })).toBeChecked()
+  await expect(dialog.getByRole('checkbox', { name: 'Schnellmerken' })).not.toBeChecked()
+  await expect(dialog.getByLabel('Name einer neuen Liste')).toHaveValue('')
+  await dialog.getByRole('button', { name: 'Schließen' }).click()
+
+  // on a list, but not the quick one: the star shows in colour and is not pressed
+  await page.mouse.move(5, 5)
+  const star = first.getByRole('button', { name: 'Bisasam merken' })
+  await expect(star).toHaveCSS('opacity', '1')
+  await expect(star).toHaveAttribute('aria-pressed', 'false')
+  await expect(star).toHaveAttribute('data-on-list', 'true')
+
+  // a second card goes onto both lists
+  await second.hover()
+  await second.getByRole('button', { name: /^Infos zu/ }).click()
+  await dialog.getByRole('checkbox', { name: 'Kaufen' }).check()
+  await dialog.getByRole('checkbox', { name: 'Schnellmerken' }).check()
+  await dialog.getByRole('button', { name: 'Schließen' }).click()
+  // two different cards are noted, one of them twice
+  await expect(page.getByTestId('saved-count')).toHaveText('2')
+
+  // beside the binder the list is chosen like a set
+  await page.getByRole('tab', { name: /^Merkliste/ }).click()
+  await expect(chooser.locator('option')).toHaveText(['Schnellmerken (1)', 'Kaufen (2)'])
+  await expect(list.getByTestId('card-tile')).toHaveCount(1)
+  await chooser.selectOption({ label: 'Kaufen (2)' })
+  await expect(list.getByTestId('card-tile')).toHaveCount(2)
+
+  // the quick list can be neither renamed nor deleted, a list of one's own can
+  await chooser.selectOption({ label: 'Schnellmerken (1)' })
+  await expect(page.getByTestId('column-left').getByRole('button', { name: 'Umbenennen' })).toBeDisabled()
+  await expect(page.getByTestId('column-left').getByRole('button', { name: 'Löschen' })).toBeDisabled()
+  await chooser.selectOption({ label: 'Kaufen (2)' })
+  await page.getByTestId('column-left').getByRole('button', { name: 'Umbenennen' }).click()
+  const prompt = page.getByRole('dialog', { name: 'Liste umbenennen' })
+  await expect(prompt.getByLabel('Name der Liste')).toHaveValue('Kaufen')
+  await prompt.getByLabel('Name der Liste').fill('Wunschzettel')
+  await prompt.getByRole('button', { name: 'Umbenennen' }).click()
+  await expect(chooser.locator('option')).toHaveText(['Schnellmerken (1)', 'Wunschzettel (2)'])
+  await expect(chooser).toHaveValue(/.+/)
+  await expect(list.getByTestId('card-tile')).toHaveCount(2)
+
+  // a third list from the button, empty at first
+  await page.getByTestId('column-left').getByRole('button', { name: 'Neue Liste' }).click()
+  const create = page.getByRole('dialog', { name: 'Neue Liste' })
+  await create.getByLabel('Name der Liste').fill('Michi-Binder')
+  await create.getByRole('button', { name: 'Anlegen' }).click()
+  await expect(chooser.locator('option')).toHaveText(['Schnellmerken (1)', 'Wunschzettel (2)', 'Michi-Binder (0)'])
+  await expect(list).toContainText('Diese Liste ist leer.')
+
+  // everything is still there after a reload
+  await page.reload()
+  await expect(page.getByTestId('spread-label')).toBeVisible()
+  await page.getByRole('tab', { name: /^Merkliste/ }).click()
+  await expect(chooser.locator('option')).toHaveText(['Schnellmerken (1)', 'Wunschzettel (2)', 'Michi-Binder (0)'])
+
+  // deleting a list asks first and leaves the others as they are
+  await chooser.selectOption({ label: 'Wunschzettel (2)' })
+  await page.getByTestId('column-left').getByRole('button', { name: 'Löschen' }).click()
+  const question = page.getByRole('alertdialog', { name: 'Liste „Wunschzettel“ löschen?' })
+  await question.getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(chooser.locator('option')).toHaveCount(3)
+  await page.getByTestId('column-left').getByRole('button', { name: 'Löschen' }).click()
+  await question.getByRole('button', { name: 'Löschen', exact: true }).click()
+  await expect(chooser.locator('option')).toHaveText(['Schnellmerken (1)', 'Michi-Binder (0)'])
+  // the view falls back to the quick list
+  await expect(list.getByTestId('card-tile')).toHaveCount(1)
+  await expect(page.getByTestId('saved-count')).toHaveText('1')
 })

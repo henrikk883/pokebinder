@@ -10,6 +10,7 @@ import { LanguageSelect } from './LanguageSelect'
 import { SearchResults } from './SearchResults'
 import { SetPicker } from './SetPicker'
 import { useCardSearchForm } from './useCardSearchForm'
+import { savedCardCount } from './watchlist'
 import { WatchlistPanel } from './WatchlistPanel'
 
 const tabClass = 'border-b-2 px-2.5 pb-2 text-sm font-medium whitespace-nowrap'
@@ -86,7 +87,7 @@ type Tab = 'cards' | 'images' | 'saved'
 export function SearchPanel() {
   const [tab, setTab] = useState<Tab>('cards')
   const searchLang = useEditorStore((state) => state.searchLang)
-  const savedCount = useWatchlistStore((state) => state.cards.length)
+  const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
 
   return (
     <section className="flex h-full flex-col">

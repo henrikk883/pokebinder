@@ -325,3 +325,10 @@ Im Modus „Sammlung“ wird nichts hineingezogen, deshalb ist die Suche dort ei
 - Schnell-Merken: Jede Karte hat oben links einen Stern, unter der Maus beim Überfahren, auf Touch-Geräten immer. Eine gemerkte Karte behält ihren Stern sichtbar; er ersetzt den violetten Punkt vor dem Namen. Der Stern gibt es auch in der schmalen Suche.
 - Ein offener Binder bleibt darunter offen: Sein Name in der Kopfzeile führt zurück, „Meine Binder“ ins Regal. Die Suche der Seite und die Suche neben dem Binder merken sich Text und Filter getrennt.
 - Mehrere Merklisten sind der nächste Schritt und noch nicht gebaut.
+
+## 2026-10-12 – Mehrere Merklisten
+- Es gibt immer die Liste „Schnellmerken“; in sie merkt der Stern auf der Karte. Sie lässt sich weder umbenennen noch löschen. Die bisherige einzelne Merkliste wird beim ersten Start zu dieser Liste.
+- Im Info-Fenster einer Karte steht unter „Merken auf“ jede Liste als ankreuzbares Feld; darunter lässt sich eine neue Liste anlegen, auf der die Karte dann gleich steht. Eine Karte kann auf mehreren Listen stehen.
+- Im Reiter „Merkliste“ neben dem Binder und auf der Seite „Karten“ wählt man die angezeigte Liste aus (mit Anzahl); daneben „Neue Liste“, „Umbenennen“, „Löschen“ (mit Rückfrage). Beide Stellen zeigen dieselbe gewählte Liste.
+- Der Stern ist gefüllt, wenn die Karte auf „Schnellmerken“ steht, und nur farbig umrandet, wenn sie ausschließlich auf einer anderen Liste steht. Die Zahl am Reiter zählt verschiedene gemerkte Karten über alle Listen.
+- Gespeichert im `localStorage` (`pokebinder:watchlists`), noch nicht im Backup; das kommt mit „Geräte abgleichen“.

@@ -8,6 +8,7 @@ import { LanguageSelect } from './LanguageSelect'
 import { SearchResults } from './SearchResults'
 import { SetPicker } from './SetPicker'
 import { useCardSearchForm } from './useCardSearchForm'
+import { savedCardCount } from './watchlist'
 import { WatchlistPanel } from './WatchlistPanel'
 
 /** As many cards side by side as fit, each about as wide as a real card in the hand. */
@@ -74,7 +75,7 @@ const tabClass = 'border-b-2 px-4 pb-2 text-sm font-medium whitespace-nowrap'
 export function CardBrowser() {
   const [tab, setTab] = useState<Tab>('all')
   const searchLang = useEditorStore((state) => state.searchLang)
-  const savedCount = useWatchlistStore((state) => state.cards.length)
+  const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
 
   return (
     <section className="mx-auto flex min-h-full max-w-[110rem] flex-col p-5">

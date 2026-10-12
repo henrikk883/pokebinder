@@ -7,7 +7,7 @@ import type { CardLang } from '../../types/binder'
 import type { DragSource } from '../binder/dragDrop'
 import { CardImage } from './CardImage'
 import { CardInfoDialog } from './CardInfoDialog'
-import { isSaved } from './watchlist'
+import { listsWith, QUICK_LIST_ID } from './watchlist'
 
 interface CardTileProps {
   card: CardSummary
@@ -45,8 +45,11 @@ function Star({ filled }: { filled: boolean }) {
 
 export function CardTile({ card, set, lang, draggable, dragIdPrefix = 'search', browsing = false }: CardTileProps) {
   const [showingInfo, setShowingInfo] = useState(false)
-  const saved = useWatchlistStore((state) => isSaved(state.cards, card.id, lang))
+  // the star notes into the quick list; the info window offers the others
+  const listCount = useWatchlistStore((state) => listsWith(state.lists, card.id, lang).length)
+  const saved = useWatchlistStore((state) => listsWith(state.lists, card.id, lang).includes(QUICK_LIST_ID))
   const toggleSaved = useWatchlistStore((state) => state.toggle)
+  const onOtherList = !saved && listCount > 0
   const number = set ? `${card.localId}/${set.cardCount.official}` : card.localId
   const source: DragSource = { kind: 'search', card, lang }
   const { setNodeRef, listeners, isDragging } = useDraggable({
@@ -80,10 +83,13 @@ export function CardTile({ card, set, lang, draggable, dragIdPrefix = 'search', 
         type="button"
         aria-label={saved ? de.watchlist.unsaveCard(card.name) : de.watchlist.saveCard(card.name)}
         aria-pressed={saved}
-        onClick={() => toggleSaved(card.id, lang)}
-        // a noted card keeps its star in view; that is how the lists show what is noted
+        title={onOtherList ? de.watchlist.onOtherList : undefined}
+        data-on-list={listCount > 0}
+        onClick={() => toggleSaved(QUICK_LIST_ID, card.id, lang)}
+        // A noted card keeps its star in view; that is how the lists show what is noted.
+        // Filled: on the quick list. Outlined in colour: on another list only.
         className={`${overlayButtonClass} left-1 ${
-          saved ? 'border-accent text-accent-hover' : 'border-line opacity-0 group-hover:opacity-100'
+          saved || onOtherList ? 'border-accent text-accent-hover' : 'border-line opacity-0 group-hover:opacity-100'
         }`}
       >
         <Star filled={saved} />
