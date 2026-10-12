@@ -621,3 +621,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 ## 2026-10-12 – Mehr Karten und Reihenfolge nach Farbe
 - Auf Henriks Nachfrage: „Ähnliche Karten“ zeigt 24 und mit „Mehr anzeigen“ je 24 weitere, höchstens 96. Themen zeigen 48 und je 48 weitere, höchstens 144 (so viele hält das Skript je Thema fest). Weiter hinten passen die Karten weniger gut.
 - Themen lassen sich „Nach Farbe“ ordnen: dieselben Karten in der Reihenfolge des Farbkreises (Rot, Orange, Gelb, Grün, Blau, Violett), danach die überwiegend grauen von dunkel nach hell. Maßgeblich ist die mittlere Farbe des Bildes aus der Farbkennung. Es wird nur umsortiert, nicht anders ausgewählt.
+
+## 2026-10-12 – Themen: Suche nach der Farbe des Bildes
+- Von Henrik gewünscht: unter „Themen“ auch einfach nach einer Farbe suchen, etwa Orange, allein oder zusammen mit einem Thema. Der Reiter hat dafür drei Auswahlfelder statt der Themen-Knöpfe: Thema, Farbe, Reihenfolge.
+- Zehn Farben: Rot, Orange, Gelb, Grün, Türkis, Blau, Violett, Pink, Schwarz, Weiß. Eine Karte hat eine Farbe, wenn mindestens ein Viertel ihres Bildes diese Farbe hat (aus der Farbkennung); eine Karte kann so zu zwei Farben gehören.
+- Nur Farbe: die Karten der hohen Seltenheiten mit dem größten Anteil dieser Farbe zuerst, höchstens 144. Thema und Farbe: die Karten des Themas, die diese Farbe haben, in der Reihenfolge des Themas.
+- Braun und Gold gibt es nicht als eigene Farbe: Die Farbkennung trennt sie nicht sauber von dunklem Orange und Gelb.

@@ -3,7 +3,7 @@ import { mapWithConcurrency, tcgdexFor, type CardSummary } from '../../lib/tcgde
 import type { CardLang } from '../../types/binder'
 import { loadColourIndex, loadLookIndex } from './colourIndex'
 import { similarCards } from './similarCards'
-import { sortByColour } from './similarColours'
+import { cardsOfColour, sortByColour, type PictureColour } from './similarColours'
 
 /** How many similar cards are shown at first and added by "Mehr anzeigen", and how many at most. */
 export const SIMILAR_STEP = 24
@@ -61,13 +61,23 @@ async function findSimilar(cardId: string, lang: CardLang, count: number): Promi
   }
 }
 
-async function findTheme(themeId: string, lang: CardLang, count: number, order: ThemeOrder): Promise<FoundCards> {
-  const theme = (await loadLookIndex()).themes.find((entry) => entry.id === themeId)
-  if (!theme) return { status: 'unknown' }
+/** What is looked for on the tab "Themen": a theme, a colour of the picture, or both. */
+export interface ThemeChoice {
+  themeId?: string | undefined
+  colour?: PictureColour | undefined
+}
+
+async function findTheme(choice: ThemeChoice, lang: CardLang, count: number, order: ThemeOrder): Promise<FoundCards> {
+  const { themeId, colour } = choice
+  const theme = themeId === undefined ? undefined : (await loadLookIndex()).themes.find((entry) => entry.id === themeId)
+  if (themeId !== undefined && !theme) return { status: 'unknown' }
+  // a theme: its cards as they fit, of the colour only where one is chosen;
+  // a colour alone: the cards with the most of it
+  const all = colour ? cardsOfColour(await loadColourIndex(), colour, theme?.cards).slice(0, THEME_MAX) : (theme?.cards ?? [])
   // by colour: the cards that fit best, laid out anew; not other cards
-  const fitting = theme.cards.slice(0, count)
+  const fitting = all.slice(0, count)
   const ids = order === 'colour' ? sortByColour(await loadColourIndex(), fitting) : fitting
-  return { status: 'ready', cards: await cardsOf(ids, lang), hasMore: theme.cards.length > count, updating: false }
+  return { status: 'ready', cards: await cardsOf(ids, lang), hasMore: all.length > count, updating: false }
 }
 
 /**
@@ -105,10 +115,11 @@ export function useSimilarCards(cardId: string, lang: CardLang, count: number): 
   return useFound(`similar:${lang}:${cardId}`, String(count), () => findSimilar(cardId, lang, count))
 }
 
-/** The `count` cards that fit a theme best; loading until a theme is chosen. */
-export function useThemeCards(themeId: string | undefined, lang: CardLang, count: number, order: ThemeOrder): FoundCards {
-  return useFound(themeId === undefined ? undefined : `theme:${lang}:${themeId}`, `${count}:${order}`, () =>
-    themeId === undefined ? Promise.resolve<FoundCards>({ status: 'unknown' }) : findTheme(themeId, lang, count, order),
+/** The `count` cards that fit a theme, a colour or both best; loading until one of them is chosen. */
+export function useThemeCards(choice: ThemeChoice, lang: CardLang, count: number, order: ThemeOrder): FoundCards {
+  const chosen = choice.themeId !== undefined || choice.colour !== undefined
+  return useFound(chosen ? `theme:${lang}:${choice.themeId ?? ''}:${choice.colour ?? ''}` : undefined, `${count}:${order}`, () =>
+    findTheme(choice, lang, count, order),
   )
 }
 

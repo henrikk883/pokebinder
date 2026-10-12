@@ -113,3 +113,57 @@ export function sortByColour(index: ColourIndex, cardIds: readonly string[]): st
   })
   return keyed.sort((a, b) => a.key - b.key).map((entry) => entry.id)
 }
+
+/** The colours a picture can be looked for by. */
+export const PICTURE_COLOURS = ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'purple', 'pink', 'black', 'white'] as const
+export type PictureColour = (typeof PICTURE_COLOURS)[number]
+
+/** The hues of the signature (0 is red, 4 green, 8 blue) each colour stands for. */
+const HUES_OF: Partial<Record<PictureColour, readonly number[]>> = {
+  red: [0],
+  orange: [1],
+  yellow: [2],
+  green: [3, 4, 5],
+  turquoise: [6],
+  blue: [7, 8],
+  purple: [9, 10],
+  pink: [11],
+}
+/** The greys of the signature, from black (0) to white (3), that count as black and as white. */
+const GREYS_OF: Partial<Record<PictureColour, readonly number[]>> = { black: [0, 1], white: [3] }
+/** A picture is of a colour when at least this much of it is. */
+const COLOUR_SHARE = 0.25
+
+/** How much of a picture is of a colour, from 0 to 1. */
+export function colourShare(index: ColourIndex, position: number, colour: PictureColour): number {
+  const start = position * SIGNATURE_LENGTH
+  let total = 0
+  for (let i = 0; i < SIGNATURE_LENGTH; i++) total += index.signatures[start + i] ?? 0
+  if (total === 0) return 0
+  let amount = 0
+  for (const hue of HUES_OF[colour] ?? []) {
+    for (let level = 0; level < 4; level++) amount += index.signatures[start + hue * 4 + level] ?? 0
+  }
+  for (const grey of GREYS_OF[colour] ?? []) amount += index.signatures[start + HUES * 4 + grey] ?? 0
+  return amount / total
+}
+
+/**
+ * The cards whose pictures are of a colour. Among `cardIds` where given, in their order;
+ * else among the cards of the high rarities, those with the most of the colour first.
+ */
+export function cardsOfColour(index: ColourIndex, colour: PictureColour, cardIds?: readonly string[]): string[] {
+  if (cardIds) {
+    const positionOf = new Map(index.ids.map((id, position) => [id, position]))
+    return cardIds.filter((id) => {
+      const position = positionOf.get(id)
+      return position !== undefined && colourShare(index, position, colour) >= COLOUR_SHARE
+    })
+  }
+  return index.ids
+    .slice(0, index.rare)
+    .map((id, position) => ({ id, share: colourShare(index, position, colour) }))
+    .filter((entry) => entry.share >= COLOUR_SHARE)
+    .sort((a, b) => b.share - a.share)
+    .map((entry) => entry.id)
+}

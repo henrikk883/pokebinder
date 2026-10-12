@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { colourDistance, similarColours, sortByColour, SIGNATURE_LENGTH, type ColourIndex } from './similarColours'
+import {
+  cardsOfColour,
+  colourDistance,
+  colourShare,
+  similarColours,
+  sortByColour,
+  SIGNATURE_LENGTH,
+  type ColourIndex,
+} from './similarColours'
 
 /** An index of cards given by how much of which colour bin their picture has. */
 function indexOf(cards: Record<string, Record<number, number>>, rare = Object.keys(cards).length): ColourIndex {
@@ -102,5 +110,45 @@ describe('sortByColour', () => {
   it('counts a picture with little colour in it as grey', () => {
     const pale = indexOf({ nearlyGrey: { 0: 40, 50: 215 }, blue: { 32: 255 } })
     expect(sortByColour(pale, pale.ids)).toEqual(['blue', 'nearlyGrey'])
+  })
+})
+
+describe('cards of a colour', () => {
+  // bins: four per hue, twelve hues from red on; the greys from 48 (black) to 51 (white)
+  const index = indexOf(
+    {
+      allOrange: { 4: 100, 5: 100, 7: 55 },
+      halfOrange: { 4: 128, 32: 127 },
+      littleOrange: { 4: 50, 32: 205 },
+      blue: { 28: 100, 33: 155 },
+      night: { 48: 200, 49: 30, 32: 25 },
+      snow: { 51: 255 },
+      commonOrange: { 4: 255 },
+    },
+    6,
+  )
+
+  it('measures how much of a picture is of a colour, over all its shades', () => {
+    expect(colourShare(index, 0, 'orange')).toBe(1)
+    expect(colourShare(index, 1, 'orange')).toBeCloseTo(0.5)
+    expect(colourShare(index, 3, 'blue')).toBe(1)
+    expect(colourShare(index, 4, 'black')).toBeCloseTo(230 / 255)
+    expect(colourShare(index, 5, 'white')).toBe(1)
+    expect(colourShare(index, 5, 'orange')).toBe(0)
+  })
+
+  it('finds the cards of the high rarities with the most of a colour first', () => {
+    expect(cardsOfColour(index, 'orange')).toEqual(['allOrange', 'halfOrange'])
+    expect(cardsOfColour(index, 'blue')).toEqual(['blue', 'littleOrange', 'halfOrange'])
+    expect(cardsOfColour(index, 'black')).toEqual(['night'])
+    expect(cardsOfColour(index, 'pink')).toEqual([])
+  })
+
+  it('picks those of a colour out of given cards and keeps their order', () => {
+    expect(cardsOfColour(index, 'orange', ['snow', 'halfOrange', 'unknown', 'commonOrange', 'allOrange'])).toEqual([
+      'halfOrange',
+      'commonOrange',
+      'allOrange',
+    ])
   })
 })
