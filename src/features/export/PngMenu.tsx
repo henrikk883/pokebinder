@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { de } from '../../i18n/de'
 import { useEditorStore } from '../../store/editorStore'
+import type { Binder } from '../../types/binder'
 import { spreadOfPage } from '../binder/spreads'
 
 interface PngMenuProps {
+  /** For printing its own images in true size; pages are exported as they are shown. */
+  binder: Binder
   binderName: string
   /** How many pages the binder has. */
   pageCount: number
@@ -104,17 +107,37 @@ function PageChoiceDialog({ pageCount, preselected, onExport, onCancel }: PageCh
   )
 }
 
-/** "Als PNG": one of the open pages as an image, or any number of pages, one image each. */
-export function PngMenu({ binderName, pageCount, openPages, buttonClass }: PngMenuProps) {
+/**
+ * "Als PNG": one of the open pages as an image, or any number of pages, one image each.
+ * Also the way to print the binder's own images in true size.
+ */
+export function PngMenu({ binder, binderName, pageCount, openPages, buttonClass }: PngMenuProps) {
   const [open, setOpen] = useState(false)
   const [choosing, setChoosing] = useState(false)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
-  const [failed, setFailed] = useState(false)
+  const [printing, setPrinting] = useState<{ done: number; total: number } | null>(null)
+  const [failed, setFailed] = useState<string | null>(null)
+  const hasImages = binder.pages.some((page) => page.images.length > 0)
+
+  async function printImages() {
+    setOpen(false)
+    setFailed(null)
+    setPrinting({ done: 0, total: 0 })
+    try {
+      // PDF library and export code are large and only needed here, so they are loaded on demand
+      const { downloadImagePrint } = await import('./imagePrintTransfer')
+      await downloadImagePrint(binder, (done, total) => setPrinting({ done, total }))
+    } catch {
+      setFailed(de.imagePrint.failed)
+    } finally {
+      setPrinting(null)
+    }
+  }
 
   async function exportPages(pages: number[]) {
     setOpen(false)
     setChoosing(false)
-    setFailed(false)
+    setFailed(null)
     setProgress({ done: 0, total: pages.length })
     const editor = useEditorStore.getState()
     const openBefore = editor.spreadIndex
@@ -128,7 +151,7 @@ export function PngMenu({ binderName, pageCount, openPages, buttonClass }: PngMe
         (done, total) => setProgress({ done, total }),
       )
     } catch {
-      setFailed(true)
+      setFailed(de.png.failed)
     } finally {
       // back to where the binder was open
       useEditorStore.getState().showSpread(openBefore)
@@ -147,14 +170,18 @@ export function PngMenu({ binderName, pageCount, openPages, buttonClass }: PngMe
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        disabled={progress !== null || pageCount === 0}
+        disabled={progress !== null || printing !== null || pageCount === 0}
         onClick={() => setOpen((isOpen) => !isOpen)}
         className={buttonClass}
       >
-        {progress ? de.png.busy(progress.done, progress.total) : de.png.button}
+        {progress
+          ? de.png.busy(progress.done, progress.total)
+          : printing
+            ? de.imagePrint.busy(printing.done, printing.total)
+            : de.png.button}
       </button>
       {open && (
-        <div role="menu" className="absolute top-full left-0 z-10 mt-2 w-56 rounded-panel border border-line bg-panel p-1 shadow-lg">
+        <div role="menu" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-1 shadow-lg">
           {openPages.map((page) => (
             <button
               key={page}
@@ -177,6 +204,16 @@ export function PngMenu({ binderName, pageCount, openPages, buttonClass }: PngMe
           >
             {de.png.several}
           </button>
+          {hasImages && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={printImages}
+              className={`${menuItemClass} mt-1 border-t border-line pt-2`}
+            >
+              {de.imagePrint.menu}
+            </button>
+          )}
         </div>
       )}
       {choosing && (
@@ -189,7 +226,7 @@ export function PngMenu({ binderName, pageCount, openPages, buttonClass }: PngMe
       )}
       {failed && (
         <p role="alert" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-3 text-sm text-muted shadow-lg">
-          {de.png.failed}
+          {failed}
         </p>
       )}
     </div>

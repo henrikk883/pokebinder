@@ -99,7 +99,7 @@ export async function loadMissingList(binder: Binder, onProgress?: Progress): Pr
   return (await loadList(binder, true, onProgress)).rows
 }
 
-function slugOf(name: string): string {
+export function slugOf(name: string): string {
   const slug = name
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
@@ -122,7 +122,7 @@ export function proxyFileName(binderName: string, isoDate: string): string {
   return `platzhalter-${slugOf(binderName)}-${isoDate.slice(0, 10)}.pdf`
 }
 
-function download(content: BlobPart, type: string, fileName: string): void {
+export function download(content: BlobPart, type: string, fileName: string): void {
   const url = URL.createObjectURL(new Blob([content], { type }))
   const link = document.createElement('a')
   link.href = url

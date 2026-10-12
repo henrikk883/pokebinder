@@ -94,11 +94,12 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
     - Karten ohne Bild bekommen einen Rahmen mit Name und Nummer.
 16. **PNG-Export** einzelner Seiten in 1500 px Breite, mit Auswahl mehrerer Seiten (je eine Datei).
     - Pockets, in denen nur ein eigenes Bild liegt, erscheinen ohne Pocket-Rand und Öffnungsmarke, damit sich das Bild ausdrucken, ausschneiden und einstecken lässt.
+17. **Eigene Bilder drucken.** PDF auf A4, in dem jedes Pocket eines Bildes exakt 63 × 88 mm misst, mit Schnittmarken; Bilder über mehrere Pockets zusammenhängend, an Seitengrenzen geteilt.
 
 ### Speichern
 
-17. **Speichern.** Alles wird automatisch lokal gespeichert und ist nach Neuladen unverändert da.
-18. **Backup.** „Alles sichern“ schreibt alle Binder und Bilder in eine JSON-Datei; einzelne Binder lassen sich ebenfalls exportieren. Import ersetzt Binder mit derselben ID und lässt alle anderen stehen.
+18. **Speichern.** Alles wird automatisch lokal gespeichert und ist nach Neuladen unverändert da.
+19. **Backup.** „Alles sichern“ schreibt alle Binder und Bilder in eine JSON-Datei; einzelne Binder lassen sich ebenfalls exportieren. Import ersetzt Binder mit derselben ID und lässt alle anderen stehen.
     - Die App erinnert an die Sicherung, wenn die letzte älter als 14 Tage ist.
     - Über das Backup wandern Binder von einem Gerät zum anderen; eine automatische Synchronisation gibt es nicht.
 
@@ -216,15 +217,14 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Eigene Bilder maßstabsgetreu drucken:** PDF, in dem jedes Bild genau so groß ist wie die Pockets, die es belegt (63 × 88 mm je Pocket), mit Schnittmarken.
-2. **Seiten umsortieren und kopieren:** Seiten in der Miniaturleiste verschieben, eine Seite duplizieren, eine leere Seite mittendrin einfügen.
-3. **Merkliste:** Karten aus der Vorschau merken und in einem eigenen Tab neben „Karten“ und „Eigene Bilder“ wiederfinden.
-4. **Geräte abgleichen:** Import, der erkennt, welche Fassung eines Binders neuer ist, und vor dem Ersetzen fragt.
-5. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
-6. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
-7. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
-8. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
-9. **Fortschritt pro Set** in gemischten Bindern.
-10. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-11. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-12. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Seiten umsortieren und kopieren:** Seiten in der Miniaturleiste verschieben, eine Seite duplizieren, eine leere Seite mittendrin einfügen.
+2. **Merkliste:** Karten aus der Vorschau merken und in einem eigenen Tab neben „Karten“ und „Eigene Bilder“ wiederfinden.
+3. **Geräte abgleichen:** Import, der erkennt, welche Fassung eines Binders neuer ist, und vor dem Ersetzen fragt.
+4. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
+5. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
+6. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
+7. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
+8. **Fortschritt pro Set** in gemischten Bindern.
+9. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+10. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+11. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import type { Locator, Page } from '@playwright/test'
+import { PDFDocument } from 'pdf-lib'
 import { expect, test } from './fixtures'
 import { makePng, pngFile } from './png'
 
@@ -304,6 +305,43 @@ test('an image is moved by dragging it to other pockets, also to the facing page
   await expect(page.getByTestId('spread-label')).toHaveText('Seite 1')
   await page.getByRole('button', { name: 'Weiterblättern' }).click()
   await expect.poll(() => covered(3)).toEqual([2, 8, 9])
+})
+
+test('own images are printed in true size: a PDF with a piece per page side', async ({ page }) => {
+  await createBinder(page, 'Druck', 3)
+  await expect(page.getByTestId('spread-label')).toHaveText('Seiten 2 – 3')
+  const printEntry = page.getByRole('menuitem', { name: 'Eigene Bilder drucken (PDF)' })
+
+  // nothing to print yet
+  await page.getByRole('button', { name: 'Als PNG' }).click()
+  await expect(page.getByRole('menuitem', { name: 'Seite 2', exact: true })).toBeVisible()
+  await expect(printEntry).toHaveCount(0)
+  await page.keyboard.press('Escape')
+
+  // one image across the rings (last pocket of the row on page 2, first on page 3), one single
+  await addImage(page, 2, 3)
+  await page.getByLabel('Breite').selectOption('2')
+  await addImage(page, 3, 9, sunset)
+
+  await page.getByRole('button', { name: 'Als PNG' }).click()
+  const downloadPromise = page.waitForEvent('download')
+  await printEntry.click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toMatch(/^bilder-druck-[0-9]{4}-[0-9]{2}-[0-9]{2}[.]pdf$/)
+  const file = await download.path()
+  if (process.env.SHOT_DIR) await download.saveAs(`${process.env.SHOT_DIR}/image-print.pdf`)
+
+  const pdf = await PDFDocument.load(await readFile(file))
+  expect(pdf.getTitle()).toBe('Bilder – Druck')
+  // three pieces of one pocket each share a single A4 sheet
+  expect(pdf.getPageCount()).toBe(1)
+  const { width, height } = pdf.getPage(0).getSize()
+  expect([Math.round((width * 25.4) / 72), Math.round((height * 25.4) / 72)]).toEqual([210, 297])
+  const pictures = pdf.context
+    .enumerateIndirectObjects()
+    .filter(([, object]) => object.toString().includes('/Subtype /Image'))
+  expect(pictures).toHaveLength(3)
+  await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
 test('the visible part of an image can be moved and magnified', async ({ page }) => {

@@ -92,6 +92,14 @@ export const de = {
   dialog: {
     cancel: 'Abbrechen',
   },
+  imagePrint: {
+    menu: 'Eigene Bilder drucken (PDF)',
+    busy: (done: number, total: number) => `Bilder ${done} / ${total} …`,
+    title: (binderName: string) => `Bilder – ${binderName}`,
+    footer: (sheet: number, sheetCount: number) =>
+      `Blatt ${sheet} von ${sheetCount} · Mit 100 % Skalierung („Tatsächliche Größe“) drucken: jedes Pocket misst dann 63 × 88 mm.`,
+    failed: 'Das PDF konnte nicht erstellt werden.',
+  },
   png: {
     button: 'Als PNG',
     busy: (done: number, total: number) => `PNG ${Math.min(done + 1, total)} / ${total} …`,

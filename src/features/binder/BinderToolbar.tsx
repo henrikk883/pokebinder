@@ -249,6 +249,7 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
       <SortMenu binder={binder} spread={spread} />
       <MissingListMenu binder={binder} buttonClass={buttonClass} />
       <PngMenu
+        binder={binder}
         binderName={binder.name}
         pageCount={binder.pages.length}
         openPages={pageNumbersOf(spread)}

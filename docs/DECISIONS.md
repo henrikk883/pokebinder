@@ -300,3 +300,10 @@ Jede Karte in der Suche hat einen Info-Knopf (unter der Maus beim Überfahren, a
 
 ## 2026-10-12 – „Sammlung“ klappt die Suche ein und erklärt sich
 Im Modus „Sammlung“ wird nichts hineingezogen, deshalb ist die Suche dort eingeklappt; über dem Binder steht, was ein Klick auf eine Karte bewirkt. Die Lasche holt die Suche für den Moment zurück. Zurück in „Bearbeiten“ ist sie wieder so, wie man sie zuletzt selbst eingestellt hat – das automatische Einklappen wird nicht als eigene Wahl gespeichert. Anlass: Henrik sah zwischen den beiden Modi keinen Unterschied.
+
+## 2026-10-12 – Eigene Bilder maßstabsgetreu drucken
+- Menü „Als PNG“ → „Eigene Bilder drucken (PDF)“ (nur sichtbar, wenn der Binder Bilder hat). Das PDF nutzt dasselbe Raster wie der Proxy-Druck: A4, 3 × 3 Plätze zu 63 × 88 mm, Schnittmarken an jeder Pocket-Kante, bei 100 % zu drucken.
+- Jedes Pocket, hinter dem ein Bild liegt, wird ein Stück von 63 × 88 mm. Ein Bild über mehrere Pockets erscheint zusammenhängend und wird entlang der Marken in Pocket-Stücke geschnitten. Bilder über die Ringe werden an der Seitengrenze geteilt, Bilder größer als 3 × 3 (im 4 × 4-Binder) in Teile, die auf ein Blatt passen.
+- Reihenfolge wie im Binder; kleine Stücke teilen sich ein Blatt, nichts wandert auf ein früheres Blatt zurück.
+- Der Ausschnitt entspricht dem im Binder (Blickpunkt und Vergrößerung). Am Bildschirm liegen zwischen den Pockets schmale Stege, auf dem Papier nicht; bei Bildern über mehrere Pockets kann der Rand deshalb um wenige Prozent abweichen.
+- Auflösung höchstens 300 dpi, Bilder mit weniger Pixeln werden nicht hochgerechnet. Die Bilder bleiben farbig; Karten, die auf einem Bild liegen, werden nicht mitgedruckt.
