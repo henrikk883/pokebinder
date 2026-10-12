@@ -7,7 +7,11 @@ import { addPage, createBinder, setCard } from '../binder/binderModel'
 import {
   BackupError,
   backupFileName,
+  backupReminder,
   createBackup,
+  createFullBackup,
+  fullBackupFileName,
+  parseAnyBackup,
   parseBackup,
   referencedAssetIds,
   serializeBackup,
@@ -251,6 +255,87 @@ describe('parseBackup validation', () => {
     ;(backup.binder as Record<string, unknown>).cardData = { hp: 60 }
 
     expect(parseBackup(JSON.stringify(backup)).binder).not.toHaveProperty('cardData')
+  })
+})
+
+describe('full backup', () => {
+  function secondBinder(): Binder {
+    return { ...createBinder({ name: 'Johto', layout: '2x2', lang: 'en' }, createTestContext()), id: 'second' }
+  }
+
+  it('returns all binders and the whole image library after export and re-import', async () => {
+    const binders = [buildBinder(), secondBinder()]
+    const assets = buildAssets()
+
+    const json = JSON.stringify(await createFullBackup(binders, assets, '2026-10-12T10:00:00.000Z'))
+    const restored = parseAnyBackup(json)
+
+    expect(restored.binders).toEqual(binders)
+    expect(restored.assets.map((asset) => asset.id)).toEqual(['asset-cover', 'asset-forest'])
+    expect(await bytesOf(restored.assets[1])).toEqual(await bytesOf(assets[1]))
+  })
+
+  it('keeps images that no binder uses, unlike the backup of a single binder', async () => {
+    const unused: Asset = {
+      id: 'unused',
+      blob: new Blob([Uint8Array.of(1, 2, 3)], { type: 'image/png' }),
+      mimeType: 'image/png',
+      width: 1,
+      height: 1,
+      createdAt: '2026-10-01T00:00:00.000Z',
+    }
+
+    const restored = parseAnyBackup(JSON.stringify(await createFullBackup([], [unused])))
+
+    expect(restored.binders).toEqual([])
+    expect(restored.assets).toMatchObject([{ id: 'unused', createdAt: '2026-10-01T00:00:00.000Z' }])
+  })
+
+  it('reads the backup of a single binder as well', async () => {
+    const binder = buildBinder()
+
+    const restored = parseAnyBackup(serializeBackup(await createBackup(binder, buildAssets())))
+
+    expect(restored.binders).toEqual([binder])
+    expect(restored.assets).toHaveLength(2)
+  })
+
+  it('rejects what is no backup, a newer version, and damaged binders', async () => {
+    const full = await createFullBackup([buildBinder()], [])
+
+    expect(errorCodeOf(() => parseAnyBackup('nope'))).toBe('invalidJson')
+    expect(errorCodeOf(() => parseAnyBackup('{"format":"something"}'))).toBe('wrongFormat')
+    expect(errorCodeOf(() => parseAnyBackup(JSON.stringify({ ...full, version: 2 })))).toBe('unsupportedVersion')
+    expect(errorCodeOf(() => parseAnyBackup(JSON.stringify({ ...full, binders: [{ name: 'x' }] })))).toBe(
+      'invalidData',
+    )
+    expect(errorCodeOf(() => parseAnyBackup(JSON.stringify({ ...full, binders: 'all' })))).toBe('invalidData')
+    // a full backup is not accepted where exactly one binder is expected
+    expect(errorCodeOf(() => parseBackup(JSON.stringify(full)))).toBe('wrongFormat')
+  })
+
+  it('is named after the day it was made', () => {
+    expect(fullBackupFileName('2026-10-12T10:00:00.000Z')).toBe('pokebinder-gesamtsicherung-2026-10-12.json')
+  })
+})
+
+describe('backupReminder', () => {
+  const now = '2026-10-30T12:00:00.000Z'
+
+  it('has nothing to say without binders', () => {
+    expect(backupReminder(null, now, false)).toEqual({ kind: 'none' })
+  })
+
+  it('says so when nothing was ever saved', () => {
+    expect(backupReminder(null, now, true)).toEqual({ kind: 'never' })
+    expect(backupReminder('not a date', now, true)).toEqual({ kind: 'never' })
+  })
+
+  it('keeps quiet for two weeks after a backup, then counts the days', () => {
+    expect(backupReminder('2026-10-30T08:00:00.000Z', now, true)).toEqual({ kind: 'none' })
+    expect(backupReminder('2026-10-17T12:00:00.000Z', now, true)).toEqual({ kind: 'none' })
+    expect(backupReminder('2026-10-16T12:00:00.000Z', now, true)).toEqual({ kind: 'old', days: 14 })
+    expect(backupReminder('2026-09-01T12:00:00.000Z', now, true)).toEqual({ kind: 'old', days: 59 })
   })
 })
 

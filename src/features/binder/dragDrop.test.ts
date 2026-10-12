@@ -2,7 +2,14 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createTestContext } from '../../test/modelContext'
 import type { Binder, CardLang, SlotPosition } from '../../types/binder'
 import { addPage, createBinder, setCard, setOwned, type ModelContext } from './binderModel'
-import { applyDrop, isDragSource, isDropTarget, pocketId, type CardDragSource } from './dragDrop'
+import {
+  applyDrop,
+  isDragSource,
+  isDropTarget,
+  pocketId,
+  withFallback,
+  type CardDragSource,
+} from './dragDrop'
 
 const glurak = { id: 'sv03.5-006', localId: '006', name: 'Glurak-ex' }
 const pikachu = { id: 'sv03.5-025', localId: '025', name: 'Pikachu' }
@@ -48,6 +55,14 @@ describe('applyDrop', () => {
     const next = applyDrop(binder, fromSearch(charizard, 'en'), { kind: 'pocket', position: at(0, 0) }, ctx)
 
     expect(slot(next, 0, 0)?.cardRef).toEqual({ cardId: 'sv03.5-006', lang: 'en', variant: 'normal' })
+  })
+
+  it('places the card in the finish that was looked up for it', () => {
+    const holoOnly: CardDragSource = { kind: 'search', card: glurak, lang: 'de', variant: 'holo' }
+
+    const next = applyDrop(binder, holoOnly, { kind: 'pocket', position: at(0, 0) }, ctx)
+
+    expect(slot(next, 0, 0)?.cardRef).toEqual({ cardId: 'sv03.5-006', lang: 'de', variant: 'holo' })
   })
 
   it('stores only the reference, never card data', () => {
@@ -100,6 +115,25 @@ describe('applyDrop', () => {
     expect(
       applyDrop(filled, fromPocket(at(0, 0), glurak.id), { kind: 'pocket', position: at(0, 0) }, ctx),
     ).toBe(filled)
+  })
+})
+
+describe('withFallback', () => {
+  it('passes on what the lookup finds', async () => {
+    expect(await withFallback(Promise.resolve('holo'), 'normal', 1000)).toBe('holo')
+  })
+
+  it('uses the fallback when the lookup finds nothing or fails', async () => {
+    expect(await withFallback(Promise.resolve(undefined), 'normal', 1000)).toBe('normal')
+    expect(await withFallback(Promise.reject(new Error('offline')), 'normal', 1000)).toBe('normal')
+  })
+
+  it('does not wait longer than allowed', async () => {
+    const never = new Promise<string | undefined>(() => undefined)
+    const started = Date.now()
+
+    expect(await withFallback(never, 'normal', 20)).toBe('normal')
+    expect(Date.now() - started).toBeLessThan(500)
   })
 })
 

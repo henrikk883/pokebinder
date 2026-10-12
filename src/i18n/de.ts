@@ -154,8 +154,13 @@ export const de = {
   },
   backup: {
     button: 'Backup',
-    export: 'Als JSON exportieren',
+    saveAll: 'Alles sichern (alle Binder und Bilder)',
+    export: 'Nur diesen Binder als JSON exportieren',
     import: 'Aus JSON importieren',
+    neverSaved: 'Noch nie gesichert',
+    savedDaysAgo: (days: number) => `Zuletzt gesichert vor ${days} Tagen`,
+    reminderHint:
+      'Deine Binder liegen nur in diesem Browser. Ein Klick speichert alle Binder und Bilder in eine Datei.',
     fileInput: 'Backup-Datei auswählen',
     exportFailed: 'Das Backup konnte nicht erstellt werden.',
     importFailed: 'Das Backup konnte nicht importiert werden.',

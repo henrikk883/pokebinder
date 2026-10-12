@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { binderRepository } from '../../db/binderRepository'
 import { de } from '../../i18n/de'
 import { binderStore, useBinderStore } from '../../store/binderStore'
+import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
 import { countCards } from './binderModel'
 import { NewBinderDialog } from './NewBinderDialog'
@@ -17,6 +18,7 @@ export function BinderList() {
   const [listing, setListing] = useState<Listing>({ status: 'loading' })
   const [creating, setCreating] = useState(false)
   const [version, setVersion] = useState(0)
+  const listVersion = useEditorStore((state) => state.binderListVersion)
 
   useEffect(() => {
     let cancelled = false
@@ -33,12 +35,14 @@ export function BinderList() {
     return () => {
       cancelled = true
     }
-  }, [version])
+  }, [version, listVersion])
 
   async function handleDelete(binder: Binder) {
     if (!window.confirm(de.binderList.confirmDelete(binder.name))) return
     await binderRepository.deleteBinder(binder.id)
     setVersion((current) => current + 1)
+    // others that count binders (the backup reminder) should notice too
+    useEditorStore.getState().refreshBinderList()
   }
 
   return (

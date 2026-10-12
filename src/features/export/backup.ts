@@ -91,12 +91,8 @@ function base64ToBytes(data: string): Uint8Array<ArrayBuffer> {
   return bytes
 }
 
-export async function createBackup(
-  binder: Binder,
-  assets: Asset[],
-  exportedAt: string = new Date().toISOString(),
-): Promise<BackupFile> {
-  const backupAssets = await Promise.all(
+function encodeAssets(assets: Asset[]): Promise<BackupAsset[]> {
+  return Promise.all(
     assets.map(async (asset): Promise<BackupAsset> => ({
       id: asset.id,
       mimeType: asset.mimeType,
@@ -106,7 +102,20 @@ export async function createBackup(
       ...(asset.createdAt === undefined ? {} : { createdAt: asset.createdAt }),
     })),
   )
-  return { format: BACKUP_FORMAT, version: BACKUP_VERSION, exportedAt, binder, assets: backupAssets }
+}
+
+export async function createBackup(
+  binder: Binder,
+  assets: Asset[],
+  exportedAt: string = new Date().toISOString(),
+): Promise<BackupFile> {
+  return {
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    exportedAt,
+    binder,
+    assets: await encodeAssets(assets),
+  }
 }
 
 export function serializeBackup(backup: BackupFile): string {
@@ -261,8 +270,7 @@ function readAsset(value: unknown, path: string): Asset {
   return asset
 }
 
-/** Parses and validates a backup file. Throws `BackupError` when it cannot be used. */
-export function parseBackup(json: string): BackupContent {
+function readJsonObject(json: string): Record<string, unknown> {
   let parsed: unknown
   try {
     parsed = JSON.parse(json)
@@ -272,12 +280,91 @@ export function parseBackup(json: string): BackupContent {
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
     throw new BackupError('wrongFormat')
   }
-  const raw = parsed as Record<string, unknown>
+  return parsed as Record<string, unknown>
+}
+
+function readAssets(value: unknown): Asset[] {
+  return readArray(value, 'assets').map((asset, i) => readAsset(asset, `assets[${i}]`))
+}
+
+/** Parses and validates the backup of one binder. Throws `BackupError` when it cannot be used. */
+export function parseBackup(json: string): BackupContent {
+  const raw = readJsonObject(json)
   if (raw.format !== BACKUP_FORMAT) throw new BackupError('wrongFormat')
   if (raw.version !== BACKUP_VERSION) throw new BackupError('unsupportedVersion')
+  return { binder: readBinder(raw.binder), assets: readAssets(raw.assets) }
+}
 
+export const FULL_BACKUP_FORMAT = 'pokebinder-full-backup'
+export const FULL_BACKUP_VERSION = 1
+
+/** Everything the app stores: all binders and the whole image library. */
+export interface FullBackupFile {
+  format: typeof FULL_BACKUP_FORMAT
+  version: typeof FULL_BACKUP_VERSION
+  exportedAt: string
+  binders: Binder[]
+  assets: BackupAsset[]
+}
+
+export interface FullBackupContent {
+  binders: Binder[]
+  assets: Asset[]
+}
+
+export async function createFullBackup(
+  binders: Binder[],
+  assets: Asset[],
+  exportedAt: string = new Date().toISOString(),
+): Promise<FullBackupFile> {
   return {
-    binder: readBinder(raw.binder),
-    assets: readArray(raw.assets, 'assets').map((asset, i) => readAsset(asset, `assets[${i}]`)),
+    format: FULL_BACKUP_FORMAT,
+    version: FULL_BACKUP_VERSION,
+    exportedAt,
+    binders,
+    assets: await encodeAssets(assets),
   }
+}
+
+export function fullBackupFileName(isoDate: string): string {
+  return `pokebinder-gesamtsicherung-${isoDate.slice(0, 10)}.json`
+}
+
+/**
+ * Reads a backup file of either kind: one binder, or everything.
+ * Throws `BackupError` when it cannot be used.
+ */
+export function parseAnyBackup(json: string): FullBackupContent {
+  const raw = readJsonObject(json)
+  if (raw.format === BACKUP_FORMAT) {
+    const { binder, assets } = parseBackup(json)
+    return { binders: [binder], assets }
+  }
+  if (raw.format !== FULL_BACKUP_FORMAT) throw new BackupError('wrongFormat')
+  if (raw.version !== FULL_BACKUP_VERSION) throw new BackupError('unsupportedVersion')
+  return {
+    binders: readArray(raw.binders, 'binders').map(readBinder),
+    assets: readAssets(raw.assets),
+  }
+}
+
+export type BackupReminder =
+  /** Nothing to remind of: there are no binders, or the last backup is recent. */
+  | { kind: 'none' }
+  | { kind: 'never' }
+  | { kind: 'old'; days: number }
+
+/** After this many days without a full backup the app starts to remind. */
+export const BACKUP_REMINDER_DAYS = 14
+
+export function backupReminder(
+  lastBackup: string | null,
+  now: string,
+  hasBinders: boolean,
+): BackupReminder {
+  if (!hasBinders) return { kind: 'none' }
+  const last = lastBackup === null ? Number.NaN : Date.parse(lastBackup)
+  if (Number.isNaN(last)) return { kind: 'never' }
+  const days = Math.floor((Date.parse(now) - last) / (24 * 60 * 60 * 1000))
+  return days >= BACKUP_REMINDER_DAYS ? { kind: 'old', days } : { kind: 'none' }
 }

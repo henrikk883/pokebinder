@@ -208,6 +208,15 @@ Ein Pocket merkte sich, dass ein englisches Ersatzbild nicht ladbar war, und zei
 ## 2026-10-12 – PNG-Export nur noch seitenweise, mit Seitenauswahl
 Der Doppelseiten-Export ist entfernt; er zeigte laut Henrik nicht alles. „Als PNG“ bietet die aufgeschlagenen Seiten einzeln an und „Mehrere Seiten …“: ein Fenster mit einem Kästchen je Seite des Binders (dazu „Alle“ und „Keine“), aus dem jede angekreuzte Seite ein eigenes Bild mit 1500 px Breite wird, benannt nach Binder und Seitenzahl. Für den Export blättert die App nacheinander zu jeder Seite, wartet, bis Karten und Bilder geladen sind, und kehrt danach zur vorher offenen Stelle zurück. Kartenbilder im Binder werden deshalb sofort geladen statt erst beim Scrollen. Ersetzt die Regel „Doppelseite oder einzelne Seite“ weiter oben. Von Henrik gewünscht.
 
+## 2026-10-12 – „Alles sichern“: Gesamtsicherung in einer Datei
+Zusätzlich zum Backup eines Binders gibt es `pokebinder-full-backup` (Version 1): alle Binder und die ganze Bild-Bibliothek, auch Bilder, die kein Binder verwendet. „Aus JSON importieren“ liest beide Formate. Binder mit derselben ID werden ersetzt, alle anderen bleiben unberührt; kommt genau ein Binder zurück, wird er geöffnet, sonst erscheint die Liste. Grund: Die Daten liegen nur im Browser dieses Rechners. Von Henrik gewünscht.
+
+## 2026-10-12 – Erinnerung an die Gesamtsicherung
+Gibt es Binder und wurde noch nie oder seit 14 Tagen nicht mehr alles gesichert, zeigt die Kopfzeile einen dezenten Knopf („Noch nie gesichert“ bzw. „Zuletzt gesichert vor N Tagen“), der die Sicherung auslöst. Der Zeitpunkt steht im `localStorage`; er ist eine Einstellung dieses Browsers und kein Teil der Binder-Daten.
+
+## 2026-10-12 – Karten aus der Suche landen in ihrer Grundvariante
+Beim Ablegen schlägt die App die Varianten der Karte nach und setzt „normal“, wenn es sie gibt, sonst „holo“. Die Abfrage startet schon beim Aufnehmen der Karte; dauert sie länger als 1,5 Sekunden oder schlägt fehl, landet die Karte als „normal“. Ersetzt die frühere Regel, dass Karten aus der Suche immer „normal“ sind. Von Henrik gewünscht.
+
 ## 2026-10-12 – Playwright-Tests auf eigenem Port
 Die Tests starten ihren Server auf Port 5174. Auf 5173 läuft die App selbst; ein dort laufender älterer Stand war von den Tests versehentlich mitbenutzt worden.
 

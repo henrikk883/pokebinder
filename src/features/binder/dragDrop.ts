@@ -1,10 +1,16 @@
 import type { CardSummary } from '../../lib/tcgdex'
-import type { Binder, CardLang, SlotPosition } from '../../types/binder'
+import type { Binder, CardLang, CardVariant, SlotPosition } from '../../types/binder'
 import { moveCard, setCard, type ModelContext } from './binderModel'
 
 /** A card being dragged: from the search, or one that already sits in a pocket. */
 export type CardDragSource =
-  | { kind: 'search'; card: CardSummary; lang: CardLang }
+  | {
+      kind: 'search'
+      card: CardSummary
+      lang: CardLang
+      /** The finish the card is placed in; looked up when it is dropped, `normal` if unknown. */
+      variant?: CardVariant
+    }
   | { kind: 'pocket'; position: SlotPosition; cardId: string; lang: CardLang }
 
 /** What is being dragged: a card, or an image from the library. */
@@ -23,6 +29,26 @@ export function isDragSource(value: unknown): value is DragSource {
 
 export function isDropTarget(value: unknown): value is DropTarget {
   return typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === 'pocket'
+}
+
+/**
+ * Resolves to what `lookup` finds, or to `fallback` if that fails or takes longer than
+ * `timeoutMs`: a dropped card should land at once, also without a connection.
+ */
+export function withFallback<T>(lookup: Promise<T | undefined>, fallback: T, timeoutMs: number): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), timeoutMs)
+    lookup.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value ?? fallback)
+      },
+      () => {
+        clearTimeout(timer)
+        resolve(fallback)
+      },
+    )
+  })
 }
 
 /** Stable id for dnd-kit. */
@@ -44,7 +70,7 @@ export function applyDrop(
   return setCard(
     binder,
     target.position,
-    { cardId: source.card.id, lang: source.lang, variant: 'normal' },
+    { cardId: source.card.id, lang: source.lang, variant: source.variant ?? 'normal' },
     true,
     ctx,
   )
