@@ -5,6 +5,8 @@ import type { CardSummary, SetSummary } from '../../lib/tcgdex'
 import { useWatchlistStore } from '../../store/watchlistStore'
 import type { CardLang } from '../../types/binder'
 import type { DragSource } from '../binder/dragDrop'
+import { placeByTap } from '../binder/placeCard'
+import { useIsPhone } from '../../lib/phone'
 import { CardImage } from './CardImage'
 import { CardInfoDialog } from './CardInfoDialog'
 import { listsWith, QUICK_LIST_ID } from './watchlist'
@@ -52,6 +54,8 @@ export function CardTile({ card, set, lang, draggable, dragIdPrefix = 'search', 
   const onOtherList = !saved && listCount > 0
   const number = set ? `${card.localId}/${set.cardCount.official}` : card.localId
   const source: DragSource = { kind: 'search', card, lang }
+  // Where nothing can be dragged across (a phone), a tap does what a drop does elsewhere.
+  const tappable = useIsPhone() && draggable && !browsing
   const { setNodeRef, listeners, isDragging } = useDraggable({
     id: `${dragIdPrefix}:${card.id}`,
     data: source,
@@ -72,8 +76,16 @@ export function CardTile({ card, set, lang, draggable, dragIdPrefix = 'search', 
       ) : (
         <div
           ref={setNodeRef}
-          {...listeners}
-          className={`${draggable ? 'cursor-grab' : ''} ${isDragging ? 'opacity-40' : ''}`}
+          {...(tappable ? undefined : listeners)}
+          {...(tappable
+            ? {
+                role: 'button',
+                tabIndex: 0,
+                'aria-label': de.tap.place(card.name),
+                onClick: () => void placeByTap(card, lang),
+              }
+            : undefined)}
+          className={`${draggable && !tappable ? 'cursor-grab' : ''} ${isDragging ? 'opacity-40' : ''}`}
         >
           <CardImage card={card} set={set} size="small" />
         </div>

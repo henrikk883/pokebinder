@@ -156,6 +156,9 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
     ),
   )
   const select = useEditorStore((state) => state.select)
+  const waiting = useEditorStore(
+    (state) => state.moving?.pageId === pageId && state.moving.slotIndex === slot.index,
+  )
   const clearSlot = useBinderStore((state) => state.clearSlot)
   const setOwned = useBinderStore((state) => state.setOwned)
   const collecting = useEditorStore((state) => state.mode === 'collection')
@@ -164,6 +167,25 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
   function handleClick(modifiers: { toggle: boolean; range: boolean } = { toggle: false, range: false }) {
     const editor = useEditorStore.getState()
     const binder = binderStore.getState().binder
+    // A card waits to be put elsewhere: this pocket is where it goes.
+    if (!collecting && editor.moving) {
+      const from = editor.moving
+      if (editor.multi.length > 1 && editor.multi.some((other) => samePocket(other, from))) {
+        const moved = binderStore.getState().moveCards(editor.multi, from, position)
+        // without room the cards keep waiting, for another pocket to be tried
+        if (!moved) {
+          editor.setNotice(de.multi.noRoom)
+          return
+        }
+        editor.cancelMove()
+        editor.selectMany(moved)
+        return
+      }
+      editor.cancelMove()
+      binderStore.getState().moveCard(from, position)
+      select(position)
+      return
+    }
     // Several pockets are selected with Ctrl (one more or less), with Shift (all from the
     // one selected last to this one), or in the mode that does the first without a key.
     // Not while ticking off the collection, where a click has its own meaning.
@@ -232,7 +254,10 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
         if (slot.cardRef && !collecting) clearSlot(position)
       }}
       data-over-image={overImage}
+      data-moving={waiting || undefined}
       className={`relative flex aspect-[63/88] items-center justify-center rounded-pocket outline-offset-2 ${
+        waiting ? 'outline-2 outline-dashed outline-accent' : ''
+      } ${
         overImage ? '' : 'bg-bg/60'
       } ${bareImage ? '' : frameClass} ${movesImage ? 'cursor-grab' : ''}`}
     >

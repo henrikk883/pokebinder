@@ -988,3 +988,77 @@ test('a menu closes when something else on the page is clicked', async ({ page }
   await elsewhere.click()
   await expect(page.getByRole('listbox', { name: 'Set' })).toHaveCount(0)
 })
+
+test('a card is moved to a page that does not lie open: "Verschieben", turn the pages, click the target', async ({ page }) => {
+  await createBinder(page, 'Weit weg')
+  await page.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const ids = ['sv03.5-001', 'sv03.5-002', 'sv03.5-003']
+  for (const [index, id] of ids.entries()) {
+    await drag(page, tile(page, id), pocket(page, 1, index + 1))
+    await expect(pocket(page, 1, index + 1)).toHaveAttribute('data-card-id', id)
+  }
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Seite hinzufügen' }).click()
+  await page.getByRole('button', { name: 'Seite 1', exact: true }).click()
+  const move = page.getByRole('button', { name: 'Verschieben', exact: true })
+  const hint = page.getByTestId('move-hint')
+
+  // an empty pocket has nothing to move
+  await pocket(page, 1, 9).click()
+  await expect(move).toBeDisabled()
+
+  // the card waits, marked, while the binder is turned to where it should go
+  await pocket(page, 1, 1).click()
+  await move.click()
+  await expect(hint).toContainText('Jetzt das Ziel-Pocket antippen')
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-moving', 'true')
+  await page.getByRole('button', { name: 'Seiten 4 – 5' }).click()
+  await expect(hint).toBeVisible()
+  await pocket(page, 5, 7).click()
+  await expect(pocket(page, 5, 7)).toHaveAttribute('data-card-id', ids[0] ?? '')
+  await expect(pocket(page, 5, 7)).toHaveAttribute('aria-pressed', 'true')
+  await expect(hint).toHaveCount(0)
+  await page.getByRole('button', { name: 'Seite 1', exact: true }).click()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', '')
+
+  // onto a pocket that holds a card: the two swap places
+  await pocket(page, 1, 2).click()
+  await move.click()
+  await pocket(page, 1, 3).click()
+  await expect(pocket(page, 1, 3)).toHaveAttribute('data-card-id', ids[1] ?? '')
+  await expect(pocket(page, 1, 2)).toHaveAttribute('data-card-id', ids[2] ?? '')
+
+  // given up by button or by Escape, nothing moves and the next click selects as usual
+  await pocket(page, 1, 2).click()
+  await move.click()
+  await hint.getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(hint).toHaveCount(0)
+  await pocket(page, 1, 5).click()
+  await expect(pocket(page, 1, 5)).toHaveAttribute('data-card-id', '')
+  await pocket(page, 1, 2).click()
+  await move.click()
+  await page.keyboard.press('Escape')
+  await expect(hint).toHaveCount(0)
+
+  // several cards go together and keep their distance, across pages too
+  await pocket(page, 1, 2).click()
+  await pocket(page, 1, 3).click({ modifiers: ['ControlOrMeta'] })
+  await page.getByTestId('multi-selection').getByRole('button', { name: 'Verschieben', exact: true }).click()
+  await expect(hint).toContainText('Die anderen kommen mit')
+  await page.getByRole('button', { name: 'Seiten 2 – 3' }).click()
+  // the card selected last (pocket 3) goes where the click is; the other one lands before it
+  await pocket(page, 3, 2).click()
+  await expect(pocket(page, 3, 1)).toHaveAttribute('data-card-id', ids[2] ?? '')
+  await expect(pocket(page, 3, 2)).toHaveAttribute('data-card-id', ids[1] ?? '')
+
+  // one step back for each move
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await page.getByRole('button', { name: 'Seite 1', exact: true }).click()
+  await expect(pocket(page, 1, 3)).toHaveAttribute('data-card-id', ids[1] ?? '')
+
+  // not while cards are ticked off
+  await pocket(page, 1, 3).click()
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  await pocket(page, 1, 3).click()
+  await expect(move).toHaveCount(0)
+})

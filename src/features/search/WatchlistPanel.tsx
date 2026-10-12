@@ -8,6 +8,7 @@ import { useCard } from '../binder/useCard'
 import { CardTile } from './CardTile'
 import { listName } from './listName'
 import { ListWorth } from './ListWorth'
+import { TapHint } from './TapHint'
 import { useReadyCatalog } from './useCatalog'
 import { QUICK_LIST_ID, type SavedCard } from './watchlist'
 
@@ -184,6 +185,7 @@ export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap
       {draggable && cards.length > 0 && (
         <p className="shrink-0 border-t border-line px-4 py-2 text-xs text-muted max-md:hidden">{de.search.dragHint}</p>
       )}
+      {draggable && cards.length > 0 && <TapHint />}
     </div>
   )
 }

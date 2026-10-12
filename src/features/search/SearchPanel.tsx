@@ -9,6 +9,7 @@ import { FilterSelect } from './FilterSelect'
 import { LanguageSelect } from './LanguageSelect'
 import { SearchResults } from './SearchResults'
 import { SetPicker } from './SetPicker'
+import { TapHint } from './TapHint'
 import { useCardSearchForm } from './useCardSearchForm'
 import { savedCardCount } from './watchlist'
 import { WatchlistPanel } from './WatchlistPanel'
@@ -80,6 +81,7 @@ function CardSearch({ lang }: { lang: CardLang }) {
           {de.search.dragHint}
         </p>
       )}
+      {binderOpen && <TapHint />}
     </div>
   )
 }

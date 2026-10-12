@@ -390,3 +390,12 @@ Alle aufklappbaren Menüs (Sortieren, Fehlliste, Als PNG, Mehr, Backup, Set-Ausw
 - Regal und Seite „Karten“ stehen in zwei Spalten; in der Suche scrollen die Filter mit den Ergebnissen weg.
 - Bilder über zwei Seiten bleiben erhalten, auf dem Handy sieht man je Seite ihren Teil.
 - Von Henrik auf dem Handy getestet und freigegeben.
+
+## 2026-10-12 – Handy-Ansicht, Schritt 2: Antippen statt Ziehen
+- Auf dem Handy liegen Suche und Binder nicht nebeneinander, also lässt sich nichts hinüberziehen. Stattdessen legt ein Tipp auf eine Karte der Suche (oder der Merkliste) sie in den Binder: in das dort gewählte Pocket – auch wenn schon eine Karte darin liegt, wie beim Ablegen –, ohne Auswahl ins erste freie Pocket ab der offenen Seite.
+- Danach springt die Auswahl zum nächsten freien Pocket (auch auf der nächsten Seite), sodass sich eine Seite ohne Hin- und Herwechseln füllen lässt. Eine Zeile unter den Karten sagt, wo die letzte Karte gelandet ist und wohin die nächste geht; ist nichts mehr frei, steht das dort.
+- Stern und Info-Knopf bleiben, was sie sind. Am PC und Tablet wird weiter gezogen.
+- Von Henrik auf dem Handy getestet und freigegeben.
+
+## 2026-10-12 – „Verschieben“: Ziel antippen statt ziehen
+Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Handy zusätzlich direkt unter den Blätterpfeilen). Die Karte wartet dann mit gestricheltem Rahmen, ein Hinweis steht über dem Binder, und das nächste angeklickte Pocket ist ihr Ziel – auch nach dem Umblättern, also auf einer Seite, die vorher nicht offen lag. Liegt dort eine Karte, tauschen beide. „Abbrechen“ oder Esc beendet es. Mit einer Mehrfachauswahl wandern alle mit: Die zuletzt gewählte Karte landet auf dem Ziel, die anderen behalten ihren Abstand; passt das nicht in den Binder, bleibt alles liegen und man kann ein anderes Ziel wählen. Gilt auf allen Geräten: Vorher ließ sich nirgends eine Karte auf eine nicht aufgeschlagene Seite bringen. Anlass: Henrik wollte auf dem Handy verschieben können.

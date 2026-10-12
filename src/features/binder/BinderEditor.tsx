@@ -33,7 +33,9 @@ function useEditorKeys(spreadCount: number) {
       const current = clampSpread(editor.spreadIndex, spreadCount)
       if (event.key === 'ArrowLeft') editor.showSpread(clampSpread(current - 1, spreadCount))
       else if (event.key === 'ArrowRight') editor.showSpread(clampSpread(current + 1, spreadCount))
-      else if (event.key === 'Delete' && editor.multi.length > 1) {
+      else if (event.key === 'Escape' && editor.moving) {
+        editor.cancelMove()
+      } else if (event.key === 'Delete' && editor.multi.length > 1) {
         binderStore.getState().clearSlots(editor.multi)
       } else if (event.key === 'Delete' && editor.selection) {
         binderStore.getState().clearSlot(editor.selection)
@@ -110,6 +112,14 @@ export function BinderEditor({ binder }: { binder: Binder }) {
   const spreadIndex = useEditorStore((state) => state.spreadIndex)
   const notice = useEditorStore((state) => state.notice)
   const collecting = useEditorStore((state) => state.mode === 'collection')
+  const moving = useEditorStore((state) => state.moving)
+  const selection = useEditorStore((state) => state.selection)
+  const several = useEditorStore((state) => state.multi.length > 1)
+  const startMove = useEditorStore((state) => state.startMove)
+  const cancelMove = useEditorStore((state) => state.cancelMove)
+  const selectedHasCard =
+    selection !== null &&
+    binder.pages.find((page) => page.id === selection.pageId)?.slots[selection.slotIndex]?.cardRef !== undefined
 
   const phone = useIsPhone()
   const spreads = buildSpreads(binder.pages.length, phone)
@@ -130,6 +140,34 @@ export function BinderEditor({ binder }: { binder: Binder }) {
         <p data-testid="collection-hint" className="text-sm text-muted">
           {de.binder.collectionHint}
         </p>
+      )}
+      {moving && (
+        <p
+          role="status"
+          data-testid="move-hint"
+          className="flex items-center justify-between gap-3 rounded-control border border-accent bg-raised px-3 py-2 text-sm"
+        >
+          <span>{several ? de.move.hintMany : de.move.hint}</span>
+          <button
+            type="button"
+            onClick={cancelMove}
+            className="h-8 shrink-0 rounded-control border border-line bg-panel px-3 text-xs hover:border-accent"
+          >
+            {de.move.cancel}
+          </button>
+        </p>
+      )}
+      {/* on a phone the selection column is a tap away; the way to move a card is right here */}
+      {!moving && !collecting && selection && selectedHasCard && (
+        <div className="md:hidden">
+          <button
+            type="button"
+            onClick={() => startMove(selection)}
+            className="h-9 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent"
+          >
+            {de.move.start}
+          </button>
+        </div>
       )}
       {notice && (
         <p role="alert" className="rounded-control border border-line bg-raised px-3 py-2 text-sm">

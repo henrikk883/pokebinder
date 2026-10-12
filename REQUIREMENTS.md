@@ -66,6 +66,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
 7. **Karten platzieren.** Karte per Drag & Drop in einen Pocket ziehen.
    - Die Karte landet in ihrer Grundvariante (eine Karte, die es nur als Holo gibt, als Holo).
    - Karten zwischen Pockets und Seiten verschieben; belegte Pockets tauschen beim Drop.
+   - „Verschieben“ für die gewählte Karte (oder mehrere): danach das Ziel-Pocket anklicken, auch auf einer anderen Seite. So kommen Karten auf Seiten, die gerade nicht offen liegen.
    - Pocket leeren per Rechtsklick, Entf-Taste oder Button „Pocket leeren“.
    - **Lücke einfügen / schließen:** Am gewählten Pocket rücken die Karten ab dort um ein Pocket weiter, damit eine Karte dazwischen passt, oder die folgenden Karten rücken in eine Lücke nach – jeweils bis zur nächsten Lücke, auch über Seiten.
    - **Mehrere Karten auf einmal:** Mit Strg-Klick, Umschalt-Klick oder dem Umschalter „Mehrere auswählen“ lassen sich mehrere Pockets wählen und gemeinsam verschieben (eine ziehen, die anderen kommen mit), leeren oder als vorhanden bzw. fehlend markieren.
@@ -156,7 +157,7 @@ Das Mockup ist die verbindliche Vorlage für den Binder-Editor auf dem Desktop: 
 - **Plattform:** läuft im Browser auf Desktop, Tablet und Smartphone.
 - **Bedienung per Finger:** Ein Finger greift eine Karte nach kurzem Halten (250 ms), ein Wischen scrollt; mit der Maus beginnt das Ziehen sofort. Was am PC nur beim Überfahren erscheint, ist auf Geräten ohne Maus erreichbar (der Knopf „Fehlt“ auf der angetippten Karte, „Löschen“ und die Knöpfe im Regal dauerhaft).
 - **Schmale Bildschirme:** Unter 1280 px Breite startet die rechte Spalte eingeklappt und schiebt sich über den Binder. Hochformat wird nicht eigens unterstützt.
-- **Smartphone (unter 768 px Breite):** ein Bereich zur Zeit – Binder, Suche oder Auswahl – mit einer Leiste am unteren Rand; der Binder liegt mit einer Seite offen, die die Breite füllt; Menüs klappen von unten auf.
+- **Smartphone (unter 768 px Breite):** ein Bereich zur Zeit – Binder, Suche oder Auswahl – mit einer Leiste am unteren Rand; der Binder liegt mit einer Seite offen, die die Breite füllt; Menüs klappen von unten auf. Karten kommen dort per Antippen in den Binder: Ein Tipp in der Suche legt die Karte ins gewählte bzw. nächste freie Pocket.
 - **Performance:** Seitenwechsel unter 100 ms; Kartenbilder in der Suche lazy und klein, große nur im Binder.
 - **Offline:** TCGdex-Antworten liegen 24 Stunden in IndexedDB (danach als Rückfall); bereits gesehene Kartenbilder hält ein Service Worker vor. Der Bilder-Vorrat braucht `https` oder `localhost`.
 - **Datenhaltung:** lokal im Browser (IndexedDB), kein eigener Server. Jedes Gerät hat seinen eigenen Bestand.
@@ -226,6 +227,7 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 ## Offen (To-do-Liste)
 
-Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
+Mit Henrik am 12.10.2026 vereinbart, in dieser Reihenfolge:
 
-1. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Abgleich zwischen Geräten mit Anmeldung:** Binder, Bilder und Merklisten liegen zusätzlich bei Cloudflare und gleichen sich zwischen PC, Tablet und Handy ab; Anmeldung per E-Mail-Code, nur für freigeschaltete Adressen (Henrik und wenige Freunde). Ersetzt das Hin- und Herschicken der Backup-Datei. Ändert die Regel „kein Backend, keine Accounts“.
+2. **Landing Page:** eine Einstiegsseite, die sich an Handy und PC anpasst; Entwurf von Henrik unter `docs/`.

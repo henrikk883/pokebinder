@@ -428,6 +428,18 @@ export const de = {
     variants: 'Varianten',
     close: 'Schließen',
   },
+  move: {
+    start: 'Verschieben',
+    hint: 'Jetzt das Ziel-Pocket antippen, auch auf einer anderen Seite. Liegt dort eine Karte, tauschen beide den Platz.',
+    hintMany: 'Jetzt das Pocket antippen, in das die zuletzt gewählte Karte soll, auch auf einer anderen Seite. Die anderen kommen mit.',
+    cancel: 'Abbrechen',
+  },
+  tap: {
+    placed: (name: string, page: number, pocket: number) => `✓ ${name} liegt in Seite ${page} · Pocket ${pocket}`,
+    next: (page: number, pocket: number) => `Karte antippen legt sie in Seite ${page} · Pocket ${pocket}`,
+    full: 'Kein freies Pocket mehr. Im Binder ein Pocket antippen oder eine Seite hinzufügen.',
+    place: (name: string) => `${name} in den Binder legen`,
+  },
   panes: {
     label: 'Bereich',
     binder: 'Binder',

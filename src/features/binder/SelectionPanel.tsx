@@ -174,6 +174,7 @@ export function SelectionPanel() {
   const movePage = useBinderStore((state) => state.movePage)
   const insertPage = useBinderStore((state) => state.insertPage)
   const duplicatePage = useBinderStore((state) => state.duplicatePage)
+  const startMove = useEditorStore((state) => state.startMove)
   const insertGap = useBinderStore((state) => state.insertGap)
   const closeGap = useBinderStore((state) => state.closeGap)
   const showSpread = useEditorStore((state) => state.showSpread)
@@ -235,6 +236,14 @@ export function SelectionPanel() {
             >
               {de.multi.clear}
             </button>
+            <button
+              type="button"
+              disabled={selectedCards === 0 || !selection}
+              onClick={() => selection && startMove(selection)}
+              className={pageButtonClass}
+            >
+              {de.move.start}
+            </button>
             <button type="button" onClick={() => select(null)} className={outlineButtonClass}>
               {de.multi.deselect}
             </button>
@@ -261,6 +270,16 @@ export function SelectionPanel() {
                 <dd className={fieldClass}>{slot.index + 1}</dd>
               </div>
             </dl>
+            {!collecting && (
+              <button
+                type="button"
+                disabled={!slot.cardRef}
+                onClick={() => startMove({ pageId: page.id, slotIndex: slot.index })}
+                className={pageButtonClass}
+              >
+                {de.move.start}
+              </button>
+            )}
             <button
               type="button"
               disabled={!slot.cardRef}

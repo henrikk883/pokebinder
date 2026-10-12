@@ -162,3 +162,128 @@ test('on a phone the shelf and the page "Karten" stand in two columns', async ({
   await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).tap()
   await expect(bar(page)).toBeVisible()
 })
+
+test('on a phone a tapped card goes into the selected pocket, and the next free pocket is up next', async ({ page }) => {
+  await createBinder(page, 'Antippen')
+  const pockets = page.getByTestId('pocket')
+  const hint = page.getByTestId('tap-hint')
+  const toSearch = () => bar(page).getByRole('button', { name: 'Suche' }).tap()
+  const toBinder = () => bar(page).getByRole('button', { name: 'Binder' }).tap()
+
+  // nothing selected: the first free pocket of the open page is where a card would go
+  await toSearch()
+  await expect(hint).toHaveText('Karte antippen legt sie in Seite 1 · Pocket 1')
+  await page.getByRole('button', { name: 'Set', exact: true }).tap()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).tap()
+  const results = page.getByTestId('search-results')
+  const card = (cardId: string) => results.locator(`[data-card-id="${cardId}"]`)
+  await expect(card('sv03.5-001')).toBeVisible()
+
+  // a tap puts the card there and says so; the next pocket is up
+  await card('sv03.5-001').getByRole('button', { name: 'Bisasam in den Binder legen' }).tap()
+  await expect(hint.getByRole('status')).toHaveText('✓ Bisasam liegt in Seite 1 · Pocket 1')
+  await expect(hint).toContainText('Karte antippen legt sie in Seite 1 · Pocket 2')
+  await card('sv03.5-002').getByRole('button', { name: /in den Binder legen$/ }).tap()
+  await expect(hint).toContainText('Seite 1 · Pocket 3')
+
+  // in the binder both lie there, and the pocket that is up next is the one selected
+  await toBinder()
+  await expect(pockets.nth(0)).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await expect(pockets.nth(1)).toHaveAttribute('data-card-id', 'sv03.5-002')
+  await expect(pockets.nth(2)).toHaveAttribute('aria-pressed', 'true')
+
+  // a pocket picked in the binder is where the next card goes
+  await pockets.nth(8).tap()
+  await toSearch()
+  await expect(hint).toContainText('Karte antippen legt sie in Seite 1 · Pocket 9')
+  await card('sv03.5-003').getByRole('button', { name: /in den Binder legen$/ }).tap()
+  await expect(hint.getByRole('status')).toHaveText(/liegt in Seite 1 · Pocket 9$/)
+  // behind the last pocket nothing is free: back to the first free pocket of the page
+  await expect(hint).toContainText('Karte antippen legt sie in Seite 1 · Pocket 3')
+  await toBinder()
+  await expect(pockets.nth(8)).toHaveAttribute('data-card-id', 'sv03.5-003')
+
+  // info and star still do their own thing and put nothing into the binder
+  await toSearch()
+  await card('sv03.5-004').scrollIntoViewIfNeeded()
+  await card('sv03.5-004').getByRole('button', { name: /^Infos zu/ }).tap()
+  await page.getByRole('dialog').getByRole('button', { name: 'Schließen' }).tap()
+  await card('sv03.5-004').getByRole('button', { name: /merken$/ }).tap()
+  await toBinder()
+  await expect(page.locator('[data-testid="pocket"]:not([data-card-id=""])')).toHaveCount(3)
+
+  // one step back takes the last card out again
+  await page.getByRole('button', { name: 'Rückgängig' }).tap()
+  await expect(pockets.nth(8)).toHaveAttribute('data-card-id', '')
+})
+
+test('on a phone a full page sends the next card to the following page, and a full binder says so', async ({ page }) => {
+  await createBinder(page, 'Voll')
+  await bar(page).getByRole('button', { name: 'Suche' }).tap()
+  await page.getByRole('button', { name: 'Set', exact: true }).tap()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).tap()
+  const results = page.getByTestId('search-results')
+  const hint = page.getByTestId('tap-hint')
+  await expect(results.getByTestId('card-tile').first()).toBeVisible()
+
+  // nine cards fill the only page
+  for (let index = 0; index < 9; index++) {
+    const tile = results.getByTestId('card-tile').nth(index)
+    await tile.scrollIntoViewIfNeeded()
+    await tile.getByRole('button', { name: /in den Binder legen$/ }).tap()
+    await expect(hint.getByRole('status')).toHaveText(new RegExp(`liegt in Seite 1 · Pocket ${index + 1}$`))
+  }
+  await expect(hint).toContainText('Kein freies Pocket mehr.')
+  // a further tap changes nothing
+  await results.getByTestId('card-tile').nth(9).getByRole('button', { name: /in den Binder legen$/ }).tap()
+  await bar(page).getByRole('button', { name: 'Binder' }).tap()
+  await expect(page.locator('[data-testid="pocket"]:not([data-card-id=""])')).toHaveCount(9)
+
+  // with a new page there is room again, and that is where the next card goes
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).tap()
+  await bar(page).getByRole('button', { name: 'Suche' }).tap()
+  await expect(hint).toContainText('Karte antippen legt sie in Seite 2 · Pocket 1')
+})
+
+test('on a phone a card is moved by tapping it, "Verschieben", and the pocket it should go to', async ({ page }) => {
+  await createBinder(page, 'Umräumen')
+  await bar(page).getByRole('button', { name: 'Suche' }).tap()
+  await page.getByRole('button', { name: 'Set', exact: true }).tap()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).tap()
+  const results = page.getByTestId('search-results')
+  await results.locator('[data-card-id="sv03.5-001"]').getByRole('button', { name: /in den Binder legen$/ }).tap()
+  await expect(page.getByTestId('tap-hint').getByRole('status')).toHaveText(/Pocket 1$/)
+  await bar(page).getByRole('button', { name: 'Binder' }).tap()
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).tap()
+  await page.getByRole('button', { name: 'Zurückblättern' }).tap()
+  const pockets = page.getByTestId('pocket')
+  const move = page.getByRole('button', { name: 'Verschieben', exact: true })
+  const hint = page.getByTestId('move-hint')
+
+  // the button is right there in the binder once a card is tapped, not for an empty pocket
+  await pockets.nth(5).tap()
+  await expect(move).toHaveCount(0)
+  await pockets.nth(0).tap()
+  await move.tap()
+  await expect(hint).toContainText('Jetzt das Ziel-Pocket antippen')
+
+  // to the other page, which is not in view until it is turned to
+  await page.getByRole('button', { name: 'Weiterblättern' }).tap()
+  await expect(page.getByTestId('spread-label')).toHaveText('Seite 2')
+  await expect(hint).toBeVisible()
+  await pockets.nth(4).tap()
+  await expect(pockets.nth(4)).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await expect(hint).toHaveCount(0)
+  await page.getByRole('button', { name: 'Zurückblättern' }).tap()
+  await expect(pockets.nth(0)).toHaveAttribute('data-card-id', '')
+
+  // from "Auswahl" the same button leads straight back to the binder
+  await page.getByRole('button', { name: 'Weiterblättern' }).tap()
+  await pockets.nth(4).tap()
+  await bar(page).getByRole('button', { name: 'Auswahl' }).tap()
+  await page.getByTestId('column-right').getByRole('button', { name: 'Verschieben', exact: true }).tap()
+  await expect(page.getByTestId('column-center')).toBeVisible()
+  await expect(hint).toBeVisible()
+  await pockets.nth(8).tap()
+  await expect(pockets.nth(8)).toHaveAttribute('data-card-id', 'sv03.5-001')
+})

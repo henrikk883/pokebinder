@@ -7,19 +7,17 @@ import {
 } from '@dnd-kit/core'
 import { useState, type ReactNode } from 'react'
 import { de } from '../../i18n/de'
-import { baseVariant, setIdOfCard, tcgdexFor, type CardSummary } from '../../lib/tcgdex'
+import { setIdOfCard, tcgdexFor, type CardSummary } from '../../lib/tcgdex'
 import { useAssetUrl } from '../../store/assetStore'
 import { binderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import { CardImage } from '../search/CardImage'
 import type { CardLang } from '../../types/binder'
 import { useReadyCatalog } from '../search/useCatalog'
-import { isDragSource, isDropTarget, withFallback, type DragSource } from './dragDrop'
+import { isDragSource, isDropTarget, type DragSource } from './dragDrop'
+import { baseVariantOf } from './placeCard'
 import { useDragSensors } from './dragSensors'
 import { useCard } from './useCard'
-
-/** A dropped card does not wait longer than this for its finish; it then lands as normal. */
-const VARIANT_LOOKUP_TIMEOUT_MS = 1500
 
 function Preview({ card, lang }: { card: CardSummary; lang: CardLang }) {
   const set = useReadyCatalog(lang)?.setsById.get(setIdOfCard(card))
@@ -81,14 +79,7 @@ export function CardDragLayer({ children }: { children: ReactNode }) {
       // A card from the search arrives in the finish it really has: one that only exists
       // as holo is placed as holo. The finishes of its set are usually known already.
       const { card, lang } = source
-      const variant = await withFallback(
-        tcgdexFor(lang)
-          .getCardDetail(card.id)
-          .then((detail) => (detail ? baseVariant(detail.variants) : undefined)),
-        'normal',
-        VARIANT_LOOKUP_TIMEOUT_MS,
-      )
-      source = { ...source, variant }
+      source = { ...source, variant: await baseVariantOf(card.id, lang) }
     }
     const error = binderStore.getState().dropCard(source, target)
     useEditorStore.getState().select(target.position)

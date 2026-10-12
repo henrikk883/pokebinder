@@ -9,10 +9,24 @@ export type AppView = 'binders' | 'cards'
 export type AppPane = 'search' | 'binder' | 'selection'
 export const APP_PANES: readonly AppPane[] = ['binder', 'search', 'selection']
 
+/** A card was put into a pocket by a tap, or there was no pocket left for it. */
+export type TapNote = { kind: 'placed'; name: string; page: number; pocket: number } | { kind: 'full' }
+
 /** View state of the binder editor; nothing here is saved. */
 export interface EditorState {
   view: AppView
   showView: (view: AppView) => void
+  /**
+   * The pocket whose card waits to be put elsewhere: the next pocket clicked is where it
+   * goes. With several pockets selected, they all go along. This is how cards get onto a
+   * page that does not lie open, and how they are moved at all where nothing can be dragged.
+   */
+  moving: SlotPosition | null
+  startMove: (position: SlotPosition) => void
+  cancelMove: () => void
+  /** What the last tap on a card of the search did, on a phone; shown under the search. */
+  tapped: TapNote | null
+  noteTap: (note: TapNote | null) => void
   /** On a phone one of the three columns is shown at a time: this one. */
   pane: AppPane
   showPane: (pane: AppPane) => void
@@ -78,6 +92,12 @@ function selectionOf(positions: SlotPosition[]): Pick<EditorState, 'selection' |
 export const useEditorStore = create<EditorState>()((set) => ({
   view: 'binders',
   showView: (view) => set({ view }),
+  moving: null,
+  // the target is picked in the binder, so that is what a phone shows now
+  startMove: (moving) => set({ moving, notice: null, pane: 'binder' }),
+  cancelMove: () => set({ moving: null }),
+  tapped: null,
+  noteTap: (tapped) => set({ tapped }),
   pane: 'binder',
   showPane: (pane) => set({ pane }),
   spreadIndex: 0,
@@ -88,7 +108,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   notice: null,
 
   setMode: (mode) =>
-    set({ mode, notice: null, searchShownWhileCollecting: false, multi: [], multiMode: false }),
+    set({ mode, notice: null, searchShownWhileCollecting: false, multi: [], multiMode: false, moving: null }),
   multi: [],
   multiMode: false,
   // leaving the mode keeps what is selected, so that it can be acted on
@@ -109,7 +129,13 @@ export const useEditorStore = create<EditorState>()((set) => ({
   searchLang: DEFAULT_LANG,
   setSearchLang: (searchLang) => set({ searchLang }),
   setNotice: (notice) => set({ notice }),
-  showSpread: (index) => set({ spreadIndex: Math.max(0, index), selection: null, multi: [], notice: null }),
+  showSpread: (index) =>
+    set((state) => ({
+      spreadIndex: Math.max(0, index),
+      notice: null,
+      // while a card waits to be put elsewhere, turning the pages is how its target is found
+      ...(state.moving ? {} : { selection: null, multi: [] }),
+    })),
   setZoom: (zoom) => set({ zoom: clampZoom(zoom), autoZoom: false }),
   fitZoomTo: (zoom) => set({ zoom: clampZoom(zoom) }),
   select: (selection) => set({ selection, multi: [], notice: null }),
@@ -118,12 +144,14 @@ export const useEditorStore = create<EditorState>()((set) => ({
       // a binder that is opened is what the collector wants to see
       view: 'binders',
       pane: 'binder',
+      tapped: null,
       spreadIndex: 0,
       zoom: DEFAULT_ZOOM,
       autoZoom: true,
       selection: null,
       multi: [],
       multiMode: false,
+      moving: null,
       notice: null,
       mode: 'edit',
       searchShownWhileCollecting: false,
