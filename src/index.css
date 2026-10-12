@@ -83,6 +83,22 @@
   }
 }
 
+/*
+ * Shelf of "Meine Binder": with a mouse, renaming and deleting only appear on the binder
+ * pointed at (or reached by keyboard). On touch screens they are always there.
+ */
+@layer components {
+  .shelf-actions {
+    transition: opacity 150ms ease-out;
+  }
+
+  @media (hover: hover) {
+    .shelf-item:not(:hover):not(:focus-within) .shelf-actions {
+      opacity: 0;
+    }
+  }
+}
+
 @layer base {
   html,
   body,

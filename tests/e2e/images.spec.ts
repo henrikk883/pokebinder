@@ -328,6 +328,26 @@ test('the cover gets its own title and picture', async ({ page }) => {
   await expect(cover).toContainText('Meine ersten 151')
   await loaded(cover.getByTestId('cover-image'))
 
+  // on the shelf of "Meine Binder" the binder shows that picture, others their cover title
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  await page.getByRole('dialog').getByLabel('Name').fill('Ohne Cover')
+  await page.getByRole('button', { name: 'Anlegen' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  const withPicture = page.getByRole('button', { name: 'Kanto Collection öffnen' })
+  await loaded(withPicture.getByTestId('binder-cover-image'))
+  const plain = page.getByRole('button', { name: 'Ohne Cover öffnen' })
+  await expect(plain.getByTestId('binder-cover-image')).toHaveCount(0)
+  await expect(plain.getByTestId('binder-cover')).toHaveText('Ohne Cover')
+  // the binders stand next to each other, not below each other
+  const [first, second] = await Promise.all(
+    [0, 1].map((index) => page.getByTestId('binder-tile').nth(index).boundingBox()),
+  )
+  expect(first?.y).toBe(second?.y)
+  // the cover opens the binder
+  await withPicture.getByTestId('binder-cover').click()
+  await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
+
   await page.getByRole('button', { name: 'Cover bearbeiten' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Bild entfernen' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click()

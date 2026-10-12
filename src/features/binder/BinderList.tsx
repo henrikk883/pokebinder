@@ -5,6 +5,7 @@ import { binderStore, useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
 import { confirmDialog, promptDialog } from '../../store/dialogStore'
+import { BinderCover } from './BinderCover'
 import { countCards, renameBinder } from './binderModel'
 import { NewBinderDialog } from './NewBinderDialog'
 
@@ -65,7 +66,7 @@ export function BinderList() {
   }
 
   return (
-    <section className="mx-auto flex h-full max-w-3xl flex-col p-5">
+    <section className="mx-auto flex h-full max-w-5xl flex-col p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-2xl font-semibold">{de.binderList.title}</h2>
         <button
@@ -89,43 +90,45 @@ export function BinderList() {
         </div>
       )}
       {listing.status === 'ready' && listing.binders.length > 0 && (
-        <ul className="mt-5 space-y-3">
+        // a shelf: the binders stand side by side, each showing its cover
+        <ul className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-x-5 gap-y-7">
           {listing.binders.map((binder) => (
-            <li
-              key={binder.id}
-              className="flex items-center gap-4 rounded-panel border border-line bg-panel p-4"
-            >
+            <li key={binder.id} data-testid="binder-tile" className="shelf-item flex min-w-0 flex-col">
               <button
                 type="button"
                 aria-label={de.binderList.open(binder.name)}
                 onClick={() => openBinder(binder)}
-                className="min-w-0 flex-1 text-left"
+                className="group block w-full text-left"
               >
-                <span className="block truncate text-lg font-medium hover:text-accent-hover">
+                <BinderCover binder={binder} />
+                <span className="mt-3 block truncate text-base font-medium group-hover:text-accent-hover">
                   {binder.name}
                 </span>
-                <span className="block text-sm text-muted">
+                <span className="block text-xs text-muted">
                   {de.binderList.summary(binder.layout, binder.pages.length, countCards(binder))}
-                  {' · '}
+                </span>
+                <span className="block text-xs text-muted">
                   {dateFormat.format(new Date(binder.updatedAt))}
                 </span>
               </button>
-              <button
-                type="button"
-                aria-label={de.binderList.renameLabel(binder.name)}
-                onClick={() => handleRename(binder)}
-                className="h-9 shrink-0 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent"
-              >
-                {de.binderList.rename}
-              </button>
-              <button
-                type="button"
-                aria-label={de.binderList.deleteLabel(binder.name)}
-                onClick={() => handleDelete(binder)}
-                className="h-9 shrink-0 rounded-control border border-danger/60 px-3 text-sm text-danger hover:bg-danger/10"
-              >
-                {de.binderList.delete}
-              </button>
+              <div className="shelf-actions mt-2 flex gap-2">
+                <button
+                  type="button"
+                  aria-label={de.binderList.renameLabel(binder.name)}
+                  onClick={() => handleRename(binder)}
+                  className="h-8 min-w-0 flex-1 rounded-control border border-line bg-raised px-2 text-xs hover:border-accent"
+                >
+                  {de.binderList.rename}
+                </button>
+                <button
+                  type="button"
+                  aria-label={de.binderList.deleteLabel(binder.name)}
+                  onClick={() => handleDelete(binder)}
+                  className="h-8 min-w-0 flex-1 rounded-control border border-danger/60 px-2 text-xs text-danger hover:bg-danger/10"
+                >
+                  {de.binderList.delete}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

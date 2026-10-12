@@ -261,3 +261,6 @@ Vorhandene Karten in einer Folien-Variante (alles außer „normal“) kippen im
 
 ## 2026-10-12 – Fehler beim Speichern oder Import ohne Rot
 Meldungen erscheinen in neutraler Textfarbe, weil Rot dem Löschen vorbehalten ist.
+
+## 2026-10-12 – „Meine Binder“ als Regal mit Covern
+Die Übersicht zeigt die Binder als Kacheln nebeneinander, jede mit ihrem Cover-Bild (Hochformat 3:4, Bild füllt die Fläche wie auf der Cover-Innenseite). Ohne Bild steht der Cover-Titel auf einer dunklen Fläche; mit Bild wird kein Titel darübergelegt, der Name steht ohnehin darunter. „Umbenennen“ und „Löschen“ erscheinen mit der Maus erst beim Überfahren (oder per Tastatur), auf Touch-Geräten sind sie immer sichtbar. Von Henrik gewünscht (Regal statt Liste).
