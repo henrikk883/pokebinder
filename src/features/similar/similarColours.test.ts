@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { colourDistance, similarColours, SIGNATURE_LENGTH, type ColourIndex } from './similarColours'
 
 /** An index of cards given by how much of which colour bin their picture has. */
-function indexOf(cards: Record<string, Record<number, number>>): ColourIndex {
+function indexOf(cards: Record<string, Record<number, number>>, rare = Object.keys(cards).length): ColourIndex {
   const ids = Object.keys(cards)
   const signatures = new Uint8Array(ids.length * SIGNATURE_LENGTH)
   ids.forEach((id, position) => {
@@ -10,7 +10,7 @@ function indexOf(cards: Record<string, Record<number, number>>): ColourIndex {
       signatures[position * SIGNATURE_LENGTH + Number(bin)] = amount
     }
   })
-  return { ids, signatures }
+  return { ids, rare, signatures }
 }
 
 describe('colourDistance', () => {
@@ -60,6 +60,12 @@ describe('similarColours', () => {
 
   it('keeps equally near cards in the order of the index', () => {
     expect(similarColours(index, 'blue', 4)).toEqual(['orange', 'green', 'orangeToo', 'mixed'])
+  })
+
+  it('offers only the cards of the high rarities, whatever card is asked about', () => {
+    const some = indexOf({ rareGreen: { 16: 255 }, rareOrange: { 4: 200, 16: 55 }, commonOrange: { 4: 255 }, common: { 4: 250 } }, 2)
+    expect(similarColours(some, 'commonOrange', 5)).toEqual(['rareOrange', 'rareGreen'])
+    expect(similarColours(some, 'rareOrange', 5)).toEqual(['rareGreen'])
   })
 
   it('has no answer for a card whose colours are not known', () => {

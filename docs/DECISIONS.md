@@ -601,3 +601,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Von Henrik entschieden: gesucht wird immer über die englischen Karten, ohne Eingrenzung auf ein Set. Von mir ergänzt: Die Treffer erscheinen in der Sprache der Karte, von der aus gesucht wird, und auf Englisch, wo es eine Karte in dieser Sprache nicht gibt.
 - Die Treffer stehen in der Karten-Info unter der Karte. Von dort lässt sich nicht in den Binder ziehen (die Info liegt über allem); gemerkt wird mit dem Stern, von der Merkliste aus kommt die Karte in den Binder.
 - Wird die Berechnung der Kennung geändert, müssen alle Karten neu ausgewertet werden (`public/colours/` löschen, Skript neu starten).
+
+## 2026-10-12 – Ähnliche Farben nur unter den hohen Seltenheiten
+- Rückmeldung von Henrik nach dem ersten Stand: Zu einer Special Illustration Rare kamen lauter gewöhnliche Karten mit rosa Hintergrund – farblich richtig, als Vorschlag unbrauchbar. Sein Vorschlag: nur Illustration Rares und höher.
+- Angeboten werden deshalb nur noch Karten dieser Seltenheiten, wie TCGdex sie auf Englisch nennt: Illustration rare, Special illustration rare, Ultra Rare, Hyper rare, Mega Hyper Rare, Mega Attack Rare, Secret Rare, Shiny Ultra Rare, Black White Rare, Amazing Rare (2.824 Karten). Die Liste steht in `scripts/colours.mjs`. Promos zählen nicht dazu, auch wenn manche Full-Arts sind: TCGdex führt sie nur als „Promo“.
+- Bei diesen Karten zählt die ganze Karte ohne Rand statt nur des Bildfensters, weil das Bild die Karte füllt. Ausgehen kann man weiter von jeder Karte; bei gewöhnlichen zählt das Bildfenster.
+- `public/colours/cards.json` nennt dafür, wie viele Karten am Anfang zu den hohen Seltenheiten gehören.
+- Nebenbei behoben: Hat eine Karte in der eigenen Sprache kein Bild, wird der Treffer auf Englisch gezeigt.

@@ -681,7 +681,7 @@ export const de = {
     button: 'Ähnliche Farben',
     buttonHint: 'Zeigt Karten, deren Bild ähnliche Farben hat',
     title: 'Karten mit ähnlichen Farben',
-    hint: 'Verglichen wird das Bild dieser Karte mit den Bildern aller englischen Karten, die ähnlichste zuerst. Mit dem Stern merkst du dir eine Karte; von der Merkliste aus kommt sie in den Binder.',
+    hint: 'Gesucht wird unter den Karten der hohen Seltenheiten (Illustration Rare, Special Illustration Rare, Ultra Rare, Gold- und Secret Rares), die ähnlichste zuerst. Mit dem Stern merkst du dir eine Karte; von der Merkliste aus kommt sie in den Binder.',
     loading: 'Ähnliche Karten werden gesucht …',
     error: 'Die Farben der Karten konnten nicht geladen werden.',
     unknown: 'Für diese Karte sind die Farben noch nicht ausgewertet. Das betrifft Karten, die es nicht auf Englisch gibt, und ganz neue Karten.',

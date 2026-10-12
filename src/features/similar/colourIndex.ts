@@ -5,12 +5,17 @@ let loading: Promise<ColourIndex> | undefined
 async function load(): Promise<ColourIndex> {
   const [cards, signatures] = await Promise.all([fetch('/colours/cards.json'), fetch('/colours/signatures.bin')])
   if (!cards.ok || !signatures.ok) throw new Error('colour index: not there')
-  const ids = (await cards.json()) as unknown
+  const { ids, rare } = (await cards.json()) as { ids?: unknown; rare?: unknown }
   const bytes = new Uint8Array(await signatures.arrayBuffer())
-  if (!Array.isArray(ids) || !ids.every((id) => typeof id === 'string') || bytes.length !== ids.length * SIGNATURE_LENGTH) {
+  if (
+    !Array.isArray(ids) ||
+    !ids.every((id) => typeof id === 'string') ||
+    typeof rare !== 'number' ||
+    bytes.length !== ids.length * SIGNATURE_LENGTH
+  ) {
     throw new Error('colour index: not readable')
   }
-  return { ids: ids as string[], signatures: bytes }
+  return { ids: ids as string[], rare, signatures: bytes }
 }
 
 /**

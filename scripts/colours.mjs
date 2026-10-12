@@ -2,7 +2,9 @@
 //   npm run colours
 // Asks TCGdex for all English cards, loads the small picture of every card that has no
 // colour signature yet and writes public/colours/. The first run loads every picture there
-// is (some twenty thousand); later runs only those of new cards. The pictures are read by
+// is (some twenty thousand); later runs only those of new cards. The cards of the high
+// rarities (`RARE`) are the ones similar cards are looked for among; they come first in
+// the files. The pictures are read by
 // the browser Playwright brings along, so nothing else is needed.
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { chromium } from '@playwright/test'
@@ -13,6 +15,22 @@ const OUT = new URL('../public/colours/', import.meta.url)
 const DIGITAL_ONLY_SERIES = new Set(['tcgp'])
 /** Pictures loaded at a time; TCGdex is a free service. */
 const AT_A_TIME = 4
+/**
+ * The rarities whose cards are offered as similar ones, as TCGdex names them in English:
+ * illustration rares and above. Their pictures cover the card, so the whole card counts.
+ */
+const RARE = [
+  'Illustration rare',
+  'Special illustration rare',
+  'Ultra Rare',
+  'Hyper rare',
+  'Mega Hyper Rare',
+  'Mega Attack Rare',
+  'Secret Rare',
+  'Shiny Ultra Rare',
+  'Black White Rare',
+  'Amazing Rare',
+]
 /** Numbers per card; `SIGNATURE_LENGTH` in src/features/similar/similarColours.ts. */
 const SIGNATURE_LENGTH = 52
 
@@ -41,13 +59,15 @@ async function picture(url) {
  * Changing it means working out every card again (delete public/colours/ first).
  */
 function installSignature() {
-  window.signature = async (dataUrl) => {
+  window.signature = async (dataUrl, wholeCard) => {
     const bitmap = await createImageBitmap(await (await fetch(dataUrl)).blob())
     const size = 32
     const canvas = new OffscreenCanvas(size, size)
     const context = canvas.getContext('2d')
-    // the picture window of a card, not its frame; on full-art cards this is picture as well
-    context.drawImage(bitmap, bitmap.width * 0.09, bitmap.height * 0.12, bitmap.width * 0.82, bitmap.height * 0.38, 0, 0, size, size)
+    // the picture window of a card, not its frame; where the picture covers the card, all
+    // of it but the border
+    const [x, y, width, height] = wholeCard ? [0.07, 0.06, 0.86, 0.88] : [0.09, 0.12, 0.82, 0.38]
+    context.drawImage(bitmap, bitmap.width * x, bitmap.height * y, bitmap.width * width, bitmap.height * height, 0, 0, size, size)
     const { data } = context.getImageData(0, 0, size, size)
     const HUES = 12
     const bins = new Float32Array(HUES * 4 + 4)
@@ -75,12 +95,18 @@ function installSignature() {
   }
 }
 
+/** What is known so far: per card its signature and whether it is one of the whole card. */
 async function readExisting() {
   try {
-    const ids = JSON.parse(await readFile(new URL('cards.json', OUT), 'utf8'))
+    const { rare, ids } = JSON.parse(await readFile(new URL('cards.json', OUT), 'utf8'))
     const signatures = await readFile(new URL('signatures.bin', OUT))
     if (signatures.length !== ids.length * SIGNATURE_LENGTH) throw new Error('public/colours/: the two files do not belong together')
-    return new Map(ids.map((id, index) => [id, signatures.subarray(index * SIGNATURE_LENGTH, (index + 1) * SIGNATURE_LENGTH)]))
+    return new Map(
+      ids.map((id, index) => [
+        id,
+        { wholeCard: index < rare, signature: signatures.subarray(index * SIGNATURE_LENGTH, (index + 1) * SIGNATURE_LENGTH) },
+      ]),
+    )
   } catch (error) {
     if (error.code === 'ENOENT') return new Map()
     throw error
@@ -88,13 +114,15 @@ async function readExisting() {
 }
 
 async function save(known) {
-  const ids = [...known.keys()]
+  // the cards similar ones are looked for among come first
+  const rare = [...known.keys()].filter((id) => known.get(id).wholeCard)
+  const ids = [...rare, ...[...known.keys()].filter((id) => !known.get(id).wholeCard)]
   const signatures = new Uint8Array(ids.length * SIGNATURE_LENGTH)
-  ids.forEach((id, index) => signatures.set(known.get(id), index * SIGNATURE_LENGTH))
+  ids.forEach((id, index) => signatures.set(known.get(id).signature, index * SIGNATURE_LENGTH))
   await mkdir(OUT, { recursive: true })
-  await writeFile(new URL('cards.json', OUT), JSON.stringify(ids))
+  await writeFile(new URL('cards.json', OUT), JSON.stringify({ rare: rare.length, ids }))
   await writeFile(new URL('signatures.bin', OUT), signatures)
-  return { cards: ids.length, bytes: signatures.length }
+  return { cards: ids.length, rare: rare.length, bytes: signatures.length }
 }
 
 async function main() {
@@ -104,12 +132,18 @@ async function main() {
   const series = (await json('series')).filter((entry) => !DIGITAL_ONLY_SERIES.has(entry.id))
   const setIds = []
   for (const entry of series) setIds.push(...(await json(`series/${entry.id}`)).sets.map((set) => set.id))
+  const rare = new Set()
+  for (const rarity of RARE) {
+    for (const card of await json(`cards?rarity=eq:${encodeURIComponent(rarity)}`)) rare.add(card.id)
+  }
   const wanted = []
   let withoutPicture = 0
   for (const setId of setIds) {
     for (const card of (await json(`sets/${setId}`)).cards) {
-      if (known.has(card.id)) continue
-      if (card.image) wanted.push(card)
+      const wholeCard = rare.has(card.id)
+      // worked out again where a card has moved into or out of the high rarities
+      if (known.get(card.id)?.wholeCard === wholeCard) continue
+      if (card.image) wanted.push({ ...card, wholeCard })
       else withoutPicture++
     }
   }
@@ -130,9 +164,12 @@ async function main() {
           const signature =
             buffer &&
             (await page
-              .evaluate((url) => window.signature(url), `data:image/webp;base64,${buffer.toString('base64')}`)
+              .evaluate(([url, wholeCard]) => window.signature(url, wholeCard), [
+                `data:image/webp;base64,${buffer.toString('base64')}`,
+                card.wholeCard,
+              ])
               .catch(() => undefined))
-          if (signature) known.set(card.id, Uint8Array.from(signature))
+          if (signature) known.set(card.id, { wholeCard: card.wholeCard, signature: Uint8Array.from(signature) })
           else failed++
           if (++done % 1000 === 0) {
             // kept as it goes, so that a run that is cut off has not been for nothing
@@ -146,8 +183,8 @@ async function main() {
     console.log(`worked out: ${wanted.length - failed}; not loadable this time: ${failed}`)
   }
 
-  const { cards, bytes } = await save(known)
-  console.log(`public/colours/: ${cards} cards, ${(bytes / 1024 / 1024).toFixed(2)} MB`)
+  const { cards, rare: offered, bytes } = await save(known)
+  console.log(`public/colours/: ${cards} cards, ${offered} of them of the high rarities, ${(bytes / 1024 / 1024).toFixed(2)} MB`)
 }
 
 await main()

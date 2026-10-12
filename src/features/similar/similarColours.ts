@@ -8,6 +8,12 @@ export const SIGNATURE_LENGTH = 52
 export interface ColourIndex {
   /** Card ids; the signature of the card at `n` starts at `n * SIGNATURE_LENGTH`. */
   ids: readonly string[]
+  /**
+   * So many cards at the start are of the high rarities (illustration rares and above).
+   * Only they are offered as similar cards: beside such a card, a common one with the same
+   * colours does not look alike.
+   */
+  rare: number
   signatures: Uint8Array
 }
 
@@ -33,14 +39,14 @@ export function colourDistance(signatures: Uint8Array, a: number, b: number): nu
 }
 
 /**
- * The cards whose pictures are nearest in colour to that of `cardId`, the nearest first.
- * `undefined` where the colours of that card are not known.
+ * The cards of the high rarities whose pictures are nearest in colour to that of `cardId`
+ * (any card), the nearest first. `undefined` where the colours of that card are not known.
  */
 export function similarColours(index: ColourIndex, cardId: string, count: number): string[] | undefined {
   const own = index.ids.indexOf(cardId)
   if (own === -1) return undefined
   const others: { id: string; distance: number }[] = []
-  index.ids.forEach((id, position) => {
+  index.ids.slice(0, index.rare).forEach((id, position) => {
     if (position !== own) others.push({ id, distance: colourDistance(index.signatures, own, position) })
   })
   // equally near cards stay in the order of the index, so the answer is always the same

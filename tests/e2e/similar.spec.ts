@@ -4,13 +4,13 @@ import { expect, test } from './fixtures'
 const SIGNATURE_LENGTH = 52
 
 /** The colour index of the app, replaced by a few cards whose colours are made up. */
-async function mockColours(page: Page, cards: Record<string, Record<number, number>>) {
+async function mockColours(page: Page, cards: Record<string, Record<number, number>>, rare = Object.keys(cards).length) {
   const ids = Object.keys(cards)
   const signatures = Buffer.alloc(ids.length * SIGNATURE_LENGTH)
   ids.forEach((id, position) => {
     for (const [bin, amount] of Object.entries(cards[id] ?? {})) signatures[position * SIGNATURE_LENGTH + Number(bin)] = amount
   })
-  await page.route('**/colours/cards.json', (route) => route.fulfill({ json: ids }))
+  await page.route('**/colours/cards.json', (route) => route.fulfill({ json: { rare, ids } }))
   await page.route('**/colours/signatures.bin', (route) =>
     route.fulfill({ contentType: 'application/octet-stream', body: signatures }),
   )

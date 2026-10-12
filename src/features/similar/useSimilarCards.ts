@@ -25,9 +25,11 @@ async function find(cardId: string, lang: CardLang): Promise<SimilarCards> {
   if (!ids) return { status: 'unknown' }
   const cards = await mapWithConcurrency(ids, 6, async (id): Promise<SimilarCard | undefined> => {
     const own = lang === 'en' ? undefined : await tcgdexFor(lang).getCard(id).catch(() => undefined)
-    if (own) return { card: own, lang }
+    // a card without a picture in that language is shown in English, where it has one
+    if (own?.image) return { card: own, lang }
     const english = await tcgdexFor('en').getCard(id).catch(() => undefined)
-    return english ? { card: english, lang: 'en' } : undefined
+    if (english) return { card: english, lang: 'en' }
+    return own ? { card: own, lang } : undefined
   })
   return { status: 'ready', cards: cards.filter((entry) => entry !== undefined) }
 }
