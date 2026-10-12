@@ -450,3 +450,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 ## 2026-10-12 – Neue To-do-Liste und Roadmap
 - Elf Ideen in REQUIREMENTS.md aufgenommen („Offen“) und in fünf Etappen geordnet („Roadmap“): Alltag, Preise, Gestalten, Mit Freunden, Groß. Bewusst ohne Zeitangaben, nur mit relativem Umfang.
 - Drei Punkte verlangen Regeländerungen (Teilen: andere dürfen lesen; englische Oberfläche: Texte je Sprache; Kamera: externer Dienst). Sie sind in der Roadmap benannt und werden erst entschieden, wenn der Punkt dran ist.
+
+## 2026-10-12 – Installierbar als App
+- Henrik: Das Symbol bleibt das bestehende Logo. Englische Oberfläche und Karten per Kamera sind zurückgestellt (Roadmap, Etappe E).
+- `public/manifest.webmanifest` (Name, Farben, „standalone“) und Symbole unter `public/icons/`: das Logo auf dem dunklen Hintergrund der App in 192 und 512 px, eine „maskable“-Fassung mit mehr Rand (manche Startbildschirme schneiden rund aus) und 180 px für iPhone/iPad. Erzeugt aus `favicon.svg`, keine neue Abhängigkeit.
+- Der Service Worker hält jetzt auch die App selbst vor. Die Seite kommt vom Netz, wann immer sie binnen 4 s da ist, sonst die zuletzt gehaltene – so ist nach einem Update sofort die neue Fassung da und ohne Netz die alte. Skripte und Styles tragen ihren Inhalt im Namen und werden gehalten, wie sie sind; eine neue Fassung räumt die der alten weg.
+- `/api/` und `/cdn-cgi/` fasst der Service Worker nicht an: Anmeldung und Abgleich gehen immer direkt zum Server.
+- Grenze: Was erst bei Bedarf nachgeladen wird (PDF- und PNG-Export, japanische Schrift), steht ohne Netz nur bereit, wenn es vorher schon einmal benutzt wurde.

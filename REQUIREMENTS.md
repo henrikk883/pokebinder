@@ -238,7 +238,7 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Mit Henrik am 12.10.2026 vereinbart. Die Reihenfolge steht in der Roadmap darunter; hier steht, was jeder Punkt können soll.
 
-1. **Installierbar als App.** PokéBinder lässt sich auf Handy, iPad und PC „zum Startbildschirm hinzufügen“: eigenes Symbol, eigener Name, Start ohne Browserleiste. Einmal gesehene Karten und die App selbst öffnen sich auch ohne Netz.
+1. **Installierbar als App – erledigt.** PokéBinder lässt sich auf Handy, iPad und PC „zum Startbildschirm hinzufügen“: eigenes Symbol, eigener Name, Start ohne Browserleiste. Einmal gesehene Karten und die App selbst öffnen sich auch ohne Netz.
 2. **Sammlungswert im Regal.** Jeder Binder zeigt im Regal seinen Fortschritt (vorhanden / gesamt) und den Wert der vorhandenen Karten; über dem Regal steht die Summe über alle Binder. Preise wie überall: Cardmarket-Preistrend, Karten ohne Preis werden genannt.
 3. **Karte im Binder finden.** Ein Suchfeld im offenen Binder (Name oder Nummer) zeigt die Treffer und springt zur Seite, auf der die Karte liegt; das Pocket ist danach ausgewählt.
 4. **Preisverlauf.** Die App hält den Wert jedes Binders fest (höchstens einmal am Tag) und zeigt, wie er sich über Wochen und Monate entwickelt hat – je Binder und für die ganze Sammlung. Der Verlauf gleicht sich zwischen den Geräten ab.
@@ -258,7 +258,7 @@ Fünf Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher 
 
 | Etappe | Punkt | Umfang | Baut auf | Vorher zu klären |
 |---|---|---|---|---|
-| **A – Alltag** | 1 Installierbar als App | klein | Service Worker (vorhanden) | Symbol: das bestehende Logo oder ein neues? |
+| **A – Alltag** | 1 Installierbar als App | klein | Service Worker (vorhanden) | erledigt (Symbol: das bestehende Logo) |
 | | 2 Sammlungswert im Regal | klein | Preise, Fortschritt (vorhanden) | – |
 | | 3 Karte im Binder finden | klein | – | – |
 | **B – Preise** | 4 Preisverlauf | mittel | Punkt 2 | Wie lange zurück? Vorschlag: täglich für 90 Tage, danach wöchentlich |
@@ -267,7 +267,7 @@ Fünf Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher 
 | | 7 Seiten-Vorlagen | mittel | Punkt 6 (damit Vorlagen das Layout kennen) | Mit Karten oder nur die Bilder? Vorschlag: wählbar |
 | **D – Mit Freunden** | 8 Binder teilen | groß | Abgleich und Anmeldung (vorhanden) | Wer darf den Link öffnen: jeder mit Link oder nur freigeschaltete Adressen? |
 | | 9 Tauschabgleich | mittel | Punkt 8, Tauschliste (vorhanden) | – |
-| **E – Groß** | 10 Englische Oberfläche | mittel | – | Nur sinnvoll, wenn die App über den Freundeskreis hinausgehen soll |
+| **E – Zurückgestellt** | 10 Englische Oberfläche | mittel | – | Nur sinnvoll, wenn die App über den Freundeskreis hinausgehen soll |
 | | 11 Karten per Kamera | groß, unsicher | Punkt 1 (Kamera am Handy) | Ob es einen Erkennungsdienst gibt, der gut genug und bezahlbar ist; erst eine Machbarkeitsprüfung, dann die Entscheidung |
 
 **Regeln, die sich dafür ändern müssten** (jeweils erst mit Henriks OK, wenn der Punkt dran ist):
@@ -276,4 +276,4 @@ Fünf Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher 
 - **Punkt 10:** „UI-Texte auf Deutsch und nur in `src/i18n/de.ts`“ wird zu „je Sprache eine Datei“.
 - **Punkt 11:** Sehr wahrscheinlich ein weiterer externer Dienst oder eine weitere Abhängigkeit; beides ist laut CLAUDE.md nur nach Rückfrage erlaubt. Kamerabilder verlassen dabei das Gerät, was zum Grundsatz „kein Tracking, alles zuerst lokal“ passen muss.
 
-**Empfohlene Reihenfolge:** A → B → C → D → E. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt und lohnt sich, sobald die Freunde die App wirklich benutzen; E zuletzt, weil beide Punkte davon abhängen, wohin die App sich entwickeln soll.
+**Reihenfolge:** A → B → C → D. A bringt mit wenig Aufwand am meisten für den Alltag; D ist der größte Schritt und lohnt sich, sobald die Freunde die App wirklich benutzen. **E ist zurückgestellt** (Henrik, 12.10.2026): Englische Oberfläche und Karten per Kamera kommen ganz ans Ende und werden erst angefasst, wenn Henrik sie wieder aufruft.
