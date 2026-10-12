@@ -99,6 +99,34 @@ test('a card without a German scan shows the English one, whatever lay in the po
   await expect(pocket(page, 1, 1).getByRole('img', { name: 'Glurak (englisches Bild)' })).toBeVisible()
 })
 
+test('a card TCGdex has no picture of gets one from the second image source', async ({ page, tcgdex }) => {
+  // pokemontcg.io has this promo; TCGdex has neither a German nor an English scan of it
+  tcgdex.otherImages.add('https://images.pokemontcg.io/smp/SM195.png')
+  tcgdex.otherImages.add('https://images.pokemontcg.io/smp/SM195_hires.png')
+  await createBinder(page, 'Zweite Quelle')
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  await page.getByRole('button', { name: 'Mehr laden' }).click()
+  await expect(page.getByRole('button', { name: 'Mehr laden' })).toBeHidden()
+
+  // in the search: the small scan
+  const searchTile = page.locator('[data-testid="card-tile"][data-card-id="smp-SM195"]')
+  await searchTile.scrollIntoViewIfNeeded()
+  const small = searchTile.getByRole('img', { name: 'Glurak GX (englisches Bild)' })
+  await expect(small).toHaveAttribute('src', 'https://images.pokemontcg.io/smp/SM195.png')
+  await expect.poll(() => small.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
+
+  // in the binder: the high resolution scan; the card stays a German card
+  await drag(page, searchTile.locator('> div'), pocket(page, 1, 1))
+  const large = pocket(page, 1, 1).getByRole('img', { name: 'Glurak GX (englisches Bild)' })
+  await expect(large).toHaveAttribute('src', 'https://images.pokemontcg.io/smp/SM195_hires.png')
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-lang', 'de')
+
+  // the second source is asked only where TCGdex has nothing: never for cards with a scan
+  const asked = new Set(tcgdex.otherImageRequests.map((url) => url.split('/').slice(3, 5).join('/')))
+  expect([...asked].some((path) => path.startsWith('sv3pt5/'))).toBe(false)
+  expect(asked.has('smp/SM195.png')).toBe(true)
+})
+
 test('a new binder opens on page 1 next to the cover, with the chosen layout', async ({ page }) => {
   await createBinder(page, 'Mein 4er', '4 × 4')
 

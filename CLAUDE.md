@@ -19,7 +19,7 @@ Private Web-App zum Planen von Pokémon-Karten-Bindern: Karten aus TCGdex suchen
 ## Stack (fest)
 
 React + TypeScript + Vite, Tailwind CSS, Zustand, Dexie (IndexedDB), dnd-kit, @tcgdex/sdk, pdf-lib, Vitest, Playwright; html-to-image erst ab v1.
-Keine weiteren Abhängigkeiten ohne Rückfrage. Kein Backend, keine Accounts, kein Tracking, keine externen Dienste außer TCGdex und dessen Bild-URLs.
+Keine weiteren Abhängigkeiten ohne Rückfrage. Kein Backend, keine Accounts, kein Tracking, keine externen Dienste außer TCGdex und dessen Bild-URLs. Einzige Ausnahme: Kartenbilder von `images.pokemontcg.io` als Ersatz für Karten, von denen TCGdex gar kein Bild hat (nur Bilddateien, keine Kartendaten).
 
 ## Befehle
 

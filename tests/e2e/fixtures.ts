@@ -48,13 +48,22 @@ function requestKey(url: URL): string {
 export interface Tcgdex {
   /** Every API request the app has made, in order. */
   requests: string[]
+  /** Pictures that exist at pokemontcg.io, the second image source; add full addresses. */
+  otherImages: Set<string>
+  /** Every picture the app has asked the second image source for. */
+  otherImageRequests: string[]
   /** From now on TCGdex cannot be reached. */
   goOffline: () => void
 }
 
 async function mockTcgdex(page: Page): Promise<Tcgdex> {
   const { index, englishImages } = await loadRecording()
-  const state = { requests: [] as string[], offline: false }
+  const state = {
+    requests: [] as string[],
+    offline: false,
+    otherImages: new Set<string>(),
+    otherImageRequests: [] as string[],
+  }
 
   await page.route('https://api.tcgdex.net/**', async (route) => {
     const url = new URL(route.request().url())
@@ -86,8 +95,22 @@ async function mockTcgdex(page: Page): Promise<Tcgdex> {
     return route.fulfill({ contentType: 'image/png', headers, body: PIXEL })
   })
 
+  // the second image source: nothing exists there unless a test says so
+  await page.route('https://images.pokemontcg.io/**', (route) => {
+    const url = route.request().url()
+    state.otherImageRequests.push(url)
+    const headers = { 'access-control-allow-origin': '*' }
+    if (state.offline) return route.abort('internetdisconnected')
+    if (!state.otherImages.has(url)) {
+      return route.fulfill({ status: 404, contentType: 'text/plain', headers, body: 'not found' })
+    }
+    return route.fulfill({ contentType: 'image/png', headers, body: PIXEL })
+  })
+
   return {
     requests: state.requests,
+    otherImages: state.otherImages,
+    otherImageRequests: state.otherImageRequests,
     goOffline: () => {
       state.offline = true
     },

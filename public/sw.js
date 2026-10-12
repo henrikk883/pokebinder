@@ -1,16 +1,17 @@
-// Keeps card pictures and set logos from TCGdex on this device, so that cards seen once
-// still show without a connection. Everything else is left alone: the app itself comes
-// from the local server, and card data is cached by the app in IndexedDB.
+// Keeps card pictures and set logos on this device, so that cards seen once still show
+// without a connection. Everything else is left alone: the app itself comes from the local
+// server, and card data is cached by the app in IndexedDB.
 
 const CACHE = 'tcgdex-images-v1'
-const IMAGE_HOST = 'assets.tcgdex.net'
+// TCGdex, and pokemontcg.io for the cards TCGdex has no picture of
+const IMAGE_HOSTS = new Set(['assets.tcgdex.net', 'images.pokemontcg.io'])
 
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
 
 self.addEventListener('fetch', (event) => {
   const { request } = event
-  if (request.method !== 'GET' || new URL(request.url).host !== IMAGE_HOST) return
+  if (request.method !== 'GET' || !IMAGE_HOSTS.has(new URL(request.url).host)) return
 
   event.respondWith(
     (async () => {

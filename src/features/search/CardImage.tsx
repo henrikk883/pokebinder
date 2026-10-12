@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { de } from '../../i18n/de'
 import {
-  cardImageUrl,
-  englishCardImage,
+  cardImageSources,
   type CardImageSize,
   type CardSummary,
   type SetSummary,
@@ -19,27 +18,28 @@ interface CardImageProps {
 const frameClass = 'aspect-[63/88] w-full rounded-pocket'
 
 /**
- * Picture of a card. Without a scan in the card's language the English scan stands in;
- * without that, a grey placeholder with the card's name.
+ * Picture of a card. Without a scan in the card's language an English scan stands in,
+ * from TCGdex or from the second image source; without any, a grey placeholder with the
+ * card's name.
  */
 export function CardImage({ card, set, size, missing = false }: CardImageProps) {
   // Remembered per image address, not as a plain flag: the same pocket shows other cards
   // after a page turn or a drop, and one card without an English scan must not hide the
   // English scan of the next.
-  const [failedSubstitute, setFailedSubstitute] = useState<string>()
+  const [failed, setFailed] = useState<readonly string[]>([])
   const tone = missing ? 'grayscale' : ''
   // The long search lists load their small pictures as they scroll into view. Binder pages
   // load theirs at once, so that a page is complete when it is exported.
   const loading = size === 'small' ? 'lazy' : 'eager'
-  const substitute = card.image || !set ? undefined : cardImageUrl(englishCardImage(card, set), size)
+  const { own, substitutes } = cardImageSources(card, set, size)
 
-  if (card.image) {
+  if (own) {
     return (
       <img
-        key={card.image}
+        key={own}
         // asked for with CORS, so that the PNG export may read the picture
         crossOrigin="anonymous"
-        src={cardImageUrl(card.image, size)}
+        src={own}
         alt={card.name}
         loading={loading}
         decoding="async"
@@ -49,10 +49,11 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
     )
   }
 
-  if (substitute !== undefined && substitute !== failedSubstitute) {
+  const substitute = substitutes.find((url) => !failed.includes(url))
+  if (substitute !== undefined) {
     return (
       <img
-        // a fresh element per address, so a failed load never sticks to the next card
+        // a fresh element per address, so a failed load never sticks to the next one
         key={substitute}
         crossOrigin="anonymous"
         src={substitute}
@@ -61,7 +62,7 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
         loading={loading}
         decoding="async"
         draggable={false}
-        onError={() => setFailedSubstitute(substitute)}
+        onError={() => setFailed((known) => [...known, substitute])}
         className={`${frameClass} bg-raised object-cover ${tone}`}
       />
     )

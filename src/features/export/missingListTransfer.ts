@@ -1,7 +1,6 @@
 import { de } from '../../i18n/de'
 import {
-  cardImageUrl,
-  englishCardImage,
+  cardImageSources,
   mapWithConcurrency,
   setIdOfCardId,
   tcgdexFor,
@@ -24,7 +23,7 @@ const priceKey = (row: Pick<MissingRow, 'cardId' | 'variant' | 'lang'>) =>
   `${row.lang}:${row.cardId}:${row.variant}`
 
 interface LoadedCard extends CardInfo {
-  /** Base addresses of pictures to try, best first: the card's own language, then English. */
+  /** Addresses of pictures to try, best first: the card's own language, then English stand-ins. */
   images: string[]
 }
 
@@ -34,13 +33,16 @@ async function loadCard(cardId: string, lang: CardLang): Promise<LoadedCard | un
   if (!detail) return undefined
   const { setsById } = await client.getCatalog()
   const set = setsById.get(setIdOfCardId(cardId, setsById) ?? '')
-  const card: LoadedCard = { name: detail.name, localId: detail.localId, images: [] }
-  if (detail.image) card.images.push(detail.image)
+  const { own, substitutes } = cardImageSources(detail, set, 'large')
+  const card: LoadedCard = {
+    name: detail.name,
+    localId: detail.localId,
+    images: own ? [own] : substitutes,
+  }
   if (set) {
     card.setId = set.id
     card.setName = set.name
     card.officialCount = set.cardCount.official
-    if (!detail.image) card.images.push(englishCardImage(detail, set))
   }
   if (detail.rarity) card.rarity = detail.rarity
   return card
@@ -200,7 +202,7 @@ export async function downloadProxies(binder: Binder, onProgress?: Progress): Pr
     async (row) => {
       const key = cardKey(row.cardId, row.lang)
       for (const image of cards.get(key)?.images ?? []) {
-        const jpeg = await greyJpeg(cardImageUrl(image, 'large'))
+        const jpeg = await greyJpeg(image)
         if (jpeg) {
           pictures.set(key, jpeg)
           break

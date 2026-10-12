@@ -15,7 +15,15 @@ export {
 } from './cardIds'
 export { baseVariant } from './variants'
 export { mapWithConcurrency } from './prices'
-export { cardImageUrl, englishCardImage, setLogoUrl, type CardImageSize } from './images'
+export {
+  cardImageSources,
+  cardImageUrl,
+  englishCardImage,
+  pokemontcgCardImages,
+  pokemontcgSetId,
+  setLogoUrl,
+  type CardImageSize,
+} from './images'
 export type * from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000

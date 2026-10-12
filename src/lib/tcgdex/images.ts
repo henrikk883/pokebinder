@@ -20,6 +20,75 @@ export function englishCardImage(
   return `https://assets.tcgdex.net/en/${set.seriesId}/${set.id}/${card.localId}`
 }
 
+/**
+ * Sets whose id at pokemontcg.io does not follow the rule in `pokemontcgSetId`:
+ * there, half sets are written `35` in some series and `pt5` in others.
+ */
+const POKEMONTCG_SET_IDS: Record<string, string> = {
+  'swsh3.5': 'swsh35',
+  'swsh4.5': 'swsh45',
+  'swsh4.5sv': 'swsh45sv',
+  'sm3.5': 'sm35',
+  'sm7.5': 'sm75',
+  'sm11.5': 'sm115',
+}
+
+/**
+ * The id a TCGdex set has at pokemontcg.io: numbers without leading zeros, half sets
+ * with `pt5` (`sv03.5` → `sv3pt5`, `swsh12.5gg` → `swsh12pt5gg`). A wrong guess does no
+ * harm: the picture is then simply not found.
+ */
+export function pokemontcgSetId(setId: string): string {
+  const known = POKEMONTCG_SET_IDS[setId]
+  if (known) return known
+  const match = /^([a-z]+)0*(\d+)(?:\.(\d))?(.*)$/.exec(setId)
+  if (!match) return setId
+  const [, prefix, number, half, rest] = match
+  return `${prefix}${number}${half ? `pt${half}` : ''}${rest}`
+}
+
+const POKEMONTCG_IMAGES = 'https://images.pokemontcg.io'
+
+/**
+ * English scans of a card at pokemontcg.io, the second image source. It is asked only for
+ * cards TCGdex has no picture of at all, mostly whole subsets (trainer galleries, shiny
+ * vault). Numbers are written with and without leading zeros there, so both are offered.
+ */
+export function pokemontcgCardImages(
+  card: Pick<CardSummary, 'localId'>,
+  set: Pick<SetSummary, 'id'>,
+  size: CardImageSize,
+): string[] {
+  // Japanese sets (SV2a, …) are not in that database
+  if (set.id !== set.id.toLowerCase()) return []
+  const suffix = size === 'large' ? '_hires' : ''
+  const numbers = new Set([card.localId, card.localId.replace(/^0+(?=.)/, '')])
+  return [...numbers].map(
+    (number) => `${POKEMONTCG_IMAGES}/${pokemontcgSetId(set.id)}/${number}${suffix}.png`,
+  )
+}
+
+/**
+ * Pictures to show for a card, best first: the scan in the card's language; without one,
+ * the English scan of TCGdex and then those of pokemontcg.io. Which of the stand-ins exist
+ * only shows when loading them.
+ */
+export function cardImageSources(
+  card: Pick<CardSummary, 'localId' | 'image'>,
+  set: Pick<SetSummary, 'id' | 'seriesId'> | undefined,
+  size: CardImageSize,
+): { own: string | undefined; substitutes: string[] } {
+  if (card.image) return { own: cardImageUrl(card.image, size), substitutes: [] }
+  if (!set) return { own: undefined, substitutes: [] }
+  return {
+    own: undefined,
+    substitutes: [
+      cardImageUrl(englishCardImage(card, set), size),
+      ...pokemontcgCardImages(card, set, size),
+    ],
+  }
+}
+
 export function setLogoUrl(logo: string, format: 'webp' | 'png' = 'webp'): string {
   return `${logo}.${format}`
 }
