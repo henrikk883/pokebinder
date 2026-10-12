@@ -8,6 +8,7 @@ import {
 import type { Binder, CardLang } from '../../types/binder'
 import { buildMissingList, missingListCsv, type CardInfo, type MissingRow } from './missingList'
 import { createMissingListPdf } from './missingListPdf'
+import { wideFontFor } from './pdfFont'
 import { createProxyPdf, type ProxyCard } from './proxyPdf'
 
 /** Requests to TCGdex running at the same time while a list is put together. */
@@ -134,8 +135,11 @@ function download(content: BlobPart, type: string, fileName: string): void {
 export async function downloadMissingList(binder: Binder, onProgress?: Progress): Promise<void> {
   const rows = await loadMissingList(binder, onProgress)
   const now = new Date()
+  const title = de.missingList.title(binder.name)
+  const wideFont = await wideFontFor([title, ...rows.flatMap((row) => [row.name, row.setName])])
   const bytes = await createMissingListPdf({
-    title: de.missingList.title(binder.name),
+    ...(wideFont ? { wideFont } : {}),
+    title,
     subtitle: de.missingList.subtitle(rows.length, new Intl.DateTimeFormat('de-DE').format(now)),
     emptyText: de.missingList.empty,
     columns: de.missingList.columns,
@@ -220,7 +224,10 @@ export async function downloadProxies(binder: Binder, onProgress?: Progress): Pr
       : { name: row.name, number: row.number }
   })
   const now = new Date()
+  // only cards without a picture have their name printed
+  const wideFont = await wideFontFor(proxies.filter((card) => !card.jpeg).map((card) => card.name))
   const bytes = await createProxyPdf({
+    ...(wideFont ? { wideFont } : {}),
     title: de.proxies.title(binder.name),
     footer: de.proxies.footer,
     cards: proxies,

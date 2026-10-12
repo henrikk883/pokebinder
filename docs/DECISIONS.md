@@ -288,3 +288,9 @@ Ein eingesetztes Bild wird an einem seiner Pockets gegriffen und auf einem ander
 
 ## 2026-10-12 – Hosting bei Cloudflare, Repo bleibt privat
 Die fertige App wird als statische Dateien bei Cloudflare bereitgestellt (`wrangler.jsonc`, Ordner `dist`), damit Henrik sie unterwegs auf dem iPad nutzen kann; über https funktioniert dort auch der Bilder-Vorrat. Cloudflare baut bei jedem Push auf `main` selbst. Kein Server-Code, keine Konten in der App: Binder und Bilder bleiben im Browser des jeweiligen Geräts und wandern über „Alles sichern“ von Gerät zu Gerät. GitHub Pages schied aus, weil es im Gratis-Tarif ein öffentliches Repo verlangt und Henrik sich eine spätere Vermarktung offenhalten will. `wrangler` läuft nur bei Cloudflare (`npx`), es ist keine Abhängigkeit des Projekts.
+
+## 2026-10-12 – Japanische Schrift in Fehlliste und Proxy-Druck
+- Neues Paket `@pdf-lib/fontkit` (von Henrik freigegeben) und die Schrift Noto Sans JP Regular als TrueType-Datei in `public/fonts/` (2,7 MB, SIL Open Font License, Lizenztext liegt daneben). Die Datei stammt aus dem Paket `@fontsource/noto-sans-jp` (Teilmenge „japanese“, 6887 Zeichen inklusive lateinischer Buchstaben) und wurde von WOFF nach TTF entpackt.
+- Schrift und fontkit werden nur geladen, wenn eine Liste japanische Zeichen enthält (Name, Set oder Binder-Name); deutsche und englische Listen bleiben klein und unverändert. Ohne Verbindung fällt die Liste auf das alte Verhalten zurück (Karten-ID statt Name).
+- Die Schrift wird vollständig eingebettet, ein solches PDF wird dadurch etwa 1,6 MB größer. Ausprobiert und verworfen: die verkleinerte Einbettung von pdf-lib (`subset: true`) lässt bei dieser Schrift die meisten Zeichen weg, und WOFF/WOFF2 direkt einzubetten ergibt leere oder sehr langsam erzeugte Dateien.
+- Überschriften mit japanischen Zeichen stehen in normaler statt fetter Schrift, weil nur ein Schnitt beiliegt.

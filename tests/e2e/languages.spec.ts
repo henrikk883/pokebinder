@@ -1,4 +1,6 @@
+import { readFile } from 'node:fs/promises'
 import type { Locator, Page } from '@playwright/test'
+import { PDFDocument } from 'pdf-lib'
 import { expect, test } from './fixtures'
 
 const searchField = 'Name, Set oder Nummer'
@@ -195,4 +197,49 @@ test('Japanese cards come from the Japanese sets and stay Japanese', async ({ pa
   await page.reload()
   await expect(pocket(page, 1, 1).getByRole('img', { name: 'フシギダネ' })).toBeVisible()
   await expect(searchLanguage(page)).toHaveValue('ja')
+})
+
+test('the checklist prints Japanese names; the font for them is only loaded for such lists', async ({ page }) => {
+  const fontRequests: string[] = []
+  page.on('request', (request) => {
+    if (request.url().includes('/fonts/')) fontRequests.push(request.url())
+  })
+  const checklist = async () => {
+    const download = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Fehlliste als PDF' }).click()
+    return readFile(await (await download).path())
+  }
+  const placeFirstAsMissing = async (search: string) => {
+    await page.getByRole('searchbox', { name: searchField }).fill(search)
+    const tile = page.getByTestId('card-tile').first()
+    await expect(tile).toBeVisible()
+    await drag(page, tile.locator('img'), pocket(page, 1, 1))
+    await expect(pocket(page, 1, 1)).not.toHaveAttribute('data-card-id', '')
+    await pocket(page, 1, 1).hover()
+    await pocket(page, 1, 1).getByRole('button', { name: 'Als fehlend markieren' }).click()
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'false')
+  }
+
+  // a German list is written with the standard font: small, and no font is fetched
+  await createBinder(page, 'Deutsch')
+  await placeFirstAsMissing('Glurak')
+  const german = await checklist()
+  expect(german.length).toBeLessThan(200_000)
+  expect(fontRequests).toEqual([])
+
+  // A Japanese one carries the font that can write its names. (The recorded TCGdex answers
+  // hold no details of single Japanese cards, so here it is the binder's name that needs it.)
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).click()
+  await createBinder(page, '日本のバインダー', 'ja')
+  await placeFirstAsMissing('リザードン')
+  const japanese = await checklist()
+  expect(japanese.length).toBeGreaterThan(1_000_000)
+  expect(fontRequests).toHaveLength(1)
+  const pdf = await PDFDocument.load(japanese)
+  expect(pdf.getForm().getFields()).toHaveLength(1)
+
+  // the font is kept for the next list
+  await checklist()
+  expect(fontRequests).toHaveLength(1)
 })

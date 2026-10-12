@@ -1,6 +1,7 @@
-import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from 'pdf-lib'
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 import type { CardLang } from '../../types/binder'
 import { hasSeveralLanguages, totalPrice, type MissingRow } from './missingList'
+import { embedFonts, fontFor, printable } from './pdfText'
 
 export interface MissingListPdfInput {
   title: string
@@ -17,6 +18,11 @@ export interface MissingListPdfInput {
   /** Line under the table with the sum of the prices; `unpriced` rows have none. */
   totalLabel: (amount: number, unpriced: number) => string
   pageLabel: (page: number, pageCount: number) => string
+  /**
+   * File of the font for Japanese (see `pdfFont.ts`). With it, Japanese names and sets are
+   * printed as they are; without it, by their ids.
+   */
+  wideFont?: Uint8Array
 }
 
 // A4 in points
@@ -58,21 +64,9 @@ export function checkboxName(index: number, row: Pick<MissingRow, 'cardId' | 'va
   return `fehlt_${index + 1}_${row.cardId}_${row.variant}`
 }
 
-/** The standard PDF fonts know Western European letters only; others are replaced. */
-function printable(text: string, font: PDFFont): string {
-  const known = new Set(font.getCharacterSet())
-  const replacements: Record<string, string> = { '♀': ' (w)', '♂': ' (m)', '★': '*', '’': "'", '–': '-' }
-  let result = ''
-  for (const char of text) {
-    const replaced = replacements[char] ?? char
-    for (const piece of replaced) result += known.has(piece.codePointAt(0) ?? 0) ? piece : '?'
-  }
-  return result
-}
-
 /**
- * Text the font can show, or `fallback` where it cannot: Japanese names and sets would
- * come out as question marks, so their id is printed instead.
+ * Text the font can show, or `fallback` where it cannot: without the font for Japanese,
+ * such names and sets would come out as question marks, so their id is printed instead.
  */
 function readable(text: string, fallback: string, font: PDFFont): string {
   return printable(text, font).includes('?') && !text.includes('?') ? fallback : text
@@ -93,8 +87,8 @@ function fitted(text: string, font: PDFFont, size: number, width: number): strin
 export async function createMissingListPdf(input: MissingListPdfInput): Promise<Uint8Array> {
   const pdf = await PDFDocument.create()
   pdf.setTitle(input.title)
-  const font = await pdf.embedFont(StandardFonts.Helvetica)
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold)
+  const fonts = await embedFonts(pdf, input.wideFont)
+  const { regular: font, bold } = fonts
   const form = pdf.getForm()
   const ink = rgb(0.1, 0.1, 0.12)
   const faint = rgb(0.45, 0.45, 0.5)
@@ -106,11 +100,13 @@ export async function createMissingListPdf(input: MissingListPdfInput): Promise<
     pages.push(page)
     let y = PAGE.height - PAGE.margin
     if (pages.length === 1) {
-      page.drawText(fitted(input.title, bold, 16, PAGE.width - 2 * PAGE.margin), {
+      // the title carries the name of the binder, which may be Japanese
+      const titleFont = fontFor(input.title, bold, fonts)
+      page.drawText(fitted(input.title, titleFont, 16, PAGE.width - 2 * PAGE.margin), {
         x: PAGE.margin,
         y: y - 16,
         size: 16,
-        font: bold,
+        font: titleFont,
         color: ink,
       })
       page.drawText(printable(input.subtitle, font), {
@@ -161,20 +157,21 @@ export async function createMissingListPdf(input: MissingListPdfInput): Promise<
       backgroundColor: rgb(1, 1, 1),
     })
     const cells: Record<ColumnKey, string> = {
-      set: readable(row.setName, row.setId, font),
+      set: readable(row.setName, row.setId, fontFor(row.setName, font, fonts)),
       lang: input.languageLabel(row.lang),
       number: row.number,
-      name: readable(row.name, row.cardId, font),
+      name: readable(row.name, row.cardId, fontFor(row.name, font, fonts)),
       variant: input.variantLabel(row.variant),
       rarity: row.rarity,
       price: row.price === undefined ? '' : input.priceLabel(row.price),
     }
     for (const column of columns) {
-      page.drawText(fitted(cells[column.key], font, FONT_SIZE, column.width), {
+      const cellFont = fontFor(cells[column.key], font, fonts)
+      page.drawText(fitted(cells[column.key], cellFont, FONT_SIZE, column.width), {
         x: column.x,
         y: top + (ROW_HEIGHT - FONT_SIZE) / 2 + 1,
         size: FONT_SIZE,
-        font,
+        font: cellFont,
         color: ink,
       })
     }

@@ -85,6 +85,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
 
 14. **Fehlliste.** Checkliste aller fehlenden Karten mit Set, Nummer, Name, Variante, Seltenheit und Preis.
     - Als PDF mit anklickbaren Kästchen: am PC digital abhakbar und druckbar. Bei gemischten Sprachen mit Sprach-Spalte.
+    - Japanische Namen und Sets werden in japanischer Schrift gedruckt (ebenso im Proxy-Druck).
     - Als CSV, die Excel per Doppelklick öffnet.
 15. **Proxy-Druck.** Schwarz-Weiß-Bild jeder fehlenden Karte als Platzhalter für den Binder.
     - DIN A4 bei 100 % Skalierung; jede Karte exakt 63 × 88 mm, 3×3 pro Blatt mit Schnittmarken, Reihenfolge wie im Binder.
@@ -183,7 +184,7 @@ Ein reines Frontend ohne eigenen Server.
 | Speicherung | IndexedDB über Dexie | große Bilder lokal speicherbar |
 | Kartendaten | @tcgdex/sdk | mehrsprachig, mit TypeScript-Typen |
 | Styling | Tailwind CSS | schnelle, konsistente UI |
-| PDF | pdf-lib | Fehlliste mit anklickbaren Checkboxen, Proxy-Druck |
+| PDF | pdf-lib, @pdf-lib/fontkit | Fehlliste mit anklickbaren Checkboxen, Proxy-Druck; fontkit bettet die Schrift für Japanisch ein (Noto Sans JP, liegt der App bei) |
 | Export | html-to-image | PNG einer Seite |
 | Tests | Vitest + Playwright | Logik und echte Klickpfade |
 
@@ -201,7 +202,7 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 | 5 Master Set & Fehlliste | Assistent „Leer / Master Set“, Optionen Holo/Sonder-Reverse, Secret Rares, Promos, Modus „Sammlung“, Fehlt-Markierung, Fortschritt, PDF-Export mit abhakbaren Kästchen | Master Set eines Sets mit und ohne Holo erzeugen; Kartenzahl stimmt mit TCGdex überein; Fehlliste enthält genau die als fehlend markierten Karten | fertig |
 | 6 v1 | Sprachen, PNG-Export, Undo/Redo | je Feature ein Playwright-Test | fertig |
 
-**Nach Phase 6 ergänzt:** Start per Doppelklick, Bilder-Vorrat (Service Worker), Preise, CSV-Fehlliste, Proxy-Druck, Holo-Effekt, PNG pro Seite mit Seitenauswahl, Gesamtsicherung mit Erinnerung, Grundvariante beim Platzieren, Binder umbenennen, Menü „Mehr“ und eigene Dialoge, Sortieren nach Pokédex-Nummer, zweite Bildquelle, Regal mit Covern und Sortierung, Bilder verschieben, Bedienung per Finger, einklappbare Spalten, angepasster Zoom, Hosting bei Cloudflare.
+**Nach Phase 6 ergänzt:** Start per Doppelklick, Bilder-Vorrat (Service Worker), Preise, CSV-Fehlliste, Proxy-Druck, Holo-Effekt, PNG pro Seite mit Seitenauswahl, Gesamtsicherung mit Erinnerung, Grundvariante beim Platzieren, Binder umbenennen, Menü „Mehr“ und eigene Dialoge, Sortieren nach Pokédex-Nummer, zweite Bildquelle, Regal mit Covern und Sortierung, Bilder verschieben, Bedienung per Finger, einklappbare Spalten, angepasster Zoom, Hosting bei Cloudflare, japanische Schrift in den PDF-Dateien.
 
 ## Geklärte Datenfragen (TCGdex, abgefragt am 12.10.2026)
 
@@ -211,5 +212,4 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 ## Offen
 
-- **Japanische Namen in PDF-Dateien:** Fehlliste und Proxy-Druck können japanische Schriftzeichen noch nicht drucken; dafür muss eine Schrift eingebettet werden.
 - **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

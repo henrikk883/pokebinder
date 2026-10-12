@@ -1,4 +1,5 @@
-import { PDFDocument, rgb, StandardFonts, type PDFImage } from 'pdf-lib'
+import { PDFDocument, rgb, type PDFImage } from 'pdf-lib'
+import { embedFonts, fontFor, printable } from './pdfText'
 
 /** Millimetres to PDF points. */
 export const mm = (value: number) => (value * 72) / 25.4
@@ -91,6 +92,8 @@ export interface ProxyPdfInput {
   /** Printed small at the bottom of every sheet, e.g. the reminder to print at 100 %. */
   footer: (sheet: number, sheetCount: number) => string
   cards: readonly ProxyCard[]
+  /** File of the font for Japanese (see `pdfFont.ts`), for the names of cards without a picture. */
+  wideFont?: Uint8Array
 }
 
 /**
@@ -100,10 +103,8 @@ export interface ProxyPdfInput {
 export async function createProxyPdf(input: ProxyPdfInput): Promise<Uint8Array> {
   const pdf = await PDFDocument.create()
   pdf.setTitle(input.title)
-  const font = await pdf.embedFont(StandardFonts.Helvetica)
-  const known = new Set(font.getCharacterSet())
-  const printable = (text: string) =>
-    [...text].map((char) => (known.has(char.codePointAt(0) ?? 0) ? char : '?')).join('')
+  const fonts = await embedFonts(pdf, input.wideFont)
+  const font = fonts.regular
   const ink = rgb(0.1, 0.1, 0.12)
   const faint = rgb(0.5, 0.5, 0.55)
   const sheetCount = sheetsNeeded(input.cards.length)
@@ -132,22 +133,25 @@ export async function createProxyPdf(input: ProxyPdfInput): Promise<Uint8Array> 
       }
       // no picture anywhere: a frame with name and number still holds the place in the binder
       page.drawRectangle({ ...rect, borderColor: faint, borderWidth: 0.6 })
-      const lines = [printable(card.name), printable(card.number)].filter((line) => line !== '')
+      const lines = [card.name, card.number].filter((line) => line !== '')
       lines.forEach((line, index) => {
         const size = index === 0 ? 11 : 9
-        let text = line
-        while (text.length > 1 && font.widthOfTextAtSize(text, size) > rect.width - 16) text = text.slice(0, -1)
+        const lineFont = fontFor(line, font, fonts)
+        let text = printable(line, lineFont)
+        while (text.length > 1 && lineFont.widthOfTextAtSize(text, size) > rect.width - 16) {
+          text = text.slice(0, -1)
+        }
         page.drawText(text, {
-          x: rect.x + (rect.width - font.widthOfTextAtSize(text, size)) / 2,
+          x: rect.x + (rect.width - lineFont.widthOfTextAtSize(text, size)) / 2,
           y: rect.y + rect.height / 2 - index * 16,
           size,
-          font,
+          font: lineFont,
           color: index === 0 ? ink : faint,
         })
       })
     }
 
-    const footer = printable(input.footer(sheet + 1, sheetCount))
+    const footer = printable(input.footer(sheet + 1, sheetCount), font)
     page.drawText(footer, {
       x: (mm(A4_MM.width) - font.widthOfTextAtSize(footer, 7)) / 2,
       y: mm(6),
