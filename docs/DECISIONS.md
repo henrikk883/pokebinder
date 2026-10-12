@@ -342,3 +342,10 @@ Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket
 - Verglichen wird der ganze Binder, nicht einzelne Karten: Die gewählte Fassung ersetzt die andere vollständig. Ein Zusammenführen von Änderungen beider Seiten gibt es nicht.
 - „Alles sichern“ enthält jetzt auch die Merklisten (Feld `watchlists`, Format-Version bleibt 1; ältere Dateien ohne das Feld bleiben lesbar). Beim Einspielen werden sie zusammengeführt: Listen mit derselben Kennung bekommen die fehlenden Karten dazu, unbekannte Listen kommen hinzu, der Name einer Liste bleibt, wie er auf dem Gerät ist. Es wird nichts entfernt – eine auf einem Gerät gelöschte Karte oder Liste kommt beim Abgleich zurück.
 - Regal-Reihenfolge und eingeklappte Spalten bleiben Sache des Geräts und wandern nicht mit.
+
+## 2026-10-12 – Einkaufsliste
+- Menü „Fehlliste“ → „Einkaufsliste“ öffnet ein Fenster mit den fehlenden Karten des Binders: Bild, Name, Set, Nummer, Variante, Cardmarket-Preistrend. Reihenfolge „Günstigste zuerst“ (Standard), „Teuerste zuerst“ oder „Wie im Binder“; Karten ohne Preis stehen bei den Preis-Reihenfolgen am Ende. Unten die Summe.
+- Budget: ein Betrag in Euro (deutsche Schreibweise, „49,90“). Die App kauft gedanklich die günstigsten Karten zuerst, bis das Geld nicht mehr reicht, nennt Anzahl und Betrag und blendet die übrigen Zeilen ab. Es wird keine Karte übersprungen, um später eine andere unterzubringen.
+- Eine Zeile je Pocket wie in der Fehlliste: Eine Karte, die zweimal fehlt, steht zweimal da.
+- Dieselbe Ansicht gibt es für jede Merkliste (Knopf „Einkaufsliste“ neben „Wert berechnen“), dort mit der Grundvariante jeder Karte.
+- Link zu Cardmarket: TCGdex liefert die Produktnummer (`idProduct`) mit; der Link führt damit zur Karte (`…/Products?idProduct=…`), ohne Nummer zur Suche nach dem Namen. Er öffnet sich nur per Klick in einem neuen Tab. Die App selbst ruft Cardmarket nicht ab – deshalb kein Verstoß gegen „keine externen Dienste“.

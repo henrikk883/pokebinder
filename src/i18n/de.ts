@@ -348,6 +348,27 @@ export const de = {
     emptyList: 'Diese Liste ist leer. Im Info-Fenster einer Karte legst du fest, auf welchen Listen sie steht.',
     count: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} gemerkt`,
   },
+  shopping: {
+    menu: 'Einkaufsliste',
+    title: (name: string) => `Einkaufsliste – ${name}`,
+    hint: 'Was noch fehlt und was es bei Cardmarket kostet (Preistrend). Der Link öffnet die Karte dort in einem neuen Tab.',
+    empty: 'Es fehlt keine Karte.',
+    emptyList: 'Auf dieser Liste steht keine Karte.',
+    order: 'Reihenfolge',
+    orders: {
+      cheapest: 'Günstigste zuerst',
+      dearest: 'Teuerste zuerst',
+      binder: 'Wie im Binder',
+    },
+    budget: 'Budget in €',
+    budgetPlaceholder: 'z. B. 50',
+    within: (count: number, total: number, spent: number) =>
+      `Reicht für ${count} von ${total} Karten (${formatEuro(spent)} €), günstigste zuerst.`,
+    total: (count: number, amount: number) =>
+      `${count} ${count === 1 ? 'Karte' : 'Karten'} · Summe: ${formatEuro(amount)} €`,
+    link: 'Cardmarket ↗',
+    linkLabel: (name: string) => `${name} bei Cardmarket öffnen`,
+  },
   importDialog: {
     title: 'Backup einspielen',
     hint: 'Einige Binder aus der Datei gibt es auf diesem Gerät schon. Angekreuzte Binder werden durch die Fassung aus der Datei ersetzt.',

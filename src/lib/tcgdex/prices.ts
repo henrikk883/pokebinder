@@ -3,6 +3,7 @@ import type { CardVariant } from '../../types/binder'
 /** Cardmarket figures as TCGdex passes them on; 0 and null both mean "no figure". */
 export interface RawCardmarket {
   unit?: string | null
+  idProduct?: number | null
   avg?: number | null
   trend?: number | null
   'avg-holo'?: number | null
@@ -26,6 +27,8 @@ export interface Price {
   /** Cardmarket price trend, or the average where there is no trend. */
   amount: number
   currency: string
+  /** Cardmarket's number of the product, where TCGdex passes it on; for a link to it. */
+  productId?: number
 }
 
 const figure = (value: number | null | undefined) =>
@@ -72,7 +75,10 @@ export function cardmarketPrice(card: RawPricedCard, variant: CardVariant): Pric
   if (!market) return undefined
   // every finish but the normal card is a foil
   const amount = amountFor(market, variant !== 'normal')
-  return amount === undefined ? undefined : { amount, currency: market.unit ?? 'EUR' }
+  if (amount === undefined) return undefined
+  const price: Price = { amount, currency: market.unit ?? 'EUR' }
+  if (typeof market.idProduct === 'number') price.productId = market.idProduct
+  return price
 }
 
 /** Runs `task` for every item with at most `limit` running at once; results keep the order. */

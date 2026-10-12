@@ -156,7 +156,7 @@ export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap
                 {de.watchlist.count(cards.length)}
               </p>
               {/* on the wide page beside the count; beside the binder at the bottom, like the binder's value */}
-              {wide && <ListWorth key={active.id} cards={cards} />}
+              {wide && <ListWorth key={active.id} cards={cards} name={listName(active)} />}
             </div>
             <ul className={gridClass}>
               {cards.map((saved) => (
@@ -178,7 +178,7 @@ export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap
           data-testid="list-worth"
           className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-line px-4 py-2 text-sm"
         >
-          <ListWorth key={active.id} cards={cards} />
+          <ListWorth key={active.id} cards={cards} name={listName(active)} />
         </div>
       )}
       {draggable && cards.length > 0 && (

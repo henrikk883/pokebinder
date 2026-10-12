@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { de } from '../../i18n/de'
 import type { Binder } from '../../types/binder'
+import { ShoppingDialog } from './ShoppingDialog'
 
 type Progress = (done: number, total: number) => void
 type Exporter = 'downloadMissingList' | 'downloadMissingListCsv' | 'downloadProxies'
@@ -18,6 +19,7 @@ export function MissingListMenu({ binder, buttonClass }: { binder: Binder; butto
   const [open, setOpen] = useState(false)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [failed, setFailed] = useState(false)
+  const [shopping, setShopping] = useState<Binder | null>(null)
 
   async function run(exporter: Exporter) {
     setOpen(false)
@@ -65,7 +67,26 @@ export function MissingListMenu({ binder, buttonClass }: { binder: Binder; butto
               {entry.label}
             </button>
           ))}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              // the list is of the binder as it is now; later changes do not move it
+              setShopping(binder)
+            }}
+            className={`${menuItemClass} mt-1 border-t border-line pt-2`}
+          >
+            {de.shopping.menu}
+          </button>
         </div>
+      )}
+      {shopping && (
+        <ShoppingDialog
+          title={de.shopping.title(shopping.name)}
+          load={async (onProgress) => (await import('./missingListTransfer')).loadShoppingRows(shopping, onProgress)}
+          onClose={() => setShopping(null)}
+        />
       )}
       {failed && (
         <p role="alert" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-3 text-sm text-muted shadow-lg">

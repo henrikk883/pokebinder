@@ -1,4 +1,5 @@
-import { baseVariant, mapWithConcurrency, tcgdexFor } from '../../lib/tcgdex'
+import { baseVariant, mapWithConcurrency, setIdOfCardId, tcgdexFor } from '../../lib/tcgdex'
+import type { ShoppingRow } from '../export/shopping'
 import type { SavedCard } from './watchlist'
 
 export interface ListValue {
@@ -43,4 +44,40 @@ export async function loadListValue(
     onProgress,
   )
   return sumPrices(prices)
+}
+
+/**
+ * The cards of a list as lines of a shopping list, in the order of the list. Each counts
+ * in its base finish, as in `loadListValue`.
+ */
+export async function loadListShoppingRows(
+  cards: readonly SavedCard[],
+  onProgress?: (done: number, total: number) => void,
+): Promise<ShoppingRow[]> {
+  return mapWithConcurrency(
+    cards,
+    8,
+    async (card, index) => {
+      const client = tcgdexFor(card.lang)
+      const detail = await client.getCardDetail(card.cardId).catch(() => undefined)
+      const variant = baseVariant(detail?.variants ?? [])
+      const price = await client.getPrice(card.cardId, variant).catch(() => undefined)
+      const { setsById } = await client.getCatalog()
+      const set = setsById.get(setIdOfCardId(card.cardId, setsById) ?? '')
+      const line: ShoppingRow = {
+        key: `${index}:${card.lang}:${card.cardId}`,
+        cardId: card.cardId,
+        lang: card.lang,
+        variant,
+        // a card TCGdex cannot be asked about still stands on the list, by its id
+        name: detail?.name ?? card.cardId,
+        setName: set?.name ?? '',
+        number: detail ? (set ? `${detail.localId}/${set.cardCount.official}` : detail.localId) : '',
+      }
+      if (price) line.price = price.amount
+      if (price?.productId !== undefined) line.cardmarketId = price.productId
+      return line
+    },
+    onProgress,
+  )
 }

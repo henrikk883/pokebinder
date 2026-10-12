@@ -10,6 +10,7 @@ import { buildMissingList, missingListCsv, type CardInfo, type MissingRow } from
 import { createMissingListPdf } from './missingListPdf'
 import { wideFontFor } from './pdfFont'
 import { createProxyPdf, type ProxyCard } from './proxyPdf'
+import type { ShoppingRow } from './shopping'
 
 /** Requests to TCGdex running at the same time while a list is put together. */
 const PARALLEL_REQUESTS = 8
@@ -53,6 +54,8 @@ async function loadCard(cardId: string, lang: CardLang): Promise<LoadedCard | un
 interface LoadedList {
   rows: MissingRow[]
   cards: Map<string, LoadedCard>
+  /** Cardmarket's product number of each priced card and finish. */
+  products: Map<string, number>
 }
 
 /**
@@ -72,6 +75,7 @@ async function loadList(binder: Binder, withPrices: boolean, onProgress?: Progre
   )
 
   const prices = new Map<string, number>()
+  const products = new Map<string, number>()
   if (withPrices) {
     const priced = [...new Map(missing.map((row) => [priceKey(row), row])).values()]
     await mapWithConcurrency(
@@ -82,6 +86,7 @@ async function loadList(binder: Binder, withPrices: boolean, onProgress?: Progre
           .getPrice(row.cardId, row.variant)
           .catch(() => undefined)
         if (price) prices.set(priceKey(row), price.amount)
+        if (price?.productId !== undefined) products.set(priceKey(row), price.productId)
       },
       onProgress,
     )
@@ -92,11 +97,32 @@ async function loadList(binder: Binder, withPrices: boolean, onProgress?: Progre
     (cardId, lang) => cards.get(cardKey(cardId, lang)),
     (cardId, variant, lang) => prices.get(priceKey({ cardId, variant, lang })),
   )
-  return { rows, cards }
+  return { rows, cards, products }
 }
 
 export async function loadMissingList(binder: Binder, onProgress?: Progress): Promise<MissingRow[]> {
   return (await loadList(binder, true, onProgress)).rows
+}
+
+/** The missing cards of a binder as lines of a shopping list, in binder order. */
+export async function loadShoppingRows(binder: Binder, onProgress?: Progress): Promise<ShoppingRow[]> {
+  const { rows, products } = await loadList(binder, true, onProgress)
+  return rows.map((row, index) => {
+    const line: ShoppingRow = {
+      // one line per pocket, like the checklist: a card missing twice is bought twice
+      key: `${index}:${priceKey(row)}`,
+      cardId: row.cardId,
+      lang: row.lang,
+      variant: row.variant,
+      name: row.name,
+      setName: row.setName,
+      number: row.number,
+    }
+    if (row.price !== undefined) line.price = row.price
+    const product = products.get(priceKey(row))
+    if (product !== undefined) line.cardmarketId = product
+    return line
+  })
 }
 
 export function slugOf(name: string): string {

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { de } from '../../i18n/de'
+import { ShoppingDialog } from '../export/ShoppingDialog'
 import type { SavedCard } from './watchlist'
-import { loadListValue, type ListValue } from './watchlistValue'
+import { loadListShoppingRows, loadListValue, type ListValue } from './watchlistValue'
 
 type Valuation =
   | { status: 'loading'; done: number; total: number }
@@ -12,8 +13,9 @@ type Valuation =
  * What the cards of a list would cost at Cardmarket, worked out on request because it
  * needs requests per card. Like the value of a binder.
  */
-export function ListWorth({ cards }: { cards: readonly SavedCard[] }) {
+export function ListWorth({ cards, name }: { cards: readonly SavedCard[]; name: string }) {
   const [valuation, setValuation] = useState<Valuation>()
+  const [shopping, setShopping] = useState<readonly SavedCard[] | null>(null)
 
   async function calculate() {
     setValuation({ status: 'loading', done: 0, total: cards.length })
@@ -56,6 +58,20 @@ export function ListWorth({ cards }: { cards: readonly SavedCard[] }) {
         >
           {de.price.calculate}
         </button>
+      )}
+      <button
+        type="button"
+        onClick={() => setShopping(cards)}
+        className="h-8 shrink-0 rounded-control border border-line bg-raised px-3 text-xs hover:border-accent"
+      >
+        {de.shopping.menu}
+      </button>
+      {shopping && (
+        <ShoppingDialog
+          title={de.shopping.title(name)}
+          load={(onProgress) => loadListShoppingRows(shopping, onProgress)}
+          onClose={() => setShopping(null)}
+        />
       )}
     </>
   )

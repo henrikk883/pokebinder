@@ -191,3 +191,94 @@ test.describe('holo effect', () => {
     await expect(pocket(page, 1, 2).locator('[data-holo="true"]')).toHaveCSS('transform', 'none')
   })
 })
+
+test.describe('shopping list', () => {
+  const amount = async (locator: Locator) => euros((await locator.textContent()) ?? '')
+
+  test('the missing cards of a binder with prices, cheapest first, a budget and links to Cardmarket', async ({ page }) => {
+    await createMasterSet(page)
+    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Einkaufsliste' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Einkaufsliste – 151' })
+    const rows = dialog.getByTestId('shopping-row')
+    const priced = dialog.locator('[data-testid="shopping-row"]:has([data-testid="shopping-price"].font-medium)')
+
+    // every card of a fresh master set is still missing: 165 and the secret rares
+    await expect(dialog.getByTestId('shopping-total')).toContainText(/^207 Karten · Summe: [0-9.]+,[0-9]{2} €/)
+    await expect(rows).toHaveCount(207)
+    const pricedCount = await priced.count()
+    expect(pricedCount).toBeGreaterThanOrEqual(2)
+
+    // cheapest first; cards without a price at the end
+    const first = await amount(priced.nth(0).getByTestId('shopping-price'))
+    const second = await amount(priced.nth(1).getByTestId('shopping-price'))
+    expect(first).toBeLessThanOrEqual(second)
+    await expect(rows.first().getByTestId('shopping-price')).toHaveText(/€$/)
+    await expect(rows.last().getByTestId('shopping-price')).toHaveText('kein Preis')
+
+    // each line names the card and leads to it at Cardmarket, in a tab of its own
+    const link = priced.nth(0).getByRole('link', { name: /bei Cardmarket öffnen$/ })
+    await expect(link).toHaveAttribute('href', /^https:\/\/www\.cardmarket\.com\/de\/Pokemon\/Products\?idProduct=[0-9]+$/)
+    await expect(link).toHaveAttribute('target', '_blank')
+    await expect(rows.last().getByRole('link')).toHaveAttribute(
+      'href',
+      /^https:\/\/www\.cardmarket\.com\/de\/Pokemon\/Products\/Search\?searchString=.+/,
+    )
+
+    // a budget that covers the cheapest card only
+    await dialog.getByLabel('Budget in €').fill(String(first).replace('.', ','))
+    await expect(dialog.getByTestId('shopping-budget')).toContainText(/^Reicht für [0-9]+ von 207 Karten \([0-9.]+,[0-9]{2} €\)/)
+    await expect(rows.first()).toHaveAttribute('data-affordable', 'true')
+    await expect(rows.last()).toHaveAttribute('data-affordable', 'false')
+    // nothing for no money, and no budget line for something that is no amount
+    await dialog.getByLabel('Budget in €').fill('0')
+    await expect(dialog.getByTestId('shopping-budget')).toContainText('Reicht für 0 von 207 Karten')
+    await dialog.getByLabel('Budget in €').fill('viel')
+    await expect(dialog.getByTestId('shopping-budget')).toHaveCount(0)
+    await expect(rows.first()).toHaveAttribute('data-affordable', 'true')
+
+    // the other orders
+    await dialog.getByLabel('Reihenfolge').selectOption({ label: 'Teuerste zuerst' })
+    expect(await amount(rows.first().getByTestId('shopping-price'))).toBeGreaterThanOrEqual(second)
+    await dialog.getByLabel('Reihenfolge').selectOption({ label: 'Wie im Binder' })
+    await expect(rows.first()).toHaveAttribute('data-card-id', 'sv03.5-001')
+
+    await dialog.getByRole('button', { name: 'Schließen' }).click()
+    await expect(dialog).toBeHidden()
+  })
+
+  test('a card that is there is not on the list', async ({ page }) => {
+    await createMasterSet(page)
+    await collection(page).click()
+    await pocket(page, 1, 1).click()
+    await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'true')
+
+    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Einkaufsliste' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Einkaufsliste – 151' })
+    await expect(dialog.getByTestId('shopping-row')).toHaveCount(206)
+    await expect(dialog.locator('[data-card-id="sv03.5-001"]')).toHaveCount(0)
+  })
+
+  test('a "Merkliste" has its shopping list too', async ({ page }) => {
+    await page.getByRole('banner').getByRole('button', { name: 'Karten' }).click()
+    await page.getByTestId('page').getByRole('button', { name: 'Set', exact: true }).click()
+    await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+    const results = page.getByTestId('browse-results')
+    for (const id of ['sv03.5-001', 'sv03.5-002']) {
+      const found = results.locator(`[data-card-id="${id}"]`)
+      await found.hover()
+      await found.getByRole('button', { name: /merken$/ }).click()
+    }
+    await page.getByTestId('page').getByRole('tab', { name: /^Merkliste/ }).click()
+    await page.getByTestId('browse-watchlist').getByRole('button', { name: 'Einkaufsliste' }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'Einkaufsliste – Schnellmerken' })
+    await expect(dialog.getByTestId('shopping-row')).toHaveCount(2)
+    await expect(dialog.getByTestId('shopping-total')).toContainText(/^2 Karten · Summe: [0-9.]+,[0-9]{2} €/)
+    await expect(dialog.locator('[data-card-id="sv03.5-001"]')).toContainText('Bisasam')
+    await expect(dialog.locator('[data-card-id="sv03.5-001"]')).toContainText('151 · 001/165')
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+  })
+})

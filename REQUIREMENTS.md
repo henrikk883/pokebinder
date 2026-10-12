@@ -91,6 +91,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
     - Als PDF mit anklickbaren Kästchen: am PC digital abhakbar und druckbar. Bei gemischten Sprachen mit Sprach-Spalte.
     - Japanische Namen und Sets werden in japanischer Schrift gedruckt (ebenso im Proxy-Druck).
     - Als CSV, die Excel per Doppelklick öffnet.
+    - Als **Einkaufsliste** in der App: fehlende Karten mit Preis, günstigste zuerst, mit Summe, Budget („wie weit reicht das Geld?“) und Link zur Karte bei Cardmarket. Dieselbe Ansicht gibt es für jede Merkliste.
 15. **Proxy-Druck.** Schwarz-Weiß-Bild jeder fehlenden Karte als Platzhalter für den Binder.
     - DIN A4 bei 100 % Skalierung; jede Karte exakt 63 × 88 mm, 3×3 pro Blatt mit Schnittmarken, Reihenfolge wie im Binder.
     - Karten ohne Bild bekommen einen Rahmen mit Name und Nummer.
@@ -221,11 +222,10 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
-2. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
+1. **Lücke einfügen und schließen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter; beim Herausnehmen rücken sie auf Wunsch nach.
+2. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
 3. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
-4. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
-5. **Fortschritt pro Set** in gemischten Bindern.
-6. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-7. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-8. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+4. **Fortschritt pro Set** in gemischten Bindern.
+5. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+6. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+7. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
