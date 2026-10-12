@@ -112,7 +112,12 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
     - **Einspielen mit Abgleich:** Die App vergleicht jeden Binder der Datei mit dem auf dem Gerät. Würde ein Binder ersetzt, fragt sie vorher und zeigt, welche Seite die neuere Fassung hat; vorangekreuzt ist, was neu oder in der Datei neuer ist. Binder, die nicht in der Datei stehen, bleiben unberührt.
     - Merklisten aus der Datei werden mit denen des Geräts zusammengeführt.
     - Die App erinnert an die Sicherung, wenn die letzte älter als 14 Tage ist.
-    - Über das Backup wandern Binder von einem Gerät zum anderen; eine automatische Synchronisation gibt es nicht.
+    - Über das Backup wandern Binder auch ohne Anmeldung von einem Gerät zum anderen.
+20. **Abgleich zwischen Geräten.** Wer sich über „Anmelden“ in der Kopfzeile mit E-Mail-Code anmeldet (nur freigeschaltete Adressen), dessen Binder und Merklisten gleichen sich zwischen seinen Geräten ab: beim Öffnen der App, kurz nach jeder Änderung und beim Zurückkehren zur App. Ohne Anmeldung und ohne Netz bleibt die App, wie sie ist.
+    - Die Kopfzeile zeigt den Stand („Abgeglichen“, „Ohne Verbindung“ …); das Menü dahinter bietet „Jetzt abgleichen“ und „Abmelden“.
+    - Wurde ein Binder auf zwei Geräten geändert, überschreibt die App nichts, sondern fragt, welche Fassung gelten soll. Eine Änderung gewinnt immer gegen eine Löschung auf dem anderen Gerät.
+    - Merklisten, die auf zwei Geräten geändert wurden, werden zusammengeführt.
+    - Eigene Bilder gleichen sich noch nicht ab (siehe „Offen“).
 
 ### Karten ohne Bild
 
@@ -128,7 +133,7 @@ Das Mockup ist die verbindliche Vorlage für den Binder-Editor auf dem Desktop: 
 
 | Bereich | Inhalt |
 | --- | --- |
-| Kopfzeile | Logo „PokéBinder“, Meine Binder / Binder-Name, daneben „Karten“; rechts Speicherstatus, Erinnerung an die Sicherung und „Backup“ |
+| Kopfzeile | Logo „PokéBinder“, Meine Binder / Binder-Name, daneben „Karten“; rechts Speicherstatus, Abgleich (bzw. „Anmelden“), Erinnerung an die Sicherung und „Backup“ |
 | Linke Spalte (Suche) | Tabs „Karten“ / „Eigene Bilder“, Suchfeld, Filter Set, Seltenheit, Typ, Sprache mit Flagge; Ergebnisse als 2-spaltiges Raster mit Name und Set · Nummer; Hinweis „Karten in einen Pocket ziehen“ |
 | Mitte, Werkzeugleiste | Binder-Name, „Sortieren“, „Fehlliste“ (PDF, CSV, Platzhalter), „Als PNG“, Rückgängig / Wiederholen, „Mehr“ (umbenennen, Master Set anpassen, Layout), „+ Seite“ als Hauptbutton |
 | Mitte, Steuerung | Umschalter „Bearbeiten“ / „Sammlung“, Blätterpfeile mit „Seiten 4 – 5“, Zoom mit − / Prozent / + |
@@ -229,5 +234,5 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Mit Henrik am 12.10.2026 vereinbart, in dieser Reihenfolge:
 
-1. **Abgleich zwischen Geräten mit Anmeldung:** Binder, Bilder und Merklisten liegen zusätzlich bei Cloudflare und gleichen sich zwischen PC, Tablet und Handy ab; Anmeldung per E-Mail-Code, nur für freigeschaltete Adressen (Henrik und wenige Freunde). Ersetzt das Hin- und Herschicken der Backup-Datei. Ändert die Regel „kein Backend, keine Accounts“.
+1. **Abgleich zwischen Geräten, Rest:** Binder und Merklisten gleichen sich ab (Punkt 20). Offen: die eigenen Bilder – bis dahin zeigt ein Binder auf einem zweiten Gerät an ihrer Stelle leere Pockets.
 2. **Landing Page:** eine Einstiegsseite, die sich an Handy und PC anpasst; Entwurf von Henrik unter `docs/`.

@@ -6,6 +6,7 @@ import { useWatchlistStore } from '../../store/watchlistStore'
 import type { Asset } from '../../types/binder'
 import { normalizeImages } from '../images/imageModel'
 import type { Watchlist } from '../search/watchlist'
+import { requestSync } from '../sync/syncStore'
 import { planImport, type ImportEntry } from './importPlan'
 import {
   backupFileName,
@@ -94,5 +95,6 @@ export async function applyImport(pending: PendingImport, binderIds: readonly st
   for (const binder of binders) await binderRepository.saveBinder(binder)
   await assetStore.getState().load()
   if (pending.watchlists) useWatchlistStore.getState().merge(pending.watchlists)
+  requestSync()
   return binders
 }

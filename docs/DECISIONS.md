@@ -408,3 +408,15 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Schreiben nur, wenn das Gerät den Stand kennt, den der Server hat (`base`); sonst 409 und der Sammler entscheidet. Gelöschte Binder bleiben als Löschvermerk stehen, damit andere Geräte davon erfahren.
 - Keine neuen Abhängigkeiten: Die wenigen Typen der Cloudflare-Laufzeit stehen in `worker/types.ts`, `wrangler` läuft nur bei Cloudflare bzw. per `npx`. Die Tests des Server-Teils laufen gegen echtes SQLite (`node:sqlite`).
 - Die Abgleich-Logik für die App (`src/features/sync/syncPlan.ts`) ist vorbereitet; Anmelde-Knopf und Abgleich selbst folgen in Schritt 2.
+
+## 2026-10-12 – Abgleich zwischen Geräten, Schritt 2: Anmelden und Abgleich in der App
+- Access-Anwendung „PokeBinder Sync“ schützt `/api`; ihr AUD-Tag steht in `wrangler.jsonc` (kein Geheimnis: er sagt nur, für welche Anwendung ein Token gilt).
+- „Anmelden“ führt den Browser zu `/api/login`, Access fragt den Code ab und schickt ihn zurück. „Abmelden“ führt zu `/cdn-cgi/access/logout`; was auf dem Gerät liegt, bleibt dort.
+- Ob jemand angemeldet ist, fragt die App mit `/api/me`. Anfragen folgen der Weiterleitung zur Anmeldeseite bewusst nicht (`redirect: 'manual'`), sonst sähe „nicht angemeldet“ aus wie „keine Verbindung“. Antwortet statt der API die App selbst (Entwicklung, Tests), gibt es keinen Server-Teil und die Kopfzeile zeigt nichts davon.
+- Abgleich beim Start, 2,5 s nach dem Speichern, nach Einspielen/Umbenennen/Löschen und beim Zurückkehren zur App (höchstens alle 20 s). Immer nur einer zur Zeit.
+- Was das Gerät sich merkt (`pokebinder:sync` im Browser): worauf es sich mit dem Server zuletzt geeinigt hat, gelöschte Binder, und ob die Merklisten seither geändert wurden. Meldet sich ein anderer Sammler auf dem Gerät an, beginnt das von vorn; gelöscht wird dabei nichts.
+- Konflikte bekommen einen eigenen kleinen Dialog statt des Import-Dialogs: Hier wählt man zwischen zwei Fassungen, dort kreuzt man an, was eingespielt wird. Vorgewählt ist die spätere Fassung; „Später“ lässt beide Seiten unberührt.
+- Merklisten gehen als Ganzes über die Leitung. Auf einer Seite geändert, ersetzen sie die andere; auf beiden geändert, werden sie zusammengeführt (dabei kommt eine dort entfernte Karte zurück – lieber das, als dass Gemerktes verloren geht).
+- Ein heruntergeladener Binder läuft durch dieselbe Prüfung wie ein Backup (`readBinder`); was sie nicht besteht, wird nicht übernommen. Liegt der Binder gerade offen und wurde währenddessen nicht angefasst, wird er neu geöffnet bzw. weggelegt.
+- `nextBase` aus Schritt 1 entfällt: Der Stand wird Aktion für Aktion fortgeschrieben, damit ein Abgleich, der mittendrin abbricht, das Erledigte behält.
+- Tests: die App-Seite des Abgleichs gegen den echten Server-Code mit zwei „Geräten“ (`worker/syncRoundTrip.test.ts`), dazu Playwright mit nachgestellter Schnittstelle (`tests/e2e/sync.spec.ts`).

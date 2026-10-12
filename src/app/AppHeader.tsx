@@ -1,4 +1,5 @@
 import { BackupMenu } from '../features/export/BackupMenu'
+import { SyncButton } from '../features/sync/SyncButton'
 import { de } from '../i18n/de'
 import { useBinderStore } from '../store/binderStore'
 import { useEditorStore } from '../store/editorStore'
@@ -69,6 +70,7 @@ export function AppHeader() {
       </nav>
       <div className="ml-auto flex shrink-0 items-center gap-5 max-md:gap-2">
         <SaveStatusBadge />
+        <SyncButton />
         <BackupMenu />
       </div>
     </header>

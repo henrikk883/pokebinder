@@ -89,39 +89,3 @@ export function planSync({ local, remote, base, deletedLocally }: SyncInput): Sy
   }
   return actions
 }
-
-/**
- * The base after the actions were carried out: every binder both sides now have, with the
- * time they agree on. `resolved` holds the outcome of each conflict the collector decided
- * (`updatedAt` of the version that was kept); undecided conflicts keep their old base, so
- * that they come up again.
- */
-export function nextBase(
-  { local, remote, base }: Pick<SyncInput, 'local' | 'remote' | 'base'>,
-  actions: readonly SyncAction[],
-  resolved: Readonly<Record<string, string>> = {},
-): Record<string, string> {
-  const localById = new Map(local.map((entry) => [entry.id, entry]))
-  const remoteById = new Map(remote.map((entry) => [entry.id, entry]))
-  const byId = new Map(actions.map((action) => [action.id, action]))
-  const next: Record<string, string> = {}
-
-  for (const id of new Set([...localById.keys(), ...remoteById.keys()])) {
-    const action = byId.get(id)
-    const here = localById.get(id)?.updatedAt
-    const there = remoteById.get(id)?.updatedAt
-    if (!action) {
-      // the same on both sides
-      if (here !== undefined) next[id] = here
-    } else if (action.kind === 'push' && here !== undefined) {
-      next[id] = here
-    } else if (action.kind === 'pull' && there !== undefined) {
-      next[id] = there
-    } else if (action.kind === 'conflict') {
-      const kept = resolved[id] ?? base[id]
-      if (kept !== undefined) next[id] = kept
-    }
-    // deleted on either side, or forgotten: no longer something both sides have
-  }
-  return next
-}

@@ -223,7 +223,8 @@ function readPage(value: unknown, index: number, layout: Layout, path: string): 
   }
 }
 
-function readBinder(value: unknown): Binder {
+/** Checks what claims to be a binder, from a file or from the server. Throws `BackupError`. */
+export function readBinder(value: unknown): Binder {
   const raw = readRecord(value, 'binder')
   const cover = readRecord(raw.cover, 'binder.cover')
   const layout = readOneOf(raw.layout, LAYOUTS, 'binder.layout')

@@ -12,6 +12,7 @@ import { binderStore, useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
 import { confirmDialog, promptDialog } from '../../store/dialogStore'
+import { noteBinderDeleted, requestSync } from '../sync/syncStore'
 import { BinderCover } from './BinderCover'
 import { countCards, renameBinder } from './binderModel'
 import {
@@ -200,6 +201,7 @@ export function BinderList() {
     if (name === null) return
     await binderRepository.saveBinder(renameBinder(binder, name))
     setVersion((current) => current + 1)
+    requestSync()
   }
 
   async function handleDelete(binder: Binder) {
@@ -211,6 +213,7 @@ export function BinderList() {
     })
     if (!agreed) return
     await binderRepository.deleteBinder(binder.id)
+    noteBinderDeleted(binder.id)
     setVersion((current) => current + 1)
     // others that count binders (the backup reminder) should notice too
     useEditorStore.getState().refreshBinderList()

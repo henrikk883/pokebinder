@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { nextBase, planSync, type SyncInput } from './syncPlan'
+import { planSync, type SyncInput } from './syncPlan'
 
 const monday = '2026-10-12T10:00:00.000Z'
 const tuesday = '2026-10-13T10:00:00.000Z'
@@ -111,63 +111,5 @@ describe('planSync', () => {
       { kind: 'pull', id: 'b' },
       { kind: 'push', id: 'c' },
     ])
-  })
-})
-
-describe('nextBase', () => {
-  it('records what both sides have once the actions are done', () => {
-    const state = input({
-      local: [here('same', monday), here('pushed', tuesday), here('pulled', monday), here('gone', monday)],
-      remote: [
-        there('same', monday),
-        there('pushed', monday),
-        there('pulled', tuesday),
-        there('gone', tuesday, true),
-        there('fetched', wednesday),
-      ],
-      base: { same: monday, pushed: monday, pulled: monday, gone: monday },
-    })
-    const actions = planSync(state)
-
-    expect(nextBase(state, actions)).toEqual({
-      same: monday,
-      pushed: tuesday,
-      pulled: tuesday,
-      fetched: wednesday,
-    })
-  })
-
-  it('keeps an undecided conflict open and records a decided one', () => {
-    const state = input({ local: [here('a', tuesday)], remote: [there('a', wednesday)], base: { a: monday } })
-    const actions = planSync(state)
-
-    // not decided: the old base stays, so the conflict comes up again
-    expect(nextBase(state, actions)).toEqual({ a: monday })
-    expect(planSync({ ...state, base: nextBase(state, actions) })).toEqual(actions)
-    // decided for the version of the server
-    expect(nextBase(state, actions, { a: wednesday })).toEqual({ a: wednesday })
-  })
-
-  it('has no base for a conflict between binders that never agreed and is not decided', () => {
-    const state = input({ local: [here('a', monday)], remote: [there('a', tuesday)] })
-
-    expect(nextBase(state, planSync(state))).toEqual({})
-  })
-
-  it('settles: after a sync without conflicts the next one has nothing to do', () => {
-    const state = input({
-      local: [here('a', tuesday), here('b', monday)],
-      remote: [there('b', tuesday), there('c', monday)],
-      base: { b: monday },
-    })
-    const base = nextBase(state, planSync(state))
-    // both sides as they are after pushing a, pulling b and c
-    const after = input({
-      local: [here('a', tuesday), here('b', tuesday), here('c', monday)],
-      remote: [there('a', tuesday), there('b', tuesday), there('c', monday)],
-      base,
-    })
-
-    expect(planSync(after)).toEqual([])
   })
 })

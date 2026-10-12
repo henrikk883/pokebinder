@@ -49,6 +49,8 @@ export interface WatchlistState {
   remove: (listId: string) => void
   /** Takes in the lists of a backup: see `mergeWatchlists`. */
   merge: (lists: readonly Watchlist[]) => void
+  /** Puts the lists of another device in place of these, as a sync does. */
+  replace: (lists: Watchlist[]) => void
 }
 
 export const useWatchlistStore = create<WatchlistState>()((set, get) => {
@@ -72,6 +74,7 @@ export const useWatchlistStore = create<WatchlistState>()((set, get) => {
     },
     rename: (listId, name) => update(renameList(get().lists, listId, name)),
     merge: (lists) => update(mergeWatchlists(get().lists, lists)),
+    replace: (lists) => update(lists),
     remove: (listId) => {
       update(removeList(get().lists, listId))
       if (get().activeListId === listId) set({ activeListId: QUICK_LIST_ID })

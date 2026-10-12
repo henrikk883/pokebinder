@@ -1,0 +1,367 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it } from 'vitest'
+import { readBinder } from '../src/features/export/backup'
+import { createBinder, renameBinder } from '../src/features/binder/binderModel'
+import { QUICK_LIST_ID, type Watchlist } from '../src/features/search/watchlist'
+import { createSyncApi, SignedOutError, type Send } from '../src/features/sync/syncApi'
+import { runSync, type SyncDeps } from '../src/features/sync/syncRun'
+import { EMPTY_SYNC_STATE, withDeleted, withListsChanged, type SyncState } from '../src/features/sync/syncState'
+import type { Binder } from '../src/types/binder'
+import { handleApi } from './api'
+import { createD1Store } from './d1Store'
+import type { SyncStore } from './store'
+import { createTestBucket, createTestDatabase } from './testing'
+
+// The app's side of the sync against the real server part: two devices of one collector,
+// each with its own binders, lists and memory of the last sync.
+
+const ASH = 'ash@example.com'
+let server: SyncStore
+let clock: number
+
+/** A time later than every one handed out before. */
+const tick = () => new Date(Date.UTC(2026, 9, 12, 10, 0, clock++)).toISOString()
+
+interface Device {
+  binders: Map<string, Binder>
+  lists: Watchlist[]
+  state: SyncState
+  deps: SyncDeps
+  sync: (decisions?: Parameters<typeof runSync>[2]) => ReturnType<typeof runSync>
+  /** What the collector does on this device. */
+  create: (name: string) => Binder
+  rename: (id: string, name: string) => void
+  remove: (id: string) => void
+  note: (cardId: string) => void
+  names: () => string[]
+}
+
+function device(user = ASH, send?: Send): Device {
+  const self: Device = {
+    binders: new Map(),
+    lists: [{ id: QUICK_LIST_ID, name: '', cards: [] }],
+    state: EMPTY_SYNC_STATE,
+    deps: {
+      api: createSyncApi(
+        send ?? ((path, init) => handleApi(new Request(`https://pokebinder.example${path}`, init), user, server)),
+      ),
+      binders: {
+        list: () => Promise.resolve([...self.binders.values()]),
+        load: (id) => Promise.resolve(self.binders.get(id)),
+        save: (binder) => Promise.resolve(void self.binders.set(binder.id, binder)),
+        remove: (id) => Promise.resolve(void self.binders.delete(id)),
+      },
+      readBinder,
+      lists: {
+        get: () => self.lists,
+        replace: (lists) => {
+          self.lists = lists
+        },
+      },
+      state: {
+        read: () => self.state,
+        write: (state) => {
+          self.state = state
+        },
+      },
+      now: tick,
+    },
+    sync: (decisions) => runSync(self.deps, user, decisions),
+    create: (name) => {
+      const binder = { ...createBinder({ name, layout: '3x3' }), updatedAt: tick() }
+      self.binders.set(binder.id, binder)
+      return binder
+    },
+    rename: (id, name) => {
+      const binder = self.binders.get(id)
+      if (binder) self.binders.set(id, { ...renameBinder(binder, name), updatedAt: tick() })
+    },
+    remove: (id) => {
+      self.binders.delete(id)
+      self.state = withDeleted(self.state, id)
+    },
+    note: (cardId) => {
+      self.lists = self.lists.map((list) =>
+        list.id === QUICK_LIST_ID ? { ...list, cards: [...list.cards, { cardId, lang: 'de', savedAt: tick() }] } : list,
+      )
+      self.state = withListsChanged(self.state, tick())
+    },
+    names: () => [...self.binders.values()].map((binder) => binder.name).sort(),
+  }
+  return self
+}
+
+const noted = (target: Device) => target.lists.flatMap((list) => list.cards.map((card) => card.cardId)).sort()
+
+beforeEach(() => {
+  server = createD1Store(createTestDatabase(), createTestBucket())
+  clock = 0
+})
+
+describe('binders between two devices', () => {
+  it('brings a binder made on one device to the other, whole', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+
+    await pc.sync()
+    const result = await phone.sync()
+
+    expect(result).toEqual({ conflicts: [], changed: [kanto.id] })
+    expect(phone.binders.get(kanto.id)).toEqual(kanto)
+    // and then there is nothing left to do on either side
+    expect(await pc.sync()).toEqual({ conflicts: [], changed: [] })
+    expect(await phone.sync()).toEqual({ conflicts: [], changed: [] })
+  })
+
+  it('carries a change from the device it was made on to the other', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    await pc.sync()
+    await phone.sync()
+
+    phone.rename(kanto.id, 'Kanto komplett')
+    await phone.sync()
+    await pc.sync()
+
+    expect(pc.names()).toEqual(['Kanto komplett'])
+  })
+
+  it('brings together binders made on both devices', async () => {
+    const pc = device()
+    const phone = device()
+    pc.create('Kanto')
+    phone.create('Johto')
+
+    await pc.sync()
+    await phone.sync()
+    await pc.sync()
+
+    expect(pc.names()).toEqual(['Johto', 'Kanto'])
+    expect(phone.names()).toEqual(['Johto', 'Kanto'])
+  })
+
+  it('removes a binder everywhere once it was deleted on one device', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    await pc.sync()
+    await phone.sync()
+
+    pc.remove(kanto.id)
+    await pc.sync()
+    const result = await phone.sync()
+
+    expect(result.changed).toEqual([kanto.id])
+    expect(phone.names()).toEqual([])
+    expect(pc.state.deleted).toEqual([])
+    // it does not come back from anywhere
+    await pc.sync()
+    await phone.sync()
+    expect(pc.names()).toEqual([])
+  })
+
+  it('keeps a binder that was worked on elsewhere while it was deleted here', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    await pc.sync()
+    await phone.sync()
+
+    pc.remove(kanto.id)
+    phone.rename(kanto.id, 'Kanto vom Handy')
+    await phone.sync()
+    await pc.sync()
+
+    expect(pc.names()).toEqual(['Kanto vom Handy'])
+  })
+
+  it('asks when a binder was changed on both devices, and does as it is told', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    await pc.sync()
+    await phone.sync()
+
+    pc.rename(kanto.id, 'Vom PC')
+    phone.rename(kanto.id, 'Vom Handy')
+    await pc.sync()
+    const asked = await phone.sync()
+
+    expect(asked.changed).toEqual([])
+    expect(asked.conflicts).toMatchObject([{ id: kanto.id, name: 'Vom Handy' }])
+    expect(phone.names()).toEqual(['Vom Handy'])
+    // until it is decided, the question comes up again and nothing is overwritten
+    expect((await phone.sync()).conflicts).toHaveLength(1)
+    await pc.sync()
+    expect(pc.names()).toEqual(['Vom PC'])
+
+    expect(await phone.sync({ [kanto.id]: 'local' })).toEqual({ conflicts: [], changed: [] })
+    await pc.sync()
+    expect(pc.names()).toEqual(['Vom Handy'])
+  })
+
+  it('takes the version of the other device when that is what was decided', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    await pc.sync()
+    await phone.sync()
+    pc.rename(kanto.id, 'Vom PC')
+    phone.rename(kanto.id, 'Vom Handy')
+    await pc.sync()
+
+    const result = await phone.sync({ [kanto.id]: 'remote' })
+
+    expect(result).toEqual({ conflicts: [], changed: [kanto.id] })
+    expect(phone.names()).toEqual(['Vom PC'])
+    expect(await phone.sync()).toEqual({ conflicts: [], changed: [] })
+  })
+
+  it('asks about a binder both devices already had before they ever synced', async () => {
+    const pc = device()
+    const phone = device()
+    const kanto = pc.create('Kanto')
+    // brought over with a backup file earlier, then worked on
+    phone.binders.set(kanto.id, { ...kanto, name: 'Kanto alt', updatedAt: tick() })
+
+    await pc.sync()
+
+    expect((await phone.sync()).conflicts).toHaveLength(1)
+  })
+
+  it('leaves alone what the server has that is no binder', async () => {
+    const pc = device()
+    const phone = device()
+    await server.putBinder(ASH, 'odd', tick(), JSON.stringify({ id: 'odd', updatedAt: 'x', pages: 'none' }), null)
+    pc.create('Kanto')
+    await pc.sync()
+
+    const result = await phone.sync()
+
+    expect(phone.names()).toEqual(['Kanto'])
+    expect(result.changed).toHaveLength(1)
+  })
+
+  it('keeps the binders of one collector from another', async () => {
+    const ash = device()
+    const misty = device('misty@example.com')
+    ash.create('Kanto')
+    await ash.sync()
+
+    await misty.sync()
+
+    expect(misty.names()).toEqual([])
+  })
+
+  it('starts afresh when another collector signs in on the device', async () => {
+    const shared = device()
+    shared.create('Kanto')
+    await shared.sync()
+
+    await runSync(shared.deps, 'misty@example.com')
+
+    expect(shared.state.user).toBe('misty@example.com')
+    // nothing is deleted for that: the binder on the device now belongs to both
+    expect(shared.names()).toEqual(['Kanto'])
+  })
+})
+
+describe('lists between two devices', () => {
+  it('brings what was noted on one device to the other', async () => {
+    const pc = device()
+    const phone = device()
+    pc.note('sv03.5-025')
+
+    await pc.sync()
+    await phone.sync()
+
+    expect(noted(phone)).toEqual(['sv03.5-025'])
+    expect(pc.state.listsChangedAt).toBeNull()
+  })
+
+  it('takes a card off everywhere once it was taken off on one device', async () => {
+    const pc = device()
+    const phone = device()
+    pc.note('sv03.5-025')
+    await pc.sync()
+    await phone.sync()
+
+    phone.lists = phone.lists.map((list) => ({ ...list, cards: [] }))
+    phone.state = withListsChanged(phone.state, tick())
+    await phone.sync()
+    await pc.sync()
+
+    expect(noted(pc)).toEqual([])
+  })
+
+  it('keeps what was noted on both devices', async () => {
+    const pc = device()
+    const phone = device()
+    pc.note('sv03.5-025')
+    phone.note('sv03.5-006')
+
+    await pc.sync()
+    await phone.sync()
+    await pc.sync()
+
+    expect(noted(pc)).toEqual(['sv03.5-006', 'sv03.5-025'])
+    expect(noted(phone)).toEqual(['sv03.5-006', 'sv03.5-025'])
+    // settled: nothing more is sent
+    const before = pc.state
+    await pc.sync()
+    expect(pc.state).toEqual(before)
+  })
+
+  it('sends nothing while there is nothing noted anywhere', async () => {
+    const pc = device()
+
+    await pc.sync()
+
+    expect(await server.getWatchlists(ASH)).toBeUndefined()
+  })
+})
+
+describe('when the server cannot be used', () => {
+  it('says so when the collector has to sign in again, and keeps everything', async () => {
+    const redirect = () => Promise.resolve(new Response(null, { status: 302, headers: { location: 'https://sign.in' } }))
+    const pc = device(ASH, redirect)
+    pc.create('Kanto')
+
+    await expect(pc.sync()).rejects.toBeInstanceOf(SignedOutError)
+    expect(pc.names()).toEqual(['Kanto'])
+    expect(await pc.deps.api.session()).toEqual({ kind: 'signedOut' })
+  })
+
+  it('tells being offline from there being no server part', async () => {
+    const offline = createSyncApi(() => Promise.reject(new TypeError('Failed to fetch')))
+    const appOnly = createSyncApi(() =>
+      Promise.resolve(new Response('<!doctype html>', { headers: { 'content-type': 'text/html' } })),
+    )
+
+    expect(await offline.session()).toEqual({ kind: 'offline' })
+    expect(await appOnly.session()).toEqual({ kind: 'unavailable' })
+    expect(await device().deps.api.session()).toEqual({ kind: 'signedIn', email: ASH })
+  })
+
+  it('remembers what was done when the connection breaks half-way', async () => {
+    const pc = device()
+    pc.create('Arkani')
+    pc.create('Bisasam')
+    let calls = 0
+    const flaky: Send = (path, init) => {
+      if (init?.method === 'PUT' && ++calls === 2) return Promise.reject(new TypeError('Failed to fetch'))
+      return handleApi(new Request(`https://pokebinder.example${path}`, init), ASH, server)
+    }
+    pc.deps.api = createSyncApi(flaky)
+
+    await expect(pc.sync()).rejects.toBeInstanceOf(TypeError)
+
+    expect(Object.keys(pc.state.base)).toHaveLength(1)
+    expect((await server.listBinders(ASH)).map((entry) => entry.id)).toEqual(Object.keys(pc.state.base))
+    // the next sync sends the rest
+    await pc.sync()
+    expect(await server.listBinders(ASH)).toHaveLength(2)
+  })
+})

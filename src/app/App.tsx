@@ -3,6 +3,7 @@ import { BinderWorkspace } from '../features/binder/BinderWorkspace'
 import { CardDragLayer } from '../features/binder/CardDragLayer'
 import { SelectionPanel } from '../features/binder/SelectionPanel'
 import { CardBrowser } from '../features/search/CardBrowser'
+import { startSync } from '../features/sync/syncStore'
 import { SearchPanel } from '../features/search/SearchPanel'
 import { assetStore } from '../store/assetStore'
 import { restoreLastBinder } from '../store/binderStore'
@@ -19,6 +20,7 @@ export function App() {
     // Without storage the app still works, it just starts empty.
     restoreLastBinder().catch(() => undefined)
     assetStore.getState().load().catch(() => undefined)
+    return startSync()
   }, [])
 
   return (
