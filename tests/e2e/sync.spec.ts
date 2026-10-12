@@ -95,6 +95,8 @@ async function connect(page: Page, server: FakeServer): Promise<Connection> {
 async function secondDevice(browser: Browser, server: FakeServer) {
   const context = await browser.newContext({ serviceWorkers: 'block' })
   const page = await context.newPage()
+  // in the app right away, as the first device is (see fixtures.ts)
+  await page.addInitScript(() => sessionStorage.setItem('pokebinder:visited', '1'))
   // the shelf needs nothing from outside
   await page.route(/^https:/, (route) => route.abort())
   const connection = await connect(page, server)

@@ -426,3 +426,11 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Ein Bild, das in keinem Binder liegt, bleibt auf seinem Gerät. So kommt ein aus der Bibliothek gelöschtes Bild nicht vom Server zurück, und der Abgleich muss nie Bilder löschen. Auf dem Server bleiben nicht mehr benutzte Bilder liegen; bei wenigen Sammlern fällt das nicht ins Gewicht.
 - Bilder ändern sich unter ihrer Kennung nie, darum gibt es hier keine Konflikte.
 - Was der Server nicht annähme (anderes Format als JPEG/PNG/WebP, über 12 MB), schickt die App gar nicht erst, statt es bei jedem Abgleich erneut zu versuchen; der Binder selbst gleicht sich trotzdem ab.
+
+## 2026-10-12 – Startseite und „Karten stöbern“
+- Mit Henrik abgestimmt: Der Reiter „Karten“ heißt „Karten stöbern“ (deutsch wie der Rest; am Handy aus Platzgründen „Stöbern“). Die Startseite erscheint beim Öffnen der Seite, nicht nach Neuladen im selben Tab (Merker in `sessionStorage`, `pokebinder:visited`). Das große Bild ist ein gezeichneter Binder mit echten Karten.
+- Die Startseite ist eine dritte Ansicht (`home`) neben Regal/Binder und „Karten stöbern“ und nutzt die bestehende Kopf- und Fußzeile; das Logo führt zu ihr. „Meine Binder“ führt immer ins Regal; lag ein Binder offen, gibt es zusätzlich „Weiter mit …“.
+- Aus der Vorlage nicht übernommen: die KI-erfundenen Kartenbilder, die Menüpunkte „Sets entdecken“ und „So funktioniert's“ (dafür gibt es keine Seiten) und „Ohne Account · Lokal gespeichert“ (stimmt seit dem Abgleich nicht mehr ganz; jetzt „Ohne Anmeldung nutzbar · Abgleich zwischen Geräten optional“). Dazugekommen ist eine vierte Kachel zum Abgleich.
+- Die Karten im gezeichneten Binder sind 16 feste Karten aus „151“ (deutsch). Ihre Bild-Adressen ergeben sich aus Serie, Set und Nummer (`cardImageAt` in `src/lib/tcgdex/`), es braucht dafür keine Abfrage von Kartendaten. Lädt ein Bild nicht (kein Netz), bleibt das Pocket leer.
+- Das Abzeichen über der Überschrift ist grau statt violett wie in der Vorlage: Violett bleibt der Hauptaktion vorbehalten, hier „Meine Binder“.
+- Tests beginnen weiterhin in der App (Merker wird vorab gesetzt); die Startseite hat eigene Tests (`tests/e2e/landing.spec.ts`).

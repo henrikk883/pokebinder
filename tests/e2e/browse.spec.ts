@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
 
 test('the page "Karten" shows the search over the whole width, many cards side by side', async ({ page }) => {
   await header(page).getByRole('button', { name: 'Karten' }).click()
-  await expect(page.getByRole('heading', { name: 'Karten', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Karten stöbern', exact: true })).toBeVisible()
   // the three columns make room for it
   await expect(page.getByTestId('column-left')).toBeHidden()
   await expect(page.getByTestId('column-right')).toBeHidden()

@@ -165,8 +165,38 @@ export const de = {
     name: 'PokéBinder',
   },
   header: {
+    home: 'Startseite',
     myBinders: 'Meine Binder',
-    cards: 'Karten',
+    cards: 'Karten stöbern',
+    cardsShort: 'Stöbern',
+  },
+  landing: {
+    badge: 'Dein digitaler Binder',
+    headline: ['Deine Karten.', 'Dein Binder.', 'Dein Design.'],
+    intro: 'Plane Master Sets, gestalte eigene Seiten und behalte deine Sammlung im Blick.',
+    bindersHint: 'Binder anlegen, füllen und abhaken',
+    cardsHint: 'Alle Karten durchsuchen und für später merken',
+    continueWith: (name: string) => `Weiter mit „${name}“ →`,
+    note: 'Ohne Anmeldung nutzbar · Abgleich zwischen Geräten optional',
+    featuresTitle: 'Für Sammler. Für kreative Köpfe.',
+    features: {
+      masterSet: {
+        title: 'Master Sets in Sekunden',
+        text: 'Set auswählen, und der Binder füllt sich in der richtigen Reihenfolge – auf Wunsch mit Reverse Holo, Secret Rares und Promos.',
+      },
+      images: {
+        title: 'Gestalte über Grenzen hinweg',
+        text: 'Eigene Bilder über mehrere Pockets legen, auch über die Ringe hinweg, und maßstabgetreu ausdrucken.',
+      },
+      missing: {
+        title: 'Sieh, was noch fehlt',
+        text: 'Karten abhaken, den Fortschritt verfolgen und die Fehlliste als PDF oder Einkaufsliste mitnehmen.',
+      },
+      sync: {
+        title: 'Auf all deinen Geräten',
+        text: 'Am PC planen, am Handy abhaken: Mit Anmeldung gleichen sich Binder, Bilder und Merklisten ab.',
+      },
+    },
   },
   sync: {
     signIn: 'Anmelden',
@@ -350,7 +380,7 @@ export const de = {
     unknownCard: 'Unbekannte Karte',
   },
   browse: {
-    title: 'Karten',
+    title: 'Karten stöbern',
     hint: 'Zum Stöbern: Karte anklicken für Details, Stern zum Merken. In den Binder kommen Karten über die Suche neben dem Binder.',
     tabs: {
       all: 'Alle Karten',

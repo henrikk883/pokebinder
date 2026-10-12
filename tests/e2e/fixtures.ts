@@ -119,7 +119,16 @@ async function mockTcgdex(page: Page): Promise<Tcgdex> {
 }
 
 /** Tests never reach the real TCGdex; they replay the recorded responses. */
-export const test = base.extend<{ tcgdex: Tcgdex }>({
+export const test = base.extend<{ tcgdex: Tcgdex; landing: boolean; start: null }>({
+  /** Whether the test begins like a new visit, on the start page. Most begin in the app. */
+  landing: [false, { option: true }],
+  start: [
+    async ({ page, landing }, use) => {
+      if (!landing) await page.addInitScript(() => sessionStorage.setItem('pokebinder:visited', '1'))
+      await use(null)
+    },
+    { auto: true },
+  ],
   tcgdex: [
     async ({ page }, use) => {
       await use(await mockTcgdex(page))

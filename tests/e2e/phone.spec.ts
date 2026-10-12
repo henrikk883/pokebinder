@@ -146,7 +146,7 @@ test('on a phone the shelf and the page "Karten" stand in two columns', async ({
   expect(third?.y).toBeGreaterThan(first?.y ?? 0)
   expect(await noSidewaysScroll(page)).toBe(true)
 
-  await page.getByRole('banner').getByRole('button', { name: 'Karten' }).tap()
+  await page.getByRole('banner').getByRole('button', { name: 'Stöbern' }).tap()
   // the bar belongs to the binder; this page has none
   await expect(bar(page)).toHaveCount(0)
   await page.getByTestId('page').getByRole('button', { name: 'Set', exact: true }).tap()

@@ -109,6 +109,8 @@ export function BackupMenu() {
           : undefined
       if (opened) binderStore.getState().openBinder(opened)
       else binderStore.getState().closeBinder()
+      // what came in is to be seen, wherever the file was chosen
+      useEditorStore.getState().showView('binders')
       useEditorStore.getState().refreshBinderList()
     } catch {
       setError(de.backup.importFailed)

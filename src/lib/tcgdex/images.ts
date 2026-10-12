@@ -1,3 +1,4 @@
+import type { CardLang } from '../../types/binder'
 import type { CardSummary, SetSummary } from './types'
 
 export type CardImageSize = 'small' | 'large'
@@ -7,6 +8,14 @@ const QUALITY: Record<CardImageSize, string> = { small: 'low', large: 'high' }
 /** Full card image URL: small for search tiles, large for the binder. */
 export function cardImageUrl(image: string, size: CardImageSize): string {
   return `${image}/${QUALITY[size]}.webp`
+}
+
+/**
+ * Where TCGdex keeps the scan of a card, told from its place in its set alone. For the few
+ * cards the app shows without asking for their data first.
+ */
+export function cardImageAt(lang: CardLang, seriesId: string, setId: string, localId: string): string {
+  return `https://assets.tcgdex.net/${lang}/${seriesId}/${setId}/${localId}`
 }
 
 /**

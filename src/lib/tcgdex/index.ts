@@ -16,6 +16,7 @@ export {
 export { baseVariant } from './variants'
 export { mapWithConcurrency } from './prices'
 export {
+  cardImageAt,
   cardImageSources,
   cardImageUrl,
   englishCardImage,

@@ -4,7 +4,23 @@ import { DEFAULT_LANG, type CardLang, type SlotPosition } from '../types/binder'
 
 export type EditorMode = 'edit' | 'collection'
 /** What fills the app: the binders (shelf or open binder), or the page to browse cards. */
-export type AppView = 'binders' | 'cards'
+export type AppView = 'home' | 'binders' | 'cards'
+
+const VISITED_KEY = 'pokebinder:visited'
+
+/**
+ * A visit begins on the start page. Loading the page anew in the same tab does not: whoever
+ * does that in the middle of a binder wants to stay in it.
+ */
+function startView(): AppView {
+  try {
+    if (sessionStorage.getItem(VISITED_KEY)) return 'binders'
+    sessionStorage.setItem(VISITED_KEY, '1')
+    return 'home'
+  } catch {
+    return 'binders'
+  }
+}
 /** The three columns of the app; a phone shows one of them at a time. */
 export type AppPane = 'search' | 'binder' | 'selection'
 export const APP_PANES: readonly AppPane[] = ['binder', 'search', 'selection']
@@ -90,7 +106,7 @@ function selectionOf(positions: SlotPosition[]): Pick<EditorState, 'selection' |
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
-  view: 'binders',
+  view: startView(),
   showView: (view) => set({ view }),
   moving: null,
   // the target is picked in the binder, so that is what a phone shows now
@@ -141,8 +157,9 @@ export const useEditorStore = create<EditorState>()((set) => ({
   select: (selection) => set({ selection, multi: [], notice: null }),
   reset: (searchLang) =>
     set((state) => ({
-      // a binder that is opened is what the collector wants to see
-      view: 'binders',
+      // A binder that is opened is what the collector wants to see. Not at the start,
+      // though: the binder of last time is put back on the table behind the start page.
+      view: state.view === 'home' ? 'home' : 'binders',
       pane: 'binder',
       tapped: null,
       spreadIndex: 0,

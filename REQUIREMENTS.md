@@ -113,6 +113,10 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
     - Merklisten aus der Datei werden mit denen des Geräts zusammengeführt.
     - Die App erinnert an die Sicherung, wenn die letzte älter als 14 Tage ist.
     - Über das Backup wandern Binder auch ohne Anmeldung von einem Gerät zum anderen.
+21. **Startseite.** Wer die Seite öffnet, landet auf einer Startseite: Überschrift, zwei große Flächen „Meine Binder“ und „Karten stöbern“, ein gezeichneter Binder mit echten Karten und vier Kacheln zu dem, was die App kann. Passt sich an Handy und PC an.
+    - Neu laden im selben Tab führt nicht zur Startseite zurück, sondern dorthin, wo man war; das Logo in der Kopfzeile führt jederzeit hin.
+    - Lag beim letzten Mal ein Binder offen, bietet die Startseite „Weiter mit …“ an.
+    - Vorlage war Henriks Entwurf `docs/PokeBinderLandingPageVorlage.png`, ausdrücklich nicht 1:1 zu übernehmen.
 20. **Abgleich zwischen Geräten.** Wer sich über „Anmelden“ in der Kopfzeile mit E-Mail-Code anmeldet (nur freigeschaltete Adressen), dessen Binder und Merklisten gleichen sich zwischen seinen Geräten ab: beim Öffnen der App, kurz nach jeder Änderung und beim Zurückkehren zur App. Ohne Anmeldung und ohne Netz bleibt die App, wie sie ist.
     - Die Kopfzeile zeigt den Stand („Abgeglichen“, „Ohne Verbindung“ …); das Menü dahinter bietet „Jetzt abgleichen“ und „Abmelden“.
     - Wurde ein Binder auf zwei Geräten geändert, überschreibt die App nichts, sondern fragt, welche Fassung gelten soll. Eine Änderung gewinnt immer gegen eine Löschung auf dem anderen Gerät.
@@ -133,7 +137,7 @@ Das Mockup ist die verbindliche Vorlage für den Binder-Editor auf dem Desktop: 
 
 | Bereich | Inhalt |
 | --- | --- |
-| Kopfzeile | Logo „PokéBinder“, Meine Binder / Binder-Name, daneben „Karten“; rechts Speicherstatus, Abgleich (bzw. „Anmelden“), Erinnerung an die Sicherung und „Backup“ |
+| Kopfzeile | Logo „PokéBinder“ (führt zur Startseite), Meine Binder / Binder-Name, daneben „Karten stöbern“ (am Handy „Stöbern“); rechts Speicherstatus, Abgleich (bzw. „Anmelden“), Erinnerung an die Sicherung und „Backup“ |
 | Linke Spalte (Suche) | Tabs „Karten“ / „Eigene Bilder“, Suchfeld, Filter Set, Seltenheit, Typ, Sprache mit Flagge; Ergebnisse als 2-spaltiges Raster mit Name und Set · Nummer; Hinweis „Karten in einen Pocket ziehen“ |
 | Mitte, Werkzeugleiste | Binder-Name, „Sortieren“, „Fehlliste“ (PDF, CSV, Platzhalter), „Als PNG“, Rückgängig / Wiederholen, „Mehr“ (umbenennen, Master Set anpassen, Layout), „+ Seite“ als Hauptbutton |
 | Mitte, Steuerung | Umschalter „Bearbeiten“ / „Sammlung“, Blätterpfeile mit „Seiten 4 – 5“, Zoom mit − / Prozent / + |
@@ -234,4 +238,4 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Mit Henrik am 12.10.2026 vereinbart, in dieser Reihenfolge:
 
-1. **Landing Page:** eine Einstiegsseite, die sich an Handy und PC anpasst; Entwurf von Henrik unter `docs/`.
+Nichts mehr: Die Liste ist abgearbeitet.

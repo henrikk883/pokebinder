@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BinderWorkspace } from '../features/binder/BinderWorkspace'
 import { CardDragLayer } from '../features/binder/CardDragLayer'
 import { SelectionPanel } from '../features/binder/SelectionPanel'
+import { LandingPage } from '../features/landing/LandingPage'
 import { CardBrowser } from '../features/search/CardBrowser'
 import { startSync } from '../features/sync/syncStore'
 import { SearchPanel } from '../features/search/SearchPanel'
@@ -14,7 +15,8 @@ import { AppLayout } from './AppLayout'
 import { DialogHost } from './DialogHost'
 
 export function App() {
-  const browsing = useEditorStore((state) => state.view === 'cards')
+  const view = useEditorStore((state) => state.view)
+  const page = view === 'home' ? <LandingPage /> : view === 'cards' ? <CardBrowser /> : undefined
 
   useEffect(() => {
     // Without storage the app still works, it just starts empty.
@@ -31,7 +33,7 @@ export function App() {
         center={<BinderWorkspace />}
         right={<SelectionPanel />}
         footer={<AppFooter />}
-        {...(browsing ? { page: <CardBrowser /> } : {})}
+        {...(page ? { page } : {})}
       />
       <DialogHost />
     </CardDragLayer>
