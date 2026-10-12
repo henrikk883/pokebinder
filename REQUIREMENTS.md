@@ -266,7 +266,7 @@ Sieben Etappen, jede für sich benutzbar. Innerhalb einer Etappe wird wie bisher
 | | 3 Karte im Binder finden | klein | – | erledigt (auch im Deck) |
 | **B – Preise** | 4 Preisverlauf | mittel | Punkt 2 | erledigt; offen: Abgleich des Verlaufs zwischen Geräten |
 | | 5 Preisalarm auf der Merkliste | klein | Merklisten (vorhanden) | in der App erledigt |
-| | 5b Benachrichtigung aufs Handy | groß | Punkt 1 (installierte App), Punkt 5, Server-Teil | Ob Henrik das will: Der Server müsste die Preise selbst regelmäßig prüfen und Nachrichten verschicken (Web Push); auf dem iPhone nur für die installierte App |
+| | 5b Benachrichtigung aufs Handy | groß | Punkt 1 (installierte App), Punkt 5, Server-Teil | Zurückgestellt (Henrik, 12.10.2026): Vorerst reicht der Hinweis in der offenen App. Falls später gewünscht: Der Server müsste die Preise selbst regelmäßig prüfen und Nachrichten verschicken (Web Push); auf dem iPhone nur für die installierte App |
 | **C – Gestalten** | 6 Mehr Layouts | mittel | – | Welche Formate hast du wirklich? 3 × 4 und 4 × 3 sind der Vorschlag |
 | | 7 Seiten-Vorlagen | mittel | Punkt 6 (damit Vorlagen das Layout kennen) | Mit Karten oder nur die Bilder? Vorschlag: wählbar |
 | **D – Mit Freunden** | 8 Binder teilen | groß | Abgleich und Anmeldung (vorhanden) | Wer darf den Link öffnen: jeder mit Link oder nur freigeschaltete Adressen? |
