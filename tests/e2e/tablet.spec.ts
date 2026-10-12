@@ -249,3 +249,24 @@ test('the info button of a card is there without a mouse and opens by a tap', as
   await dialog.getByRole('button', { name: 'Schließen' }).tap()
   await expect(dialog).toBeHidden()
 })
+
+test('pages are put in another order by finger, in the strip of thumbnails', async ({ page }) => {
+  await createBinder(page, 'Reihenfolge')
+  await searchFor(page, 'Glurak')
+  await holdAndDrag(page, page.getByTestId('card-tile').first().locator('> div'), pocket(page, 1, 1))
+  await expect(pocket(page, 1, 1)).not.toHaveAttribute('data-card-id', '')
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).tap()
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).tap()
+  const miniPage = (number: number) => page.locator(`[data-testid="mini-page"][data-page-number="${number}"]`)
+  const filled = (number: number) => miniPage(number).locator('.bg-muted')
+  await expect(filled(1)).toHaveCount(1)
+
+  await holdAndDrag(page, miniPage(1), miniPage(3))
+  await expect(filled(3)).toHaveCount(1)
+  await expect(filled(1)).toHaveCount(0)
+  await expect(page.getByTestId('spread-label')).toHaveText('Seiten 2 – 3')
+
+  // a tap on a thumbnail still turns the pages
+  await page.getByRole('button', { name: 'Seite 1', exact: true }).tap()
+  await expect(page.getByTestId('spread-label')).toHaveText('Seite 1')
+})

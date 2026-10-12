@@ -628,3 +628,76 @@ test('sorting by Pokédex number brings the Pokémon in order, trainers last', a
   await page.getByRole('button', { name: 'Rückgängig' }).click()
   await expect.poll(cards).toEqual(['sv03.5-025', 'sv03.5-001', 'sv03.5-196', '', 'sv03.5-006', '', 'sv03.5-173', '', ''])
 })
+
+test('pages are moved, duplicated and inserted; the thumbnails are dragged onto each other', async ({ page }) => {
+  await createBinder(page, 'Seiten')
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  await drag(page, tile(page, 'sv03.5-006'), pocket(page, 1, 1))
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).click()
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).click()
+  const label = page.getByTestId('spread-label')
+  const miniPage = (number: number) => page.locator(`[data-testid="mini-page"][data-page-number="${number}"]`)
+  /** The page the card lies on, read from the thumbnails: its mini page has a filled pocket. */
+  const cardPages = () =>
+    page
+      .getByTestId('mini-page')
+      .evaluateAll((pages) =>
+        pages.flatMap((entry) =>
+          entry.querySelector('.bg-muted') ? [Number(entry.getAttribute('data-page-number'))] : [],
+        ),
+      )
+  await expect.poll(cardPages).toEqual([1])
+
+  // by button: the page of the selected pocket moves back, and the view follows it
+  await page.getByRole('button', { name: 'Seite 1', exact: true }).click()
+  await pocket(page, 1, 1).click()
+  await expect(page.getByRole('button', { name: 'Nach vorn' })).toBeDisabled()
+  await page.getByRole('button', { name: 'Nach hinten' }).click()
+  await expect(label).toHaveText('Seiten 2 – 3')
+  await expect(pocket(page, 2, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+  await expect(pocket(page, 2, 1)).toHaveAttribute('aria-pressed', 'true')
+  await expect.poll(cardPages).toEqual([2])
+
+  // by dragging its thumbnail onto another page
+  await drag(page, miniPage(2), miniPage(3))
+  await expect.poll(cardPages).toEqual([3])
+  await expect(pocket(page, 3, 1)).toHaveAttribute('data-card-id', 'sv03.5-006')
+  await drag(page, miniPage(3), miniPage(1))
+  await expect.poll(cardPages).toEqual([1])
+  await expect(label).toHaveText('Seite 1')
+  // a click on a thumbnail still only turns the pages
+  await page.getByRole('button', { name: 'Seiten 2 – 3' }).click()
+  await expect(label).toHaveText('Seiten 2 – 3')
+  await expect.poll(cardPages).toEqual([1])
+
+  // a copy lands right behind the page, with its cards
+  await page.getByRole('button', { name: 'Seite 1', exact: true }).click()
+  await pocket(page, 1, 1).click()
+  await page.getByRole('button', { name: 'Duplizieren' }).click()
+  await expect.poll(cardPages).toEqual([1, 2])
+  await expect(page.getByTestId('mini-page')).toHaveCount(4)
+
+  // an empty page in front of the selected one pushes it back
+  await page.getByRole('button', { name: 'Leere Seite davor' }).click()
+  await expect.poll(cardPages).toEqual([2, 3])
+  await expect(page.getByTestId('mini-page')).toHaveCount(5)
+  await expect(label).toHaveText('Seiten 2 – 3')
+  await expect(pocket(page, 2, 1)).toHaveAttribute('aria-pressed', 'true')
+
+  // every step can be taken back, and what is left is stored
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect.poll(cardPages).toEqual([1, 2])
+  await saved(page)
+  await page.reload()
+  await expect(label).toBeVisible()
+  await expect.poll(cardPages).toEqual([1, 2])
+  await expect(page.getByTestId('mini-page')).toHaveCount(4)
+
+  // while cards are ticked off, pages stay where they are
+  await pocket(page, 1, 1).click()
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  await expect(page.getByRole('button', { name: 'Duplizieren' })).toHaveCount(0)
+  await drag(page, miniPage(1), miniPage(3))
+  await expect.poll(cardPages).toEqual([1, 2])
+})

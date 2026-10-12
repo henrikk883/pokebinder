@@ -52,7 +52,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
    - Der Binder hat ein Cover mit eigenem Bild und Titel.
    - Seite 1 steht allein rechts neben der Cover-Innenseite, danach 2–3, 4–5 …
    - Zoom 50–150 % in Schritten von 5 %. Beim Öffnen wählt die App den größten Zoom, bei dem die Doppelseite ganz zu sehen ist (höchstens 80 %); ein von Hand gewählter Zoom bleibt.
-   - Miniatur-Leiste zum Springen zwischen Doppelseiten; Seiten lassen sich hinzufügen und löschen.
+   - Miniatur-Leiste zum Springen zwischen Doppelseiten; Seiten lassen sich hinzufügen, löschen, duplizieren, mittendrin einfügen und umsortieren (in der Leiste eine Seite auf eine andere ziehen, oder per Knopf).
 5. **Einschub-Richtung.** Alle Pockets sind seitlich offen; pro Seite stelle ich ein, ob die Öffnung links, rechts oder gemischt liegt (ungerade Seiten: rechts, rechts, links; gerade Seiten: rechts, links, links).
    - Jeder Pocket zeigt seine Öffnung als dezente Markierung, auch im Export.
 6. **Karten suchen.** Suche nach Name, Set und Nummer, Ergebnisse als Bild-Kacheln.
@@ -217,14 +217,13 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Seiten umsortieren und kopieren:** Seiten in der Miniaturleiste verschieben, eine Seite duplizieren, eine leere Seite mittendrin einfügen.
-2. **Merkliste:** Karten aus der Vorschau merken und in einem eigenen Tab neben „Karten“ und „Eigene Bilder“ wiederfinden.
-3. **Geräte abgleichen:** Import, der erkennt, welche Fassung eines Binders neuer ist, und vor dem Ersetzen fragt.
-4. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
-5. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
-6. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
-7. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
-8. **Fortschritt pro Set** in gemischten Bindern.
-9. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-10. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-11. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Merkliste:** Karten aus der Vorschau merken und in einem eigenen Tab neben „Karten“ und „Eigene Bilder“ wiederfinden.
+2. **Geräte abgleichen:** Import, der erkennt, welche Fassung eines Binders neuer ist, und vor dem Ersetzen fragt.
+3. **Einkaufsliste:** fehlende Karten nach Preis sortiert, mit Summe, Budget und Link zu Cardmarket.
+4. **Lücke einfügen:** eine Karte zwischen zwei andere schieben, die folgenden rücken um ein Pocket weiter.
+5. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
+6. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
+7. **Fortschritt pro Set** in gemischten Bindern.
+8. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+9. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+10. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

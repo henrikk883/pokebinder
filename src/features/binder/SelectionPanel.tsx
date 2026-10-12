@@ -17,10 +17,13 @@ import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
 import { LanguageSelect } from '../search/LanguageSelect'
 import { useReadyCatalog } from '../search/useCatalog'
+import { spreadOfPage } from './spreads'
 import { useCard, useCardDetail, useCardLangs, usePrice } from './useCard'
 
 const fieldClass =
   'flex h-10 items-center rounded-control border border-line bg-raised px-3 text-sm'
+const pageButtonClass =
+  'flex h-10 w-full items-center justify-center rounded-control border border-line bg-raised px-2 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
 const outlineButtonClass =
   'flex h-10 w-full items-center justify-center rounded-control border border-line bg-raised text-sm hover:border-accent'
 
@@ -135,11 +138,24 @@ export function SelectionPanel() {
   const clearSlot = useBinderStore((state) => state.clearSlot)
   const setOpeningSide = useBinderStore((state) => state.setOpeningSide)
   const setCover = useBinderStore((state) => state.setCover)
+  const movePage = useBinderStore((state) => state.movePage)
+  const insertPage = useBinderStore((state) => state.insertPage)
+  const duplicatePage = useBinderStore((state) => state.duplicatePage)
+  const showSpread = useEditorStore((state) => state.showSpread)
+  const select = useEditorStore((state) => state.select)
+  const collecting = useEditorStore((state) => state.mode === 'collection')
   const selection = useEditorStore((state) => state.selection)
   const [editingCover, setEditingCover] = useState(false)
 
   const page = selection ? binder?.pages.find((entry) => entry.id === selection.pageId) : undefined
   const slot = selection ? page?.slots[selection.slotIndex] : undefined
+
+  /** Turns to where the selected page lies after it moved, and keeps its pocket selected. */
+  function follow(toIndex: number) {
+    if (!selection) return
+    showSpread(spreadOfPage(toIndex))
+    select(selection)
+  }
 
   return (
     <section className="space-y-6 p-4">
@@ -195,6 +211,58 @@ export function SelectionPanel() {
             )}
             {binder && <ImageControls binder={binder} page={page} slot={slot} />}
           </div>
+
+          {binder && !collecting && (
+            <div className="space-y-3 border-t border-line pt-5">
+              <h3 className="text-lg font-semibold">{de.selection.pageActions(page.index + 1)}</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  disabled={page.index === 0}
+                  onClick={() => {
+                    movePage(page.id, page.index - 1)
+                    follow(page.index - 1)
+                  }}
+                  className={pageButtonClass}
+                >
+                  {de.selection.movePageEarlier}
+                </button>
+                <button
+                  type="button"
+                  disabled={page.index >= binder.pages.length - 1}
+                  onClick={() => {
+                    movePage(page.id, page.index + 1)
+                    follow(page.index + 1)
+                  }}
+                  className={pageButtonClass}
+                >
+                  {de.selection.movePageLater}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    duplicatePage(page.id)
+                    follow(page.index)
+                  }}
+                  className={pageButtonClass}
+                >
+                  {de.selection.duplicatePage}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    insertPage(page.index)
+                    // the selected page moved back by one
+                    follow(page.index + 1)
+                  }}
+                  className={pageButtonClass}
+                >
+                  {de.selection.insertPageBefore}
+                </button>
+              </div>
+              <p className="text-xs text-muted">{de.selection.pageMoveHint}</p>
+            </div>
+          )}
         </>
       )}
 

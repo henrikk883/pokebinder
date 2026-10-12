@@ -307,3 +307,9 @@ Im Modus „Sammlung“ wird nichts hineingezogen, deshalb ist die Suche dort ei
 - Reihenfolge wie im Binder; kleine Stücke teilen sich ein Blatt, nichts wandert auf ein früheres Blatt zurück.
 - Der Ausschnitt entspricht dem im Binder (Blickpunkt und Vergrößerung). Am Bildschirm liegen zwischen den Pockets schmale Stege, auf dem Papier nicht; bei Bildern über mehrere Pockets kann der Rand deshalb um wenige Prozent abweichen.
 - Auflösung höchstens 300 dpi, Bilder mit weniger Pixeln werden nicht hochgerechnet. Die Bilder bleiben farbig; Karten, die auf einem Bild liegen, werden nicht mitgedruckt.
+
+## 2026-10-12 – Seiten umsortieren, duplizieren, einfügen
+- In der Miniaturleiste lässt sich eine Seite auf eine andere ziehen: Sie nimmt deren Platz ein, die Seiten dazwischen rücken auf. Ein Klick auf eine Miniatur blättert weiterhin nur.
+- In der rechten Spalte gibt es für die Seite des gewählten Pockets vier Knöpfe: „Nach vorn“, „Nach hinten“, „Duplizieren“ (Kopie direkt dahinter, mit Karten, Besitz-Markierungen, Bildern und Öffnung) und „Leere Seite davor“. Die Ansicht folgt der Seite, das Pocket bleibt gewählt.
+- Weil Seiten dabei die Seite des Binders wechseln, werden Bilder über zwei Seiten wie beim Löschen einer Seite auf ihre eigene Seite gekürzt.
+- Im Modus „Sammlung“ ist das Umordnen gesperrt. Alles lässt sich rückgängig machen.

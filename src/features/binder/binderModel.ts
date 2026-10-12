@@ -375,3 +375,51 @@ export function setOpeningSide(
   const pages = binder.pages.map((page) => (page.id === pageId ? { ...page, openingSide } : page))
   return withPages(binder, pages, ctx)
 }
+
+function renumbered(pages: Page[]): Page[] {
+  return pages.map((page, index) => (page.index === index ? page : { ...page, index }))
+}
+
+/**
+ * Moves a page to another place in the binder; the pages in between move up by one.
+ * `toIndex` is where the page stands afterwards. Pages change sides by this, so images
+ * across two pages need `normalizeImages` afterwards.
+ */
+export function movePage(
+  binder: Binder,
+  pageId: string,
+  toIndex: number,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const page = findPage(binder, pageId)
+  const target = Math.max(0, Math.min(binder.pages.length - 1, toIndex))
+  if (target === page.index) return binder
+  const pages = binder.pages.filter((entry) => entry.id !== pageId)
+  pages.splice(target, 0, page)
+  return withPages(binder, renumbered(pages), ctx)
+}
+
+/** Adds an empty page at `atIndex`; the pages from there on move back by one. */
+export function insertPage(binder: Binder, atIndex: number, ctx: ModelContext = defaultContext): Binder {
+  const index = Math.max(0, Math.min(binder.pages.length, atIndex))
+  const pages = [...binder.pages]
+  pages.splice(index, 0, createPage(binder.layout, index, binder.defaultOpeningSide, ctx))
+  return withPages(binder, renumbered(pages), ctx)
+}
+
+/**
+ * Adds a copy of a page right behind it: the same cards with their marks, the same images
+ * and opening side. The copy and its images get ids of their own.
+ */
+export function duplicatePage(binder: Binder, pageId: string, ctx: ModelContext = defaultContext): Binder {
+  const page = findPage(binder, pageId)
+  const copy: Page = {
+    ...page,
+    id: ctx.newId(),
+    slots: page.slots.map((slot) => ({ ...slot })),
+    images: page.images.map((image) => ({ ...image, id: ctx.newId() })),
+  }
+  const pages = [...binder.pages]
+  pages.splice(page.index + 1, 0, copy)
+  return withPages(binder, renumbered(pages), ctx)
+}

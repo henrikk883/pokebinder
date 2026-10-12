@@ -3,6 +3,9 @@ import { createStore } from 'zustand/vanilla'
 import { binderRepository } from '../db/binderRepository'
 import {
   addPage,
+  duplicatePage,
+  insertPage,
+  movePage,
   changeLayout,
   clearSlot,
   createBinder,
@@ -75,6 +78,12 @@ export interface BinderState {
   setCardLang: (position: SlotPosition, lang: CardLang) => void
   addPage: () => void
   removePage: (pageId: string) => void
+  /** Puts a page where the page with index `toIndex` stands; the pages in between move up. */
+  movePage: (pageId: string, toIndex: number) => void
+  /** Adds an empty page at `atIndex`. */
+  insertPage: (atIndex: number) => void
+  /** Adds a copy of a page right behind it. */
+  duplicatePage: (pageId: string) => void
   setCard: (position: SlotPosition, cardRef: CardRef, owned?: boolean) => void
   clearSlot: (position: SlotPosition) => void
   moveCard: (from: SlotPosition, to: SlotPosition) => void
@@ -219,6 +228,10 @@ export function createBinderStore(deps: BinderStoreDeps) {
       addPage: () => change((binder) => addPage(binder)),
       // pages behind the removed one change sides, which may cut off images spanning two pages
       removePage: (pageId) => change((binder) => normalizeImages(removePage(binder, pageId))),
+      // the same goes for every other change to the order of the pages
+      movePage: (pageId, toIndex) => change((binder) => normalizeImages(movePage(binder, pageId, toIndex))),
+      insertPage: (atIndex) => change((binder) => normalizeImages(insertPage(binder, atIndex))),
+      duplicatePage: (pageId) => change((binder) => normalizeImages(duplicatePage(binder, pageId))),
       setCard: (position, cardRef, owned) =>
         change((binder) => setCard(binder, position, cardRef, owned)),
       clearSlot: (position) => change((binder) => clearSlot(binder, position)),
