@@ -13,7 +13,12 @@ import { ShoppingDialog } from '../export/ShoppingDialog'
 import { MasterSetSettingsDialog } from '../masterset/MasterSetSettingsDialog'
 import { ShareDialog } from '../share/ShareDialog'
 import { cardLangs, countCards } from './binderModel'
-import { createCardComparator, createDexComparator, type CardComparator } from './sorting'
+import {
+  createCardComparator,
+  createDexComparator,
+  createIllustratorComparator,
+  type CardComparator,
+} from './sorting'
 import { applyVariantFixes, loadVariantFixes } from './variantFix'
 import { buildSpreads, pageNumbersOf, type Spread } from './spreads'
 import { useDismiss } from '../../lib/useDismiss'
@@ -29,7 +34,7 @@ const menuItemClass =
   'flex w-full items-center gap-2 rounded-control px-3 py-2 text-left text-sm hover:bg-raised'
 const menuHeadingClass = 'px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted uppercase'
 
-type SortOrder = 'set' | 'dex'
+type SortOrder = 'set' | 'dex' | 'illustrator'
 
 /** Order by set and number: sets of the binder's language first, then those of other languages. */
 async function setComparator(binder: Binder): Promise<CardComparator> {
@@ -55,6 +60,30 @@ async function dexComparator(binder: Binder): Promise<CardComparator> {
   return createDexComparator((card) => numbers.get(key(card.cardRef)), await setComparator(binder))
 }
 
+/** Order by who drew the card; the artists come with the card data of each set. */
+async function illustratorComparator(binder: Binder): Promise<CardComparator> {
+  const key = (ref: CardRef) => `${ref.lang}:${ref.cardId}`
+  const refs = new Map(
+    binder.pages.flatMap((page) =>
+      page.slots.flatMap((slot) => (slot.cardRef ? [[key(slot.cardRef), slot.cardRef] as const] : [])),
+    ),
+  )
+  const illustrators = new Map<string, string>()
+  await Promise.all(
+    [...refs.values()].map(async (ref) => {
+      const detail = await tcgdexFor(ref.lang).getCardDetail(ref.cardId)
+      if (detail?.illustrator) illustrators.set(key(ref), detail.illustrator)
+    }),
+  )
+  return createIllustratorComparator((card) => illustrators.get(key(card.cardRef)), await setComparator(binder))
+}
+
+const COMPARATORS: Record<SortOrder, (binder: Binder) => Promise<CardComparator>> = {
+  set: setComparator,
+  dex: dexComparator,
+  illustrator: illustratorComparator,
+}
+
 function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
   const sortCardsBy = useBinderStore((state) => state.sortCardsBy)
   const [open, setOpen] = useState(false)
@@ -65,7 +94,7 @@ function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
     setOpen(false)
     setFailed(false)
     try {
-      const compare = await (order === 'dex' ? dexComparator(binder) : setComparator(binder))
+      const compare = await COMPARATORS[order](binder)
       sortCardsBy(pageId === undefined ? {} : { pageId }, compare)
     } catch {
       setFailed(true)
@@ -83,11 +112,11 @@ function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
           onClick={() => sort(order, binder.pages[pageNumber - 1]?.id)}
           className={menuItemClass}
         >
-          {order === 'set' ? de.binder.sortPage(pageNumber) : de.binder.sortPageByDex(pageNumber)}
+          {de.binder.sortPageBy[order](pageNumber)}
         </button>
       ))}
       <button type="button" role="menuitem" onClick={() => sort(order)} className={menuItemClass}>
-        {order === 'set' ? de.binder.sortBinder : de.binder.sortBinderByDex}
+        {de.binder.sortBinderBy[order]}
       </button>
     </>
   )
@@ -115,6 +144,8 @@ function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
           {group('set')}
           <p className={menuHeadingClass}>{de.binder.sortByDex}</p>
           {group('dex')}
+          <p className={menuHeadingClass}>{de.binder.sortByIllustrator}</p>
+          {group('illustrator')}
         </div>
       )}
       {failed && (

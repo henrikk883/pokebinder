@@ -586,3 +586,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Der Vergleich läuft im Browser dessen, der den Link öffnet; der Server erfährt davon nichts, und der Freund sieht ihn nicht. Verglichen wird der eine geteilte Binder, nicht die ganze Sammlung des Freundes – mehr gibt der Link nicht her.
 - Anmeldung ist dafür nicht nötig: Es zählen die Binder, die auf dem Gerät liegen.
 - Für den Browser-Test spielt ein zweites „Gerät“ mit denselben aufgezeichneten TCGdex-Antworten mit (`mockTcgdex` ist dafür exportiert).
+
+## 2026-10-12 – Suche nach Illustrator und Kartenart, Sortieren nach Illustrator
+- Zwei neue Filter in jeder Kartensuche (neben dem Binder, „Karten stöbern“, Deck): „Kartenart“ als Liste und „Illustrator“ als Textfeld mit Vorschlägen. Beide Listen kommen von TCGdex (`categories`, `illustrators`) und werden wie alles andere gecacht.
+- Beim Illustrator genügt ein Teil des Namens, ab zwei Zeichen; kürzere Eingaben zählen nicht. Illustrator und Kartenart reichen wie Seltenheit und Typ auch allein als Suche; die Treffer kommen wie sonst seitenweise.
+- Sortieren: „Nach Illustrator“ für Seite oder ganzen Binder, alphabetisch nach Künstler, innerhalb eines Künstlers nach Set und Nummer; Karten ohne bekannten Illustrator ans Ende.
+- Den Illustrator liefert die Set-Abfrage jetzt mit. Der Cache-Schlüssel der Set-Details heißt deshalb `v2`: Jedes Set wird einmal neu geholt, alte Einträge bleiben ungenutzt liegen.
+- „Farbe“ meint laut Henrik die Farbe des Bildes. Das kann TCGdex nicht und bleibt Punkt 20 (ähnliche Karten) mit eigener Machbarkeitsprüfung.

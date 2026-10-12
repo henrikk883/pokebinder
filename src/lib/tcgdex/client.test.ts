@@ -328,14 +328,14 @@ describe('getSetDetails', () => {
     await client.getSetDetails('sv03.5')
 
     expect(queries).toHaveLength(1)
-    expect(queries[0]).toContain('@locale(lang: "de") { id localId name image rarity dexId }')
+    expect(queries[0]).toContain('@locale(lang: "de") { id localId name image rarity dexId illustrator }')
     expect(queries[0]).toContain('@locale(lang: "en") { id variants_detailed')
   })
 
   it('reads the finishes of Japanese sets from the Japanese data', () => {
     // western sets share their ids with the English data, Japanese sets do not exist there
     expect(setDetailsQuery('sv03.5', 'en')).toContain('@locale(lang: "en") { id variants_detailed')
-    expect(setDetailsQuery('SV2a', 'ja')).toContain('@locale(lang: "ja") { id localId name image rarity dexId }')
+    expect(setDetailsQuery('SV2a', 'ja')).toContain('@locale(lang: "ja") { id localId name image rarity dexId illustrator }')
     expect(setDetailsQuery('SV2a', 'ja')).toContain('@locale(lang: "ja") { id variants_detailed')
     expect(setDetailsQuery('SV2a', 'ja')).toContain('id: "SV2a-"')
   })

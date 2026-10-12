@@ -23,6 +23,8 @@ export interface CardDetail extends CardSummary {
    * show several. Missing for trainer and energy cards.
    */
   dexNumber?: number
+  /** Who drew the card; missing where TCGdex does not say. */
+  illustrator?: string
   /** Finishes that belong into a binder, base finish first; never empty. */
   variants: CardVariant[]
 }
@@ -60,6 +62,10 @@ export interface CardQuery {
   setId?: string
   rarity?: string
   type?: string
+  /** A part of the name of who drew the card. */
+  illustrator?: string
+  /** Kind of card in the language asked in: Pokémon, trainer or energy (see `getCategories`). */
+  category?: string
   /**
    * National Pokédex number: every card of that Pokémon, whatever it is called in the
    * language asked in. Stands in for the name where the name was typed in another language.
@@ -108,5 +114,9 @@ export interface TcgdexClient {
   /** One page of cards matching the query; pages start at 1. */
   queryCards(query: CardQuery, page: number): Promise<CardPage>
   getRarities(): Promise<string[]>
+  /** The kinds of cards, as TCGdex names them in this language. */
+  getCategories(): Promise<string[]>
+  /** Everybody who drew a card, by name. */
+  getIllustrators(): Promise<string[]>
   getTypes(): Promise<string[]>
 }

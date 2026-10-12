@@ -5,6 +5,7 @@ import { useWatchlistStore } from '../../store/watchlistStore'
 import type { CardSummary } from '../../lib/tcgdex'
 import type { CardLang } from '../../types/binder'
 import { FilterSelect } from './FilterSelect'
+import { IllustratorInput } from './IllustratorInput'
 import { LanguageSelect } from './LanguageSelect'
 import { SearchResults } from './SearchResults'
 import { SetPicker } from './SetPicker'
@@ -36,17 +37,17 @@ export function WideSearch({ lang, dragIdPrefix = 'browse', onPick, countOf }: W
 
   return (
     <>
-      <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
+      <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-6">
         <input
           type="search"
           value={form.text}
           onChange={(event) => form.setText(event.target.value)}
           placeholder={de.search.placeholder}
           aria-label={de.search.placeholder}
-          className="col-span-2 h-10 w-full rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none lg:col-span-1"
+          className="col-span-2 h-10 w-full rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none lg:col-span-3"
         />
         {/* the list of sets needs the whole width where the filters stand in two columns */}
-        <div className="col-span-2 lg:col-span-1">
+        <div className="col-span-2 lg:col-span-3">
         <SetPicker
           catalog={form.catalog.status === 'ready' ? form.catalog.data : undefined}
           unavailableText={
@@ -62,6 +63,15 @@ export function WideSearch({ lang, dragIdPrefix = 'browse', onPick, countOf }: W
         </div>
         <FilterSelect label={de.search.rarity} value={form.rarity} options={form.rarities} onChange={form.setRarity} />
         <FilterSelect label={de.search.type} value={form.type} options={form.types} onChange={form.setType} />
+        <FilterSelect label={de.search.category} value={form.category} options={form.categories} onChange={form.setCategory} />
+        <div className="lg:col-span-2">
+          <IllustratorInput
+            label={de.search.illustrator}
+            value={form.illustrator}
+            options={form.illustrators}
+            onChange={form.setIllustrator}
+          />
+        </div>
         <LanguageSelect label={de.search.language} value={lang} onChange={setSearchLang} />
       </div>
       <div className="mt-5" data-testid={onPick ? 'pick-results' : 'browse-results'}>

@@ -6,6 +6,7 @@ import { useWatchlistStore } from '../../store/watchlistStore'
 import type { CardLang } from '../../types/binder'
 import { ImageLibrary } from '../images/ImageLibrary'
 import { FilterSelect } from './FilterSelect'
+import { IllustratorInput } from './IllustratorInput'
 import { LanguageSelect } from './LanguageSelect'
 import { SearchResults } from './SearchResults'
 import { SetPicker } from './SetPicker'
@@ -57,6 +58,13 @@ function CardSearch({ lang }: { lang: CardLang }) {
         <div className="grid grid-cols-2 gap-2">
           <FilterSelect label={de.search.rarity} value={form.rarity} options={form.rarities} onChange={form.setRarity} />
           <FilterSelect label={de.search.type} value={form.type} options={form.types} onChange={form.setType} />
+          <FilterSelect label={de.search.category} value={form.category} options={form.categories} onChange={form.setCategory} />
+          <IllustratorInput
+            label={de.search.illustrator}
+            value={form.illustrator}
+            options={form.illustrators}
+            onChange={form.setIllustrator}
+          />
         </div>
 
         <LanguageSelect label={de.search.language} value={lang} onChange={setSearchLang} />

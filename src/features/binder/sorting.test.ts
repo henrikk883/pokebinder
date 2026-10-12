@@ -16,7 +16,7 @@ import {
   type ModelContext,
   type PlacedCard,
 } from './binderModel'
-import { createCardComparator, createDexComparator } from './sorting'
+import { createCardComparator, createDexComparator, createIllustratorComparator } from './sorting'
 
 /** Release order: Darkness Ablaze, a set whose id contains a dash, then 151. */
 const setOrder = ['swsh3', '30th-c', 'sv03.5']
@@ -302,5 +302,38 @@ describe('binder operations', () => {
 
   it('does nothing when the layout stays the same', () => {
     expect(changeLayout(binder, '2x2', ctx)).toBe(binder)
+  })
+})
+
+describe('createIllustratorComparator', () => {
+  const placed = (cardId: string) => ({ cardRef: { cardId, lang: 'de', variant: 'normal' } }) as Parameters<ReturnType<typeof createCardComparator>>[0]
+  const illustrators: Record<string, string> = {
+    'sv03.5-025': 'Naoyo Kimura',
+    'sv03.5-001': 'Yuu Nishida',
+    'sv03.5-196': 'saino misaki',
+    'sv03.5-173': 'naoyo kimura',
+    'sv03.5-006': 'PLANETA Mochizuki',
+  }
+  const byIllustrator = createIllustratorComparator(
+    (card) => illustrators[card.cardRef.cardId],
+    createCardComparator(['sv03.5']),
+  )
+  const sorted = (ids: string[]) => ids.map(placed).sort(byIllustrator).map((card) => card.cardRef.cardId)
+
+  it('puts the cards of one artist together, the artists by name whatever the case', () => {
+    expect(sorted(['sv03.5-001', 'sv03.5-196', 'sv03.5-006', 'sv03.5-025'])).toEqual([
+      'sv03.5-025',
+      'sv03.5-006',
+      'sv03.5-196',
+      'sv03.5-001',
+    ])
+  })
+
+  it('orders the cards of one artist by set and number', () => {
+    expect(sorted(['sv03.5-173', 'sv03.5-025'])).toEqual(['sv03.5-025', 'sv03.5-173'])
+  })
+
+  it('puts cards whose artist is not known last, in set order', () => {
+    expect(sorted(['sv03.5-200', 'sv03.5-001', 'sv03.5-100'])).toEqual(['sv03.5-001', 'sv03.5-100', 'sv03.5-200'])
   })
 })

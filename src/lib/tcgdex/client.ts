@@ -53,7 +53,7 @@ const DIGITAL_ONLY_RARITIES = new Set(
 )
 
 export type QueryParam = { key: string; value: string | number | boolean }
-export type Endpoint = 'cards' | 'sets' | 'series' | 'rarities' | 'types'
+export type Endpoint = 'cards' | 'sets' | 'series' | 'rarities' | 'types' | 'categories' | 'illustrators'
 
 /** Fetches one TCGdex resource; resolves to `undefined` when it does not exist. */
 export type Transport = (
@@ -150,13 +150,13 @@ export function setDetailsQuery(setId: string, lang: CardLang): string {
   const cards = `cards(filters: { id: ${JSON.stringify(`${setId}-`)} }, pagination: { page: 1, itemsPerPage: ${MAX_CARDS_PER_REQUEST} })`
   const printsLang = lang === 'ja' || lang === 'ko' ? lang : 'en'
   return `{
-  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity dexId }
+  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity dexId illustrator }
   prints: ${cards} @locale(lang: "${printsLang}") { id variants_detailed { type foil stamp size } }
 }`
 }
 
 interface RawSetDetails {
-  cards?: (RawCard & { rarity?: string | null; dexId?: number[] | null })[] | null
+  cards?: (RawCard & { rarity?: string | null; dexId?: number[] | null; illustrator?: string | null })[] | null
   prints?: { id: string; variants_detailed?: RawVariant[] | null }[] | null
 }
 
@@ -292,7 +292,8 @@ export function createTcgdexClient({
   const setDetails = new Map<string, Promise<CardDetail[]>>()
 
   async function loadSetDetails(setId: string): Promise<CardDetail[]> {
-    const data = await cache.fetch(`${lang}/graphql/set-details/${setId}`, () =>
+    // "v2": answers kept from before the illustrator was asked for would lack it for a day
+    const data = await cache.fetch(`${lang}/graphql/set-details/v2/${setId}`, () =>
       graphql(setDetailsQuery(setId, lang)),
     )
     const { cards, prints } = (data ?? {}) as RawSetDetails
@@ -305,6 +306,7 @@ export function createTcgdexClient({
         .map((raw): CardDetail => {
           const detail: CardDetail = { ...toCard(raw), variants: variantsOf(printsById.get(raw.id) ?? []) }
           if (raw.rarity) detail.rarity = raw.rarity
+          if (raw.illustrator) detail.illustrator = raw.illustrator.trim()
           const dexNumbers = (raw.dexId ?? []).filter((number) => Number.isInteger(number) && number > 0)
           if (dexNumbers.length > 0) detail.dexNumber = Math.min(...dexNumbers)
           return detail
@@ -417,6 +419,8 @@ export function createTcgdexClient({
       }
       if (query.type) builder.like('types', query.type)
       if (query.dexId !== undefined) builder.equal('dexId', String(query.dexId))
+      if (query.illustrator) builder.like('illustrator', query.illustrator)
+      if (query.category) builder.equal('category', query.category)
       builder.paginate(complete ? 1 : page, pageSize)
 
       const [raw, { setsById }, rarityIds] = await Promise.all([
@@ -443,6 +447,18 @@ export function createTcgdexClient({
       return rarities
         .filter((rarity) => !DIGITAL_ONLY_RARITIES.has(rarity.toLowerCase()))
         .sort((a, b) => a.localeCompare(b, lang))
+    },
+
+    async getCategories() {
+      const categories = await requestList<string>(lang, ['categories'])
+      return [...categories].sort((a, b) => a.localeCompare(b, lang))
+    },
+
+    async getIllustrators() {
+      const illustrators = await requestList<string>(lang, ['illustrators'])
+      // TCGdex's list has stray quotes and doubled names in it; what looks like one is left out
+      const names = illustrators.map((name) => name.trim()).filter((name) => name !== '' && !name.includes('"'))
+      return [...new Set(names)].sort((a, b) => a.localeCompare(b, lang))
     },
 
     async getTypes() {

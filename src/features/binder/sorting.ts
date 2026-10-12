@@ -22,6 +22,28 @@ export function createDexComparator(
 }
 
 /**
+ * Order for "sort by illustrator": the cards of one artist lie together, the artists by
+ * name. Within an artist, and for cards whose artist is not known (they come last), the
+ * order is `otherwise`.
+ */
+export function createIllustratorComparator(
+  illustratorOf: (card: PlacedCard) => string | undefined,
+  otherwise: CardComparator,
+): CardComparator {
+  return (a, b) => {
+    const left = illustratorOf(a)
+    const right = illustratorOf(b)
+    if (left !== right) {
+      if (left === undefined) return 1
+      if (right === undefined) return -1
+      const byName = left.localeCompare(right, undefined, { sensitivity: 'base' })
+      if (byName !== 0) return byName
+    }
+    return otherwise(a, b)
+  }
+}
+
+/**
  * Order for "sort by set and number": sets as given (release order), cards of unknown
  * sets last, then the card number, then the variant (normal, holo, reverse, then patterns).
  */

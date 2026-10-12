@@ -458,3 +458,32 @@ test('a Pokémon is found by its English name while German cards are shown', asy
   await expect(tiles.filter({ hasText: 'Glurak' }).first()).toBeVisible()
   expect(tcgdex.requests.filter((request) => request.startsWith('graphql:names:')).length).toBe(before)
 })
+
+test('cards are found by who drew them, alone or together with a name and a kind of card', async ({ page }) => {
+  await page.goto('/')
+  const illustrator = page.getByLabel('Illustrator').first()
+  const tiles = page.getByTestId('card-tile')
+
+  // the artists TCGdex knows are offered, and a name can be typed
+  await expect(page.locator('datalist option[value="Mitsuhiro Arita"]')).toHaveCount(1)
+  await illustrator.fill('Mitsuhiro Arita')
+  await expect(page.getByTestId('search-results').getByRole('status')).toContainText(/^[0-9]+[+] Karten/)
+
+  // narrowed down by a name
+  await page.getByRole('searchbox', { name: searchField }).fill('Glurak')
+  await expect(tiles).toHaveCount(7)
+  await expect(tiles.filter({ hasText: 'Glurak' })).toHaveCount(7)
+
+  // and by the kind of card: all of them are Pokémon, none is a trainer
+  const kind = page.getByRole('combobox', { name: 'Kartenart' }).first()
+  await expect(kind.locator('option')).toHaveText(['Kartenart', 'Energie', 'Pokémon', 'Trainer'])
+  await kind.selectOption('Pokémon')
+  await expect(tiles).toHaveCount(7)
+  await kind.selectOption('Trainer')
+  await expect(page.getByTestId('search-results')).toContainText('Keine Karten gefunden.')
+
+  // taking the artist out again brings back every Glurak
+  await kind.selectOption('')
+  await illustrator.fill('')
+  await expect(page.locator('[data-card-id="sv03.5-006"]')).toBeVisible()
+})

@@ -29,10 +29,12 @@ export function useCardSearch(
   setId: string | undefined,
   rarity: string | undefined,
   type: string | undefined,
+  illustrator: string | undefined = undefined,
+  category: string | undefined = undefined,
 ): CardSearch {
   const plan: SearchPlan = useMemo(
-    () => planSearch({ text, setId, rarity, type }),
-    [text, setId, rarity, type],
+    () => planSearch({ text, setId, rarity, type, illustrator, category }),
+    [text, setId, rarity, type, illustrator, category],
   )
   const key = `${lang}:${JSON.stringify(plan)}`
   const active = plan.kind === 'set' || plan.kind === 'query'

@@ -5,6 +5,8 @@ export interface SearchInput {
   setId?: string
   rarity?: string
   type?: string
+  illustrator?: string
+  category?: string
 }
 
 export type SearchPlan =
@@ -47,13 +49,18 @@ export function parseSearchText(text: string): ParsedSearchText {
   return parsed
 }
 
-export function planSearch({ text, setId, rarity, type }: SearchInput): SearchPlan {
+export function planSearch({ text, setId, rarity, type, illustrator: typedIllustrator, category }: SearchInput): SearchPlan {
+  // a letter or two of an artist's name would match most of them
+  const illustrator =
+    typedIllustrator && typedIllustrator.trim().length >= MIN_NAME_LENGTH ? typedIllustrator.trim() : undefined
   const { name: typedName, number, officialCount } = parseSearchText(text)
   // inside a set even a single letter narrows things down usefully
   const name =
     typedName && (typedName.length >= MIN_NAME_LENGTH || setId) ? typedName : undefined
 
-  if (!name && !number && !rarity && !type) return setId ? { kind: 'set', setId } : { kind: 'idle' }
+  if (!name && !number && !rarity && !type && !illustrator && !category) {
+    return setId ? { kind: 'set', setId } : { kind: 'idle' }
+  }
   // a bare number matches cards in every set; "188/125" names the set size and is specific enough
   if (number && !name && !setId && officialCount === undefined) return { kind: 'needsContext' }
 
@@ -64,6 +71,8 @@ export function planSearch({ text, setId, rarity, type }: SearchInput): SearchPl
   if (setId) query.setId = setId
   if (rarity) query.rarity = rarity
   if (type) query.type = type
+  if (illustrator) query.illustrator = illustrator
+  if (category) query.category = category
   return { kind: 'query', query }
 }
 

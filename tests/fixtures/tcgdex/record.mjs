@@ -32,6 +32,13 @@ const requests = [
   // cards of the Pokémon it stands for (see the query for its Pokédex number below)
   'de/cards?name=psyduck&pagination:page=1&pagination:itemsPerPage=60',
   'de/cards?dexId=eq:54&pagination:page=1&pagination:itemsPerPage=60',
+  // the kinds of cards, the artists, and cards found by them
+  'de/categories',
+  'de/illustrators',
+  'de/cards?illustrator=Mitsuhiro Arita&pagination:page=1&pagination:itemsPerPage=60',
+  'de/cards?name=Glurak&illustrator=Mitsuhiro Arita&pagination:page=1&pagination:itemsPerPage=60',
+  'de/cards?name=Glurak&illustrator=Mitsuhiro Arita&category=eq:Pokémon&pagination:page=1&pagination:itemsPerPage=60',
+  'de/cards?name=Glurak&illustrator=Mitsuhiro Arita&category=eq:Trainer&pagination:page=1&pagination:itemsPerPage=60',
   // English and Japanese cards
   'en/series',
   'en/rarities',
@@ -46,7 +53,7 @@ const requests = [
 ]
 
 async function fetchJson(request) {
-  const response = await fetch(`${API}/${request}`)
+  const response = await fetch(`${API}/${encodeURI(request)}`)
   if (!response.ok) throw new Error(`${request}: HTTP ${response.status}`)
   return response.json()
 }
@@ -82,7 +89,7 @@ for (const [setId, lang] of [
   const cards = `cards(filters: { id: "${setId}-" }, pagination: { page: 1, itemsPerPage: 1000 })`
   const printsLang = lang === 'ja' ? 'ja' : 'en'
   const query = `{
-  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity dexId }
+  cards: ${cards} @locale(lang: "${lang}") { id localId name image rarity dexId illustrator }
   prints: ${cards} @locale(lang: "${printsLang}") { id variants_detailed { type foil stamp size } }
 }`
   const response = await fetch(`${API}/graphql`, {

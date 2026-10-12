@@ -19,18 +19,32 @@ export function useCardSearchForm(lang: CardLang) {
   const [setId, setSetId] = useState<string>()
   const [rarity, setRarity] = useState<string>()
   const [type, setType] = useState<string>()
+  const [illustrator, setIllustrator] = useState('')
+  const [category, setCategory] = useState<string>()
 
   const catalog = useCatalog(lang)
   const loaders = useMemo(
     () => ({
       rarities: () => tcgdexFor(lang).getRarities(),
       types: () => tcgdexFor(lang).getTypes(),
+      categories: () => tcgdexFor(lang).getCategories(),
+      illustrators: () => tcgdexFor(lang).getIllustrators(),
     }),
     [lang],
   )
   const rarities = useLoaded(loaders.rarities)
   const types = useLoaded(loaders.types)
-  const search = useCardSearch(lang, useDebouncedValue(text, SEARCH_DELAY_MS), setId, rarity, type)
+  const categories = useLoaded(loaders.categories)
+  const illustrators = useLoaded(loaders.illustrators)
+  const search = useCardSearch(
+    lang,
+    useDebouncedValue(text, SEARCH_DELAY_MS),
+    setId,
+    rarity,
+    type,
+    useDebouncedValue(illustrator, SEARCH_DELAY_MS) || undefined,
+    category,
+  )
 
   const sets = catalog.status === 'ready' ? catalog.data.setsById : undefined
   return {
@@ -42,9 +56,15 @@ export function useCardSearchForm(lang: CardLang) {
     setRarity,
     type,
     setType,
+    illustrator,
+    setIllustrator,
+    category,
+    setCategory,
     catalog,
     rarities: rarities.status === 'ready' ? rarities.data : [],
     types: types.status === 'ready' ? types.data : [],
+    categories: categories.status === 'ready' ? categories.data : [],
+    illustrators: illustrators.status === 'ready' ? illustrators.data : [],
     search,
     sets,
     selectedSet: setId ? sets?.get(setId) : undefined,

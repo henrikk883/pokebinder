@@ -82,5 +82,11 @@
   "graphql:ja:SV2a": "graphql-set-details-ja-SV2a.json",
   "de/cards?name=psyduck&pagination:page=1&pagination:itemsPerPage=60": "77-de_cards_name_psyduck_pagination_page_1_pagination_itemsPerP.json",
   "de/cards?dexId=eq:54&pagination:page=1&pagination:itemsPerPage=60": "78-de_cards_dexId_eq_54_pagination_page_1_pagination_itemsPerPa.json",
-  "graphql:names:en:psyduck": "graphql-names-en-psyduck.json"
+  "graphql:names:en:psyduck": "graphql-names-en-psyduck.json",
+  "de/categories": "79-de_categories.json",
+  "de/illustrators": "80-de_illustrators.json",
+  "de/cards?illustrator=Mitsuhiro Arita&pagination:page=1&pagination:itemsPerPage=60": "81-de_cards_illustrator_Mitsuhiro_Arita_pagination_page_1_pagin.json",
+  "de/cards?name=Glurak&illustrator=Mitsuhiro Arita&pagination:page=1&pagination:itemsPerPage=60": "82-de_cards_name_Glurak_illustrator_Mitsuhiro_Arita_pagination_.json",
+  "de/cards?name=Glurak&illustrator=Mitsuhiro Arita&category=eq:Pokémon&pagination:page=1&pagination:itemsPerPage=60": "83-de_cards_name_Glurak_illustrator_Mitsuhiro_Arita_category_eq.json",
+  "de/cards?name=Glurak&illustrator=Mitsuhiro Arita&category=eq:Trainer&pagination:page=1&pagination:itemsPerPage=60": "84-de_cards_name_Glurak_illustrator_Mitsuhiro_Arita_category_eq.json"
 }

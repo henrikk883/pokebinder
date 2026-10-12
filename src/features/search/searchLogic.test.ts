@@ -206,3 +206,25 @@ describe('runSearch', () => {
     expect(result).toEqual({ cards: [bisasam], hasMore: true })
   })
 })
+
+describe('searching by illustrator and kind of card', () => {
+  it('needs nothing else to search by', () => {
+    expect(planSearch({ text: '', illustrator: 'Mitsuhiro Arita' })).toEqual({
+      kind: 'query',
+      query: { illustrator: 'Mitsuhiro Arita' },
+    })
+    expect(planSearch({ text: '', category: 'Trainer' })).toEqual({ kind: 'query', query: { category: 'Trainer' } })
+  })
+
+  it('goes together with name, set and the other filters', () => {
+    expect(planSearch({ text: 'Glurak', setId: 'sv03.5', illustrator: ' Arita ', category: 'Pokémon' })).toEqual({
+      kind: 'query',
+      query: { name: 'Glurak', setId: 'sv03.5', illustrator: 'Arita', category: 'Pokémon' },
+    })
+  })
+
+  it('waits for more than a letter of the name of an artist', () => {
+    expect(planSearch({ text: '', illustrator: 'A' })).toEqual({ kind: 'idle' })
+    expect(planSearch({ text: '', setId: 'sv03.5', illustrator: 'A' })).toEqual({ kind: 'set', setId: 'sv03.5' })
+  })
+})

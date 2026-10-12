@@ -616,6 +616,8 @@ test('sorting by Pokédex number brings the Pokémon in order, trainers last', a
     'Ganzen Binder sortieren',
     'Seite 1 nach Pokédex',
     'Ganzen Binder nach Pokédex',
+    'Seite 1 nach Illustrator',
+    'Ganzen Binder nach Illustrator',
   ])
   await page.getByRole('menuitem', { name: 'Seite 1 nach Pokédex' }).click()
 
@@ -628,6 +630,13 @@ test('sorting by Pokédex number brings the Pokémon in order, trainers last', a
   // one step back and the page lies as it was placed
   await page.getByRole('button', { name: 'Rückgängig' }).click()
   await expect.poll(cards).toEqual(['sv03.5-025', 'sv03.5-001', 'sv03.5-196', '', 'sv03.5-006', '', 'sv03.5-173', '', ''])
+
+  // by who drew them: Hiroyuki Yamamoto, Naoyo Kimura, PLANETA Mochizuki, saino misaki, Yuu Nishida
+  await page.getByRole('button', { name: 'Sortieren' }).click()
+  await page.getByRole('menuitem', { name: 'Ganzen Binder nach Illustrator' }).click()
+  await expect
+    .poll(cards)
+    .toEqual(['sv03.5-173', 'sv03.5-025', 'sv03.5-006', 'sv03.5-196', 'sv03.5-001', '', '', '', ''])
 })
 
 test('pages are moved, duplicated and inserted; the thumbnails are dragged onto each other', async ({ page }) => {
