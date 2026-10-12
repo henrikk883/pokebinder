@@ -5,6 +5,7 @@ import {
   englishCardImage,
   imageExists,
   pokemontcgCardImages,
+  readPicture,
   pokemontcgSetId,
 } from './images'
 
@@ -102,6 +103,40 @@ describe('cardImageSources', () => {
       own: undefined,
       substitutes: [],
     })
+  })
+})
+
+describe('readPicture', () => {
+  const original = globalThis.fetch
+
+  afterEach(() => {
+    vi.stubGlobal('fetch', original)
+  })
+
+  it('asks again, past the browser cache, when an answer cannot be used', async () => {
+    const asked: (RequestCache | undefined)[] = []
+    vi.stubGlobal('fetch', (_url: string, init?: RequestInit) => {
+      asked.push(init?.cache)
+      // twice the server sends its permission doubled, which a browser reports like this
+      return asked.length < 3 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve(new Response('scan'))
+    })
+
+    const picture = await readPicture('https://assets.tcgdex.net/de/sv/sv03.5/025/high.webp')
+
+    expect(await picture?.text()).toBe('scan')
+    expect(asked).toEqual(['default', 'reload', 'reload'])
+  })
+
+  it('gives up after a few attempts, and at once where there is no picture', async () => {
+    const offline = vi.fn(() => Promise.reject(new TypeError('Failed to fetch')))
+    vi.stubGlobal('fetch', offline)
+    expect(await readPicture('https://assets.tcgdex.net/x/high.webp', 4)).toBeUndefined()
+    expect(offline).toHaveBeenCalledTimes(4)
+
+    const missing = vi.fn(() => Promise.resolve(new Response('not found', { status: 404 })))
+    vi.stubGlobal('fetch', missing)
+    expect(await readPicture('https://assets.tcgdex.net/y/high.webp')).toBeUndefined()
+    expect(missing).toHaveBeenCalledTimes(1)
   })
 })
 

@@ -4,6 +4,7 @@ import {
   mapWithConcurrency,
   setIdOfCardId,
   tcgdexFor,
+  readPicture,
 } from '../../lib/tcgdex'
 import type { Binder, CardLang } from '../../types/binder'
 import { copiesOf } from '../binder/binderModel'
@@ -232,9 +233,9 @@ export async function downloadMissingListCsv(binder: Binder, onProgress?: Progre
 /** The picture at `url` as a black and white JPEG; `undefined` if it cannot be loaded. */
 async function greyJpeg(url: string): Promise<Uint8Array | undefined> {
   try {
-    const response = await fetch(url)
-    if (!response.ok) return undefined
-    const bitmap = await createImageBitmap(await response.blob())
+    const picture = await readPicture(url)
+    if (!picture) return undefined
+    const bitmap = await createImageBitmap(picture)
     try {
       const canvas = document.createElement('canvas')
       canvas.width = bitmap.width

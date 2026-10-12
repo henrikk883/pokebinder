@@ -108,6 +108,31 @@ export function cardImageSources(
   }
 }
 
+/** How often a picture is asked for before it counts as unreadable. */
+const READ_ATTEMPTS = 6
+
+/**
+ * A picture as data the app may read, for drawing it into a PNG or a PDF; `undefined` if
+ * there is none or it cannot be had. Showing a picture needs none of this.
+ *
+ * TCGdex's image server sends `Access-Control-Allow-Origin` twice on some of its answers,
+ * which browsers treat as no permission at all. Which answer one gets is a matter of luck,
+ * so the picture is asked for again, past the browser's cache: that would hand back the
+ * same unusable answer.
+ */
+export async function readPicture(url: string, attempts = READ_ATTEMPTS): Promise<Blob | undefined> {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const response = await fetch(url, { cache: attempt === 0 ? 'default' : 'reload' })
+      // an answer that says "not found" does not change by asking again
+      return response.ok ? await response.blob() : undefined
+    } catch {
+      // unusable this time, or no connection: the next attempt may do
+    }
+  }
+  return undefined
+}
+
 // Checked once per address; the answer does not change while the app is open.
 const verified = new Map<string, Promise<boolean>>()
 

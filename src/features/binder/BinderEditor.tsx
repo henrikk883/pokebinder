@@ -8,6 +8,7 @@ import { BinderSpread } from './BinderSpread'
 import { BinderToolbar } from './BinderToolbar'
 import { PageControls } from './PageControls'
 import { ProgressBar } from './ProgressBar'
+import { usePreloadedNeighbours } from './preloadSpreads'
 import { buildSpreads, clampSpread, fitZoom } from './spreads'
 import { ThumbnailStrip } from './ThumbnailStrip'
 
@@ -126,6 +127,7 @@ export function BinderEditor({ binder }: { binder: Binder }) {
   const current = clampSpread(spreadIndex, spreads.length)
   const spread = spreads[current]
   useEditorKeys(spreads.length)
+  usePreloadedNeighbours(binder, spreads, current)
   const frame = useRef<HTMLDivElement>(null)
   // the line that explains "Sammlung" takes room for as long as the mode lasts
   useAutoZoom(frame, zoom, `${binder.id}:${binder.layout}:${collecting}:${phone}`, phone)

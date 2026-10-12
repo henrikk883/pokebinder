@@ -56,8 +56,9 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
     return (
       <img
         key={own}
-        // asked for with CORS, so that the PNG export may read the picture
-        crossOrigin="anonymous"
+        // Plainly shown, not asked for in a readable form: TCGdex answers such requests
+        // unusably every so often, which left pockets empty. What needs to read a picture
+        // (PNG export, PDFs) fetches it itself, see `readPicture`.
         src={own}
         alt={card.name}
         loading={loading}
@@ -78,7 +79,6 @@ export function CardImage({ card, set, size, missing = false }: CardImageProps) 
       <img
         // a fresh element per address, so a failed load never sticks to the next one
         key={substitute.url}
-        crossOrigin="anonymous"
         src={substitute.url}
         alt={de.search.substituteImage(card.name)}
         title={de.search.substituteHint}

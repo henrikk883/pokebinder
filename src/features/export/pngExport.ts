@@ -1,3 +1,5 @@
+import { readPicture } from '../../lib/tcgdex'
+
 /** Width of an exported binder page in pixels, whatever the zoom on screen. */
 export const PAGE_EXPORT_WIDTH = 1500
 
@@ -47,6 +49,40 @@ export async function pageSettled(page: number, timeoutMs = SETTLE_TIMEOUT_MS): 
   }
 }
 
+const asDataUrl = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error('unreadable'))
+    reader.readAsDataURL(blob)
+  })
+
+/**
+ * Runs `draw` while the card pictures of `element` are held as data in the page itself.
+ * Drawing a page means reading its pictures, and the ones on screen are only shown, not
+ * readable (see `readPicture`). A picture that cannot be read stays as it is.
+ */
+async function withReadablePictures<T>(element: HTMLElement, draw: () => Promise<T>): Promise<T> {
+  const remote = [...element.querySelectorAll('img')].filter((image) => image.src.startsWith('http'))
+  const shown = remote.map((image) => image.src)
+  await Promise.all(
+    remote.map(async (image) => {
+      const picture = await readPicture(image.src)
+      if (!picture) return
+      image.src = await asDataUrl(picture)
+      await image.decode().catch(() => undefined)
+    }),
+  )
+  try {
+    return await draw()
+  } finally {
+    remote.forEach((image, index) => {
+      const original = shown[index]
+      if (original !== undefined) image.src = original
+    })
+  }
+}
+
 /**
  * Draws one page of the binder, as it is shown right now, into a PNG and offers it as a
  * download. Buttons are left out (`data-export-hide`); cards marked as missing stay black
@@ -58,12 +94,14 @@ export async function downloadPagePng(binderName: string, page: number): Promise
 
   // the library is large and only needed here, so it is loaded on demand
   const { toPng } = await import('html-to-image')
-  const dataUrl = await toPng(element, {
-    pixelRatio: exportScale(element.offsetWidth, PAGE_EXPORT_WIDTH),
-    // a page has no background of its own; it takes the binder's
-    backgroundColor: getComputedStyle(frame ?? element).backgroundColor,
-    filter: (node) => !(node instanceof HTMLElement && node.dataset.exportHide !== undefined),
-  })
+  const dataUrl = await withReadablePictures(element, () =>
+    toPng(element, {
+      pixelRatio: exportScale(element.offsetWidth, PAGE_EXPORT_WIDTH),
+      // a page has no background of its own; it takes the binder's
+      backgroundColor: getComputedStyle(frame ?? element).backgroundColor,
+      filter: (node) => !(node instanceof HTMLElement && node.dataset.exportHide !== undefined),
+    }),
+  )
 
   const link = document.createElement('a')
   link.href = dataUrl
