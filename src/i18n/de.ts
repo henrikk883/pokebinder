@@ -469,6 +469,8 @@ export const de = {
     zoomIn: 'Vergrößern',
     zoomOut: 'Verkleinern',
     zoomValue: (zoom: number) => `${zoom} %`,
+    zoomAuto: 'Zoom wieder automatisch anpassen',
+    zoomIsAuto: 'Der Zoom passt sich dem Platz an',
     spread: 'Aufgeschlagene Doppelseite',
     coverInside: 'Cover-Innenseite',
     noPage: 'Keine Seite',

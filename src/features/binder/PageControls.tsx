@@ -29,6 +29,8 @@ interface PageControlsProps {
 export function PageControls({ binder, spread, spreadCount }: PageControlsProps) {
   const zoom = useEditorStore((state) => state.zoom)
   const setZoom = useEditorStore((state) => state.setZoom)
+  const autoZoom = useEditorStore((state) => state.autoZoom)
+  const autoFit = useEditorStore((state) => state.autoFit)
   const showSpread = useEditorStore((state) => state.showSpread)
   const mode = useEditorStore((state) => state.mode)
   const setMode = useEditorStore((state) => state.setMode)
@@ -103,9 +105,19 @@ export function PageControls({ binder, spread, spreadCount }: PageControlsProps)
         >
           −
         </button>
-        <span data-testid="zoom-value" className="flex h-10 w-16 items-center justify-center border-y border-line bg-raised text-sm">
+        <button
+          type="button"
+          data-testid="zoom-value"
+          data-auto={autoZoom}
+          // a zoom that was picked stays; this is the way back to the one that fits
+          title={autoZoom ? de.binder.zoomIsAuto : de.binder.zoomAuto}
+          aria-label={autoZoom ? de.binder.zoomIsAuto : de.binder.zoomAuto}
+          disabled={autoZoom}
+          onClick={autoFit}
+          className="flex h-10 w-16 items-center justify-center border-y border-line bg-raised text-sm enabled:hover:border-accent"
+        >
           {de.binder.zoomValue(zoom)}
-        </span>
+        </button>
         <button
           type="button"
           aria-label={de.binder.zoomIn}

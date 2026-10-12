@@ -195,7 +195,7 @@ test('the search folds away too, and the binder then has the whole width', async
   expect(await width()).toBeCloseTo(1180 - 300, 0)
 })
 
-test('the zoom adapts so that the whole binder is in view, until one is picked by hand', async ({ page }) => {
+test('the zoom adapts so that the whole binder is in view, until one is picked by hand; that one is remembered', async ({ page }) => {
   await createBinder(page, 'Passend')
   const value = page.getByTestId('zoom-value')
   const zoom = async () => Number((await value.textContent())?.replace(' %', ''))
@@ -221,10 +221,18 @@ test('the zoom adapts so that the whole binder is in view, until one is picked b
   await page.getByRole('button', { name: 'Suche einblenden' }).tap()
   expect(await zoom()).toBe(fitted + 5)
 
-  // another binder starts fitted again; a higher screen gives it more room
+  // it also stays for the binder opened next, and when the app is opened again
   await page.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).tap()
   await page.getByRole('button', { name: 'Passend öffnen' }).tap()
+  await expect(value).toHaveText(`${fitted + 5} %`)
+  await page.reload()
+  await expect(value).toHaveText(`${fitted + 5} %`)
+  await expect(value).toHaveAttribute('data-auto', 'false')
+
+  // a tap on the figure goes back to the zoom that fits; a higher screen gives it more room
+  await value.tap()
   await expect(value).toHaveText(`${fitted} %`)
+  await expect(value).toHaveAttribute('data-auto', 'true')
   await page.setViewportSize({ width: 1180, height: 1100 })
   await expect(value).toHaveText('80 %')
   await page.setViewportSize({ width: 1180, height: 820 })

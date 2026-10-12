@@ -541,3 +541,8 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Gespeichert wird dafür nichts: Der Binder kennt sein Set, das Logo wird beim Anzeigen von TCGdex geholt (8–33 KB, vorgehalten wie die Kartenbilder) – wo es keines in der Sprache des Binders gibt, das englische. Kein Eintrag in der Bilder-Bibliothek, nichts im Backup, nichts beim Abgleich.
 - Das Logo ist ein querformatiger Schriftzug: Es steht auf dem Cover, es füllt es nicht. Lädt es nicht (kein Netz), steht dort wie bisher der Titel.
 - Im PNG-Export einer Seite spielt die Cover-Innenseite keine Rolle; das Logo ist dort vorsorglich ausgenommen.
+
+## 2026-10-12 – Der gewählte Zoom bleibt
+- Henrik stellt auf seinem großen Bildschirm jedes Mal von 80 % auf 140 %. Der selbst gewählte Zoom wird jetzt je Gerät gemerkt (`pokebinder:zoom`) und gilt für jeden Binder, der danach geöffnet wird – auch nach dem Schließen der App. Je Gerät, nicht im Abgleich: Bildschirm und Handy brauchen verschiedene Werte.
+- Wer nie einen Zoom gewählt hat, bekommt wie bisher den, der zum Platz passt. Ein Klick auf die Prozentzahl zwischen − und + führt dorthin zurück.
+- Am Handy gibt es die Zoom-Knöpfe nicht; dort bleibt es beim automatischen Zoom.

@@ -11,6 +11,35 @@ export type AppView = 'home' | 'binders' | 'cards' | 'shared'
 export const sharedToken: string | undefined =
   typeof window === 'undefined' ? undefined : shareTokenOf(window.location.search)
 
+// The zoom the collector picked is a matter of this device: a large screen and a phone
+// want different ones.
+const ZOOM_KEY = 'pokebinder:zoom'
+
+/** The zoom the collector picked on this device, if any. */
+function chosenZoom(): number | undefined {
+  try {
+    const stored = Number(localStorage.getItem(ZOOM_KEY))
+    return Number.isFinite(stored) && stored > 0 ? clampZoom(stored) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function rememberZoom(zoom: number | undefined): void {
+  try {
+    if (zoom === undefined) localStorage.removeItem(ZOOM_KEY)
+    else localStorage.setItem(ZOOM_KEY, String(zoom))
+  } catch {
+    // without storage the zoom simply lasts until the app is closed
+  }
+}
+
+/** How a binder opens: at the zoom picked on this device, else fitted to the room there is. */
+function startZoom(): { zoom: number; autoZoom: boolean } {
+  const chosen = chosenZoom()
+  return chosen === undefined ? { zoom: DEFAULT_ZOOM, autoZoom: true } : { zoom: chosen, autoZoom: false }
+}
+
 const VISITED_KEY = 'pokebinder:visited'
 
 /**
@@ -82,8 +111,10 @@ export interface EditorState {
 
   setNotice: (notice: string | null) => void
   showSpread: (index: number) => void
-  /** The collector picks a zoom; it then stays. */
+  /** The collector picks a zoom; it then stays, also for the binders opened later on this device. */
   setZoom: (zoom: number) => void
+  /** Back to the zoom that follows the room the binder has. */
+  autoFit: () => void
   /** The app adapts the zoom to the room there is. */
   fitZoomTo: (zoom: number) => void
   select: (position: SlotPosition | null) => void
@@ -124,8 +155,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   pane: 'binder',
   showPane: (pane) => set({ pane }),
   spreadIndex: 0,
-  zoom: DEFAULT_ZOOM,
-  autoZoom: true,
+  ...startZoom(),
   selection: null,
   mode: 'edit',
   notice: null,
@@ -159,7 +189,15 @@ export const useEditorStore = create<EditorState>()((set) => ({
       // while a card waits to be put elsewhere, turning the pages is how its target is found
       ...(state.moving ? {} : { selection: null, multi: [] }),
     })),
-  setZoom: (zoom) => set({ zoom: clampZoom(zoom), autoZoom: false }),
+  setZoom: (zoom) => {
+    const picked = clampZoom(zoom)
+    rememberZoom(picked)
+    set({ zoom: picked, autoZoom: false })
+  },
+  autoFit: () => {
+    rememberZoom(undefined)
+    set({ zoom: DEFAULT_ZOOM, autoZoom: true })
+  },
   fitZoomTo: (zoom) => set({ zoom: clampZoom(zoom) }),
   select: (selection) => set({ selection, multi: [], notice: null }),
   reset: (searchLang) =>
@@ -171,8 +209,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
       pane: 'binder',
       tapped: null,
       spreadIndex: 0,
-      zoom: DEFAULT_ZOOM,
-      autoZoom: true,
+      ...startZoom(),
       selection: null,
       multi: [],
       multiMode: false,
