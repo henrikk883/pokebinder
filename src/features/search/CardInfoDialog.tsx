@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { de } from '../../i18n/de'
 import type { CardSummary, SetSummary } from '../../lib/tcgdex'
 import { compareVariants, type CardLang, type CardVariant } from '../../types/binder'
 import { useWatchlistStore } from '../../store/watchlistStore'
 import { useCardDetail, useCardLangs, usePrice } from '../binder/useCard'
+import { SimilarCardsSection } from '../similar/SimilarCardsSection'
 import { CardImage } from './CardImage'
 import { isSaved } from './watchlist'
 import { listName } from './listName'
@@ -39,6 +40,9 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
   const toggleSaved = useWatchlistStore((state) => state.toggle)
   const createList = useWatchlistStore((state) => state.create)
   const [newList, setNewList] = useState('')
+  const [showingSimilar, setShowingSimilar] = useState(false)
+  // the info of a similar card opens on top of this one, so the title needs an id of its own
+  const titleId = useId()
 
   /** A list made from here is one the card is meant for. */
   function handleNewList(event: FormEvent) {
@@ -57,15 +61,18 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
       onClick={onClose}
       onKeyDown={(event) => {
-        if (event.key === 'Escape') onClose()
+        if (event.key !== 'Escape') return
+        // the info of a similar card lies on top of this one: only the top one closes
+        event.stopPropagation()
+        onClose()
       }}
     >
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="card-info-title"
+        aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
-        className="m-auto flex w-full max-w-2xl flex-col gap-6 rounded-panel border border-line bg-panel p-6 shadow-lg sm:flex-row"
+        className="m-auto flex w-full max-w-2xl flex-col gap-6 rounded-panel border border-line bg-panel p-6 text-left shadow-lg sm:flex-row sm:flex-wrap"
       >
         <div className="mx-auto w-full max-w-64 shrink-0 sm:w-64">
           <CardImage card={card} set={set} size="large" />
@@ -73,7 +80,7 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
 
         <div className="flex min-w-0 flex-1 flex-col gap-5 text-sm">
           <div>
-            <h2 id="card-info-title" className="text-xl font-semibold">
+            <h2 id={titleId} className="text-xl font-semibold">
               {card.name}
             </h2>
             <p className="mt-1 text-muted">{set ? `${set.name} · ${number}` : number}</p>
@@ -144,7 +151,16 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
             </form>
           </fieldset>
 
-          <div className="mt-auto flex justify-end gap-3">
+          <div className="mt-auto flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              aria-expanded={showingSimilar}
+              title={de.similar.buttonHint}
+              onClick={() => setShowingSimilar((showing) => !showing)}
+              className={`h-10 rounded-control border bg-raised px-4 text-sm hover:border-accent ${showingSimilar ? 'border-accent' : 'border-line'}`}
+            >
+              {de.similar.button}
+            </button>
             <button
               type="button"
               autoFocus
@@ -155,6 +171,7 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
             </button>
           </div>
         </div>
+        {showingSimilar && <SimilarCardsSection cardId={card.id} lang={lang} />}
       </div>
     </div>
   )

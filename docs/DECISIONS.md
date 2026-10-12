@@ -593,3 +593,11 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Sortieren: „Nach Illustrator“ für Seite oder ganzen Binder, alphabetisch nach Künstler, innerhalb eines Künstlers nach Set und Nummer; Karten ohne bekannten Illustrator ans Ende.
 - Den Illustrator liefert die Set-Abfrage jetzt mit. Der Cache-Schlüssel der Set-Details heißt deshalb `v2`: Jedes Set wird einmal neu geholt, alte Einträge bleiben ungenutzt liegen.
 - „Farbe“ meint laut Henrik die Farbe des Bildes. Das kann TCGdex nicht und bleibt Punkt 20 (ähnliche Karten) mit eigener Machbarkeitsprüfung.
+
+## 2026-10-12 – Ähnliche Farben (erster Schritt von Punkt 20)
+- Machbarkeit an 367 Karten geprüft: Bei Bildern mit klaren Farben (feurig-orange, Wiese, Wasser) passen die Treffer gut, bei bunt gemischten Bildern nur teilweise. Henrik hat danach das Bauen freigegeben.
+- Je Karte wird eine Farbkennung aus 52 Zahlen berechnet: wie viel des Bildfensters (nicht des Rahmens) auf zwölf Farbtöne in je vier Stufen und auf vier Graustufen entfällt. Ähnlich sind zwei Karten, wenn sich diese Verteilungen stark überdecken.
+- Die Auswertung läuft vorab mit `npm run colours` auf dem eigenen Rechner, im Browser, den Playwright mitbringt – keine neue Abhängigkeit, kein neuer Dienst. Der erste Lauf lädt einmalig die kleinen Bilder aller englischen Karten von TCGdex (gebremst, vier gleichzeitig), spätere Läufe nur die neuer Karten. Das Ergebnis liegt im Repo (`public/colours/`) und geht mit jedem Push live; die App lädt es erst, wenn jemand „Ähnliche Farben“ drückt.
+- Von Henrik entschieden: gesucht wird immer über die englischen Karten, ohne Eingrenzung auf ein Set. Von mir ergänzt: Die Treffer erscheinen in der Sprache der Karte, von der aus gesucht wird, und auf Englisch, wo es eine Karte in dieser Sprache nicht gibt.
+- Die Treffer stehen in der Karten-Info unter der Karte. Von dort lässt sich nicht in den Binder ziehen (die Info liegt über allem); gemerkt wird mit dem Stern, von der Merkliste aus kommt die Karte in den Binder.
+- Wird die Berechnung der Kennung geändert, müssen alle Karten neu ausgewertet werden (`public/colours/` löschen, Skript neu starten).

@@ -29,6 +29,7 @@ Keine weiteren Abhängigkeiten ohne Rückfrage. Kein Tracking, keine externen Di
 - `npm run lint` – ESLint + `tsc --noEmit`
 - `npm test` – Vitest
 - `npm run test:e2e` – Playwright
+- `npm run colours` – Farben neuer Kartenbilder auswerten (nach jedem neuen Set)
 
 ## Struktur
 
@@ -45,6 +46,7 @@ src/
     share/      Binder per Link teilen und geteilte Binder ansehen
     import/     Kartenlisten einlesen (kopierte Cardmarket-Wunschliste)
     landing/    Startseite
+    similar/    Karten mit ähnlichen Farben finden (Farbdaten aus `npm run colours` in public/colours/)
     export/     JSON-Backup, PDF-Fehlliste, später PNG
   store/        Zustand-Stores
   db/           Dexie-Schema und Zugriff
