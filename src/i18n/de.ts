@@ -314,6 +314,25 @@ export const de = {
       offline: 'Der Binder konnte nicht geladen werden. Besteht eine Internetverbindung?',
     },
   },
+  cardmarket: {
+    menu: 'Für Cardmarket-Wunschliste …',
+    title: (name: string) => `Fehlende Karten für Cardmarket – ${name}`,
+    hint: 'Cardmarket nimmt Wunschlisten als Text an: eine Karte je Zeile, auf Englisch, bei Pokémon mit den Namen ihrer Fähigkeiten und Attacken.',
+    list: 'Liste für Cardmarket',
+    empty: 'Es fehlt keine Karte.',
+    summary: (lines: number) => (lines === 1 ? '1 Zeile.' : `${lines} Zeilen.`),
+    skipped: (count: number) =>
+      count === 1
+        ? '1 fehlende Karte steht nicht drin: Es gibt sie nicht auf Englisch, oder sie konnte nicht nachgeschlagen werden.'
+        : `${count} fehlende Karten stehen nicht drin: Es gibt sie nicht auf Englisch, oder sie konnten nicht nachgeschlagen werden.`,
+    steps: [
+      'Liste kopieren.',
+      'Bei Cardmarket unter „Wants“ eine Wunschliste anlegen oder öffnen und „Deckliste hinzufügen“ wählen.',
+      'Den Text einfügen und bestätigen. Cardmarket zeigt, welche Zeilen es erkannt hat.',
+    ],
+    copy: 'Liste kopieren',
+    copied: 'Kopiert',
+  },
   find: {
     button: 'Karte im Binder finden',
     placeholder: 'Name oder Nummer',

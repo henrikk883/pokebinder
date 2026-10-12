@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { de } from '../../i18n/de'
 import type { Binder } from '../../types/binder'
 import { useDismiss } from '../../lib/useDismiss'
+import { CardmarketDialog } from './CardmarketDialog'
 
 type Progress = (done: number, total: number) => void
 type Exporter = 'downloadMissingList' | 'downloadMissingListCsv' | 'downloadProxies'
@@ -14,12 +15,14 @@ const ENTRIES: readonly { exporter: Exporter; label: string }[] = [
   { exporter: 'downloadProxies', label: de.missingList.proxies },
 ]
 
-/** "Was fehlt?": the missing cards as PDF checklist, as table for Excel, or as placeholders to print. */
+/** "Was fehlt?": the missing cards as PDF checklist, as table for Excel, as placeholders to print, or as a list for Cardmarket. */
 export function MissingListMenu({ binder, buttonClass }: { binder: Binder; buttonClass: string }) {
   const [open, setOpen] = useState(false)
   const menu = useDismiss<HTMLDivElement>(open, () => setOpen(false))
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [failed, setFailed] = useState(false)
+  // the list is of the binder as it was when asked for; later changes do not move it
+  const [forCardmarket, setForCardmarket] = useState<Binder | null>(null)
 
   async function run(exporter: Exporter) {
     setOpen(false)
@@ -68,8 +71,20 @@ export function MissingListMenu({ binder, buttonClass }: { binder: Binder; butto
               {entry.label}
             </button>
           ))}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              setForCardmarket(binder)
+            }}
+            className={`${menuItemClass} mt-1 border-t border-line pt-2`}
+          >
+            {de.cardmarket.menu}
+          </button>
         </div>
       )}
+      {forCardmarket && <CardmarketDialog binder={forCardmarket} onClose={() => setForCardmarket(null)} />}
       {failed && (
         <p role="alert" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-3 text-sm text-muted shadow-lg">
           {de.missingList.failed}

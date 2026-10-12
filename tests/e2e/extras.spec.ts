@@ -395,3 +395,36 @@ test.describe('the worth of the collection on the shelf', () => {
     await expect(page.getByTestId('shelf-total')).toHaveText(`Sammlungswert: ${owned} · 1 von 207 Karten vorhanden`)
   })
 })
+
+test.describe('the missing cards for Cardmarket', () => {
+  test('come as the text its wants list takes: English name, abilities and attacks, one card per line', async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    await createMasterSet(page)
+    await page.getByRole('button', { name: 'Was fehlt?', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Für Cardmarket-Wunschliste …' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Fehlende Karten für Cardmarket – 151' })
+
+    // the three cards whose English data is recorded; the binder holds them in German
+    const list = dialog.getByRole('textbox', { name: 'Liste für Cardmarket' })
+    await expect(list).toHaveValue(
+      ['1x Bulbasaur Leech Seed', '1x Ivysaur Leech Seed Vine Whip', '1x Venusaur ex Tranquil Flower Dangerous Toxwhip'].join('\n'),
+    )
+    await expect(dialog.getByTestId('cardmarket-summary')).toHaveText(/^3 Zeilen\. 204 fehlende Karten stehen nicht drin/)
+
+    await dialog.getByRole('button', { name: 'Liste kopieren' }).click()
+    await expect(dialog.getByRole('button', { name: 'Kopiert' })).toBeVisible()
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('1x Ivysaur Leech Seed Vine Whip')
+    await dialog.getByRole('button', { name: 'Schließen' }).click()
+
+    // a card that is there is not asked for
+    await collection(page).click()
+    await pocket(page, 1, 2).click()
+    await expect(pocket(page, 1, 2)).toHaveAttribute('data-owned', 'true')
+    await page.getByRole('button', { name: 'Was fehlt?', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Für Cardmarket-Wunschliste …' }).click()
+    await expect(list).toHaveValue(['1x Bulbasaur Leech Seed', '1x Venusaur ex Tranquil Flower Dangerous Toxwhip'].join('\n'))
+  })
+})

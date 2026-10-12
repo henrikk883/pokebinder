@@ -353,6 +353,10 @@ export function createTcgdexClient({
       return card ? playInfoOf(card) : undefined
     },
 
+    getEnglishCard(cardId) {
+      return request<unknown>('en', ['cards', cardId]).catch(() => undefined)
+    },
+
     async getCardDetail(cardId) {
       const { setsById } = await getCatalog()
       const setId = setIdOfCardId(cardId, setsById)

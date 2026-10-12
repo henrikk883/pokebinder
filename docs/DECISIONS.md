@@ -558,3 +558,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - „Drei Karten ohne Bild und keine mit Bild“ gilt als „das Set hat keine“: genug, um nicht jede Karte einzeln zu probieren, und ein einziges gefundenes Bild nimmt die Annahme zurück. Gemerkt für eine Woche, weil TCGdex Bilder nachliefert.
 - Im PNG-Export kann eine Karte aus der zweiten Quelle in der kleinen Fassung landen, wenn die große noch nicht da ist. In Kauf genommen: Der Export wartet nicht auf Megabytes.
 - Lehre aus der Fehlersuche: Die erste Meldung nannte die grauen Karten, weil die betroffenen Sets zufällig die fast leeren waren. Erst Browser, Binder und „man sieht nur den Namen“ führten zur Ursache; darum steht in der Fehlerliste, was eine Meldung enthalten soll.
+
+## 2026-10-12 – Fehlende Karten für Cardmarkets Wunschliste
+- Nachgesehen (Hilfeseiten von Cardmarket): Hinein geht es offiziell über „Wants → Deckliste hinzufügen“, und zwar als eingefügter Text, eine Karte je Zeile; ein Pokémon braucht den englischen Namen plus Fähigkeiten und Attacken („Mew ex Restart Genome Hacking“), der Name allein wird abgelehnt. Einen offiziellen CSV-Export aus Cardmarket heraus habe ich nicht gefunden, nur inoffizielle Browser-Erweiterungen.
+- Henrik wollte die CSV von „Was fehlt?“ dafür umbauen. Die CSV bleibt, wie sie ist (sie ist für Excel); daneben gibt es „Für Cardmarket-Wunschliste …“: ein Fenster mit dem Text zum Kopieren und den drei Schritten bei Cardmarket.
+- Die englischen Namen und Attacken kommen aus der englischen Einzelkarte von TCGdex – dieselbe Antwort wie für den Preis. Karten, die es nicht auf Englisch gibt, stehen nicht in der Liste; das Fenster sagt, wie viele.
+- Cardmarket unterscheidet in diesem Format nach Name und Attacken, nicht nach Druck. Mehrere Drucke einer Karte (normal, Illustration Rare) werden darum zu einer Zeile mit Stückzahl; welchen Druck man kauft, wählt man bei Cardmarket. Für „151“: 207 fehlende Karten ergeben 167 Zeilen.
+- Nicht geprüft: ob Cardmarket jede dieser Zeilen erkennt – dafür braucht es ein Konto dort. Das Format folgt Cardmarkets eigenem Beispiel.

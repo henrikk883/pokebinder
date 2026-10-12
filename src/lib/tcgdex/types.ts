@@ -99,6 +99,12 @@ export interface TcgdexClient {
    * how a name typed in one language leads to the cards in another.
    */
   dexIdsOfName(name: string): Promise<number[]>
+  /**
+   * The card as TCGdex has it in English, unprocessed: Cardmarket lists cards by their
+   * English name and attacks. `undefined` where there is no English card of that id (cards
+   * that exist only in Japanese or Korean). The same answer the price comes from.
+   */
+  getEnglishCard(cardId: string): Promise<unknown>
   /** One page of cards matching the query; pages start at 1. */
   queryCards(query: CardQuery, page: number): Promise<CardPage>
   getRarities(): Promise<string[]>

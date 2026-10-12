@@ -1,3 +1,4 @@
+import { cardmarketCardOf, cardmarketLines, type RawListedCard } from './cardmarketList'
 import { de } from '../../i18n/de'
 import {
   cardImageSources,
@@ -162,6 +163,31 @@ export async function loadShoppingRows(binder: Binder, onProgress?: Progress): P
     if (product !== undefined) line.cardmarketId = product
     return line
   })
+}
+
+/**
+ * The missing cards of a binder as lines for Cardmarket's wants list (see
+ * `cardmarketList.ts`), in binder order. `skipped` counts the missing cards that could
+ * not be put into words Cardmarket understands: no English card of that id, or no answer.
+ */
+export async function loadCardmarketList(
+  binder: Binder,
+  onProgress?: Progress,
+): Promise<{ lines: string[]; skipped: number }> {
+  const missing = binder.pages.flatMap((page) =>
+    page.slots.flatMap((slot) => (slot.cardRef && !slot.owned ? [slot.cardRef] : [])),
+  )
+  const cards = await mapWithConcurrency(
+    missing,
+    8,
+    async (ref) => {
+      const raw = await tcgdexFor(ref.lang).getEnglishCard(ref.cardId)
+      return typeof raw === 'object' && raw !== null ? cardmarketCardOf(raw as RawListedCard) : undefined
+    },
+    onProgress,
+  )
+  const listed = cards.filter((card) => card !== undefined)
+  return { lines: cardmarketLines(listed), skipped: cards.length - listed.length }
 }
 
 export function slugOf(name: string): string {
