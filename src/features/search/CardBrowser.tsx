@@ -11,6 +11,7 @@ import { SetPicker } from './SetPicker'
 import { useCardSearchForm } from './useCardSearchForm'
 import { savedCardCount } from './watchlist'
 import { WatchlistPanel } from './WatchlistPanel'
+import { useWishAlarms } from './wishPrice'
 
 /** As many cards side by side as fit, each about as wide as a real card in the hand. */
 const WIDE_GRID =
@@ -92,6 +93,7 @@ export function CardBrowser() {
   const [tab, setTab] = useState<Tab>('all')
   const searchLang = useEditorStore((state) => state.searchLang)
   const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
+  const alarms = useWishAlarms(useWatchlistStore((state) => state.lists))
 
   return (
     <section className="mx-auto flex min-h-full max-w-[110rem] flex-col p-5 max-md:p-3">
@@ -111,6 +113,11 @@ export function CardBrowser() {
             >
               {de.browse.tabs[option]}
               {option === 'saved' && savedCount > 0 && <span className="ml-1 text-xs text-muted">{savedCount}</span>}
+              {option === 'saved' && alarms > 0 && (
+                <span title={de.wish.alarms(alarms)} className="ml-1 rounded-full border border-accent px-1.5 text-xs text-text">
+                  {alarms}
+                </span>
+              )}
             </button>
           ))}
         </div>

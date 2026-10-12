@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { de } from '../../i18n/de'
 import type { CardSummary, SetSummary } from '../../lib/tcgdex'
 import { useWatchlistStore } from '../../store/watchlistStore'
@@ -32,6 +32,8 @@ interface CardTileProps {
   onPick?: (card: CardSummary, lang: CardLang) => void
   /** How often the card was picked already; shown on its picture. */
   picked?: number
+  /** What a list adds below the card, e.g. its wish price. */
+  footer?: ReactNode
 }
 
 // Buttons on the picture: under the mouse on the card pointed at, by finger always there.
@@ -61,6 +63,7 @@ export function CardTile({
   browsing = false,
   onPick,
   picked = 0,
+  footer,
 }: CardTileProps) {
   const [showingInfo, setShowingInfo] = useState(false)
   // the star notes into the quick list; the info window offers the others
@@ -155,6 +158,7 @@ export function CardTile({
       <p className="truncate text-xs text-muted">
         {set ? `${set.name} · ${number}` : number}
       </p>
+      {footer}
       {showingInfo && (
         <CardInfoDialog card={card} set={set} lang={lang} onClose={() => setShowingInfo(false)} />
       )}

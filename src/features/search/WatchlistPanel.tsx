@@ -11,15 +11,17 @@ import { ListWorth } from './ListWorth'
 import { TapHint } from './TapHint'
 import { useReadyCatalog } from './useCatalog'
 import { QUICK_LIST_ID, type SavedCard } from './watchlist'
+import { WishPrice } from './WishPriceLine'
 
 interface SavedTileProps {
+  listId: string
   saved: SavedCard
   draggable: boolean
   dragIdPrefix: string
   browsing: boolean
 }
 
-function SavedTile({ saved, draggable, dragIdPrefix, browsing }: SavedTileProps) {
+function SavedTile({ listId, saved, draggable, dragIdPrefix, browsing }: SavedTileProps) {
   const card = useCard(saved.cardId, saved.lang)
   const catalog = useReadyCatalog(saved.lang)
 
@@ -42,6 +44,7 @@ function SavedTile({ saved, draggable, dragIdPrefix, browsing }: SavedTileProps)
       draggable={draggable}
       dragIdPrefix={dragIdPrefix}
       browsing={browsing}
+      footer={<WishPrice listId={listId} saved={saved} name={card.name} />}
     />
   )
 }
@@ -163,6 +166,7 @@ export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap
               {cards.map((saved) => (
                 <SavedTile
                   key={`${active.id}:${saved.lang}:${saved.cardId}`}
+                  listId={active.id}
                   saved={saved}
                   draggable={draggable}
                   // the same card may be shown by several lists that are mounted at once

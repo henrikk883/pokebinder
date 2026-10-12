@@ -116,6 +116,18 @@ export const de = {
   history: {
     undo: 'Rückgängig',
     redo: 'Wiederholen',
+    valueOpen: 'Wertverlauf',
+    valueTitle: 'Wertverlauf',
+    valueOf: 'Verlauf von',
+    wholeCollection: 'Gesamte Sammlung',
+    valueTooShort: 'Noch zu früh für eine Linie: Bisher ist nur ein Tag festgehalten. Schau morgen wieder vorbei.',
+    valueChart: (days: number) => `Wert an ${days} Tagen`,
+    valueOn: (day: string, amount: number) => `${day}: ${formatEuro(amount)} €`,
+    valueChange: (amount: number, since: string) =>
+      `${amount > 0 ? '+' : amount < 0 ? '−' : '±'}${formatEuro(Math.abs(amount))} € seit ${since}`,
+    valueHint:
+      'Festgehalten wird der Wert der vorhandenen Karten (Cardmarket-Preistrend) an jedem Tag, an dem du das Regal auf diesem Gerät öffnest.',
+    close: 'Schließen',
   },
   setProgress: {
     open: 'Nach Set',
@@ -457,6 +469,19 @@ export const de = {
       all: 'Alle Karten',
       saved: 'Merkliste',
     },
+  },
+  wish: {
+    set: 'Wunschpreis setzen',
+    title: (name: string) => `Wunschpreis für ${name}`,
+    label: 'Bis zu welchem Preis (in €) würdest du die Karte kaufen?',
+    confirm: 'Merken',
+    amountInput: (amount: number) => formatEuro(amount),
+    wish: (amount: number) => `Wunsch: ${formatEuro(amount)} €`,
+    remove: (name: string) => `Wunschpreis für ${name} entfernen`,
+    now: (amount: number) => `aktuell ${formatEuro(amount)} €`,
+    reached: (amount: number) => `Jetzt ${formatEuro(amount)} €`,
+    alarms: (count: number) =>
+      count === 1 ? '1 Karte liegt bei ihrem Wunschpreis oder darunter' : `${count} Karten liegen bei ihrem Wunschpreis oder darunter`,
   },
   watchlist: {
     saveCard: (name: string) => `${name} merken`,

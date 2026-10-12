@@ -6,6 +6,8 @@ export interface SavedCard {
   lang: CardLang
   /** ISO 8601; a list shows what was noted last first. */
   savedAt: string
+  /** What the collector would pay for the card, in euros; only where one was set. */
+  wishPrice?: number
 }
 
 /** A "Merkliste": cards noted for one purpose, e.g. a binder to come or things to buy. */
@@ -48,6 +50,29 @@ export function toggleInList(
 ): Watchlist[] {
   return lists.map((list) =>
     list.id === listId ? { ...list, cards: toggleSaved(list.cards, cardId, lang, now) } : list,
+  )
+}
+
+/** Sets what the collector would pay for a card of a list, or takes that off (`undefined`). */
+export function setWishPrice(
+  lists: readonly Watchlist[],
+  listId: string,
+  cardId: string,
+  lang: CardLang,
+  wishPrice: number | undefined,
+): Watchlist[] {
+  return lists.map((list) =>
+    list.id !== listId
+      ? list
+      : {
+          ...list,
+          cards: list.cards.map((card) => {
+            if (card.cardId !== cardId || card.lang !== lang) return card
+            const { wishPrice: _before, ...rest } = card
+            void _before
+            return wishPrice === undefined ? rest : { ...rest, wishPrice }
+          }),
+        },
   )
 }
 
@@ -102,10 +127,17 @@ function parseCards(raw: unknown): SavedCard[] {
   const cards: SavedCard[] = []
   for (const entry of raw as unknown[]) {
     if (typeof entry !== 'object' || entry === null) continue
-    const { cardId, lang, savedAt } = entry as { cardId?: unknown; lang?: unknown; savedAt?: unknown }
+    const { cardId, lang, savedAt, wishPrice } = entry as {
+      cardId?: unknown
+      lang?: unknown
+      savedAt?: unknown
+      wishPrice?: unknown
+    }
     const known = OFFERED_LANGS.find((offered) => offered === lang)
     if (typeof cardId !== 'string' || cardId === '' || !known || isSaved(cards, cardId, known)) continue
-    cards.push({ cardId, lang: known, savedAt: typeof savedAt === 'string' ? savedAt : '' })
+    const card: SavedCard = { cardId, lang: known, savedAt: typeof savedAt === 'string' ? savedAt : '' }
+    if (typeof wishPrice === 'number' && Number.isFinite(wishPrice) && wishPrice > 0) card.wishPrice = wishPrice
+    cards.push(card)
   }
   return cards
 }

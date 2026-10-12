@@ -6,6 +6,7 @@ import {
   QUICK_LIST_ID,
   removeList,
   renameList,
+  setWishPrice,
   toggleInList,
   type Watchlist,
 } from '../features/search/watchlist'
@@ -42,6 +43,8 @@ export interface WatchlistState {
   showList: (listId: string) => void
   /** Notes a card on a list, or takes it off if it is on it. */
   toggle: (listId: string, cardId: string, lang: CardLang) => void
+  /** Sets what the collector would pay for a card of a list; `undefined` takes that off. */
+  setWishPrice: (listId: string, cardId: string, lang: CardLang, wishPrice: number | undefined) => void
   /** Makes a new list and returns its id; `undefined` for an empty name. */
   create: (name: string) => string | undefined
   rename: (listId: string, name: string) => void
@@ -65,6 +68,8 @@ export const useWatchlistStore = create<WatchlistState>()((set, get) => {
     showList: (activeListId) => set({ activeListId }),
     toggle: (listId, cardId, lang) =>
       update(toggleInList(get().lists, listId, cardId, lang, new Date().toISOString())),
+    setWishPrice: (listId, cardId, lang, wishPrice) =>
+      update(setWishPrice(get().lists, listId, cardId, lang, wishPrice)),
     create: (name) => {
       const id = newId()
       const lists = addList(get().lists, id, name)

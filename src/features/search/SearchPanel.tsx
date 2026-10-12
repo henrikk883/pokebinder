@@ -12,6 +12,7 @@ import { SetPicker } from './SetPicker'
 import { TapHint } from './TapHint'
 import { useCardSearchForm } from './useCardSearchForm'
 import { savedCardCount } from './watchlist'
+import { useWishAlarms } from './wishPrice'
 import { WatchlistPanel } from './WatchlistPanel'
 
 const tabClass = 'border-b-2 px-2.5 pb-2 text-sm font-medium whitespace-nowrap'
@@ -93,6 +94,7 @@ export function SearchPanel() {
   const [tab, setTab] = useState<Tab>('cards')
   const searchLang = useEditorStore((state) => state.searchLang)
   const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
+  const alarms = useWishAlarms(useWatchlistStore((state) => state.lists))
 
   return (
     <section className="flex h-full flex-col max-md:h-auto">
@@ -116,6 +118,11 @@ export function SearchPanel() {
               {option === 'saved' && savedCount > 0 && (
                 <span data-testid="saved-count" className="ml-1 text-xs text-muted">
                   {savedCount}
+                </span>
+              )}
+              {option === 'saved' && alarms > 0 && (
+                <span data-testid="wish-alarms" title={de.wish.alarms(alarms)} className="ml-1 rounded-full border border-accent px-1.5 text-xs text-text">
+                  {alarms}
                 </span>
               )}
             </button>

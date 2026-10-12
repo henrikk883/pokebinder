@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Binder } from '../../types/binder'
 import { countProgress } from './binderModel'
 import { loadBinderValue, type BinderValue } from './binderValue'
+import { dayOf, readHistory, recordPoint, storeHistory, type ValuePoint } from './valueHistory'
 
 /** What a binder was worth when it was last looked at. */
 export interface StoredValue {
@@ -104,12 +105,36 @@ function store(values: ShelfValues): void {
 }
 
 /**
+ * Notes what the binders are worth today, once every one of them has a value: a day with
+ * a binder missing would look like a loss. Returns the history as it then is.
+ */
+export function noteToday(binders: readonly Binder[], values: ShelfValues, now: string): ValuePoint[] {
+  const history = readHistory()
+  const filled = binders.filter((binder) => countProgress(binder).total > 0)
+  if (filled.length === 0 || filled.some((binder) => values[binder.id] === undefined)) return history
+  const next = recordPoint(
+    history,
+    dayOf(now),
+    Object.fromEntries(filled.map((binder) => [binder.id, values[binder.id]?.value.owned ?? 0])),
+  )
+  storeHistory(next)
+  return next
+}
+
+export interface ShelfWorth {
+  values: ShelfValues
+  /** What the binders were worth on the days the shelf was looked at, oldest first. */
+  history: readonly ValuePoint[]
+}
+
+/**
  * What each binder on the shelf is worth. Known values are there at once; those that are
  * missing or out of date are worked out one binder after the other, since each card needs
  * a request of its own the first time on a day.
  */
-export function useShelfValues(binders: readonly Binder[]): ShelfValues {
+export function useShelfValues(binders: readonly Binder[]): ShelfWorth {
   const [values, setValues] = useState<ShelfValues>(readStored)
+  const [history, setHistory] = useState<readonly ValuePoint[]>(readHistory)
 
   useEffect(() => {
     let cancelled = false
@@ -128,11 +153,12 @@ export function useShelfValues(binders: readonly Binder[]): ShelfValues {
         store(next)
         setValues(next)
       }
+      if (!cancelled) setHistory(noteToday(binders, readStored(), new Date().toISOString()))
     })()
     return () => {
       cancelled = true
     }
   }, [binders])
 
-  return values
+  return { values, history }
 }

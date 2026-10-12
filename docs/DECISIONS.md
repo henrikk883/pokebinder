@@ -502,3 +502,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Die Namen stehen nicht im Binder (er speichert nur Verweise); sie werden beim Öffnen der Suche nachgeschlagen, eine Abfrage je Set, aus dem Vorrat der App.
 - Deck: Henrik wollte die Suche auch in den „Deck Boxen“. Dort ist es ein Feld über den Karten, das die gezeigten Karten eingrenzt – ein Deck hat keine Seiten, zu denen man springen könnte.
 - Die reine Logik liegt in `cardFinder.ts` (nicht `binderFind.ts`: der Name hätte sich unter Windows mit `BinderFind.tsx` nur in der Schreibweise unterschieden).
+
+## 2026-10-12 – Etappe B: Wertverlauf und Wunschpreis
+- Wertverlauf: Wenn das Regal die Werte der Binder kennt, hält es den Tag fest (`pokebinder:value-history`: je Tag der Wert jedes Binders). Nur vollständige Tage – fehlte ein Binder, sähe das wie ein Verlust aus. Täglich für 90 Tage, davor der letzte festgehaltene Tag jeder Woche. Im Regal steht die Veränderung seit dem ersten Tag, „Wertverlauf“ zeigt eine Linie (SVG, keine Bibliothek) für die Sammlung oder einen Binder.
+- Der Verlauf beginnt mit dem ersten Öffnen des Regals nach dieser Änderung und liegt je Gerät; ein Abgleich zwischen Geräten ist offen.
+- Wunschpreis: Henrik will ihn nur für ausgewählte Karten und in den Merklisten. Er gehört zur Karte auf der jeweiligen Liste (`wishPrice`), wandert darum mit Backup und Abgleich der Merklisten mit. Nur für Karten mit Wunschpreis fragt die App den aktuellen Preis ab. Erreicht der Preistrend den Wunsch, steht „Jetzt … €“ violett umrandet unter der Karte (ein aktiver Zustand), und der Reiter „Merkliste“ nennt die Zahl.
+- Henriks „nur aufs Handy“ verstehe ich als Benachrichtigung auf dem Handy. Das geht nicht nebenbei: Geprüft wird bisher nur, während die App offen ist. Als eigener Punkt 5b in der Roadmap, mit der nötigen Regeländerung; die Entscheidung liegt bei Henrik.
+- Dateinamen: `WishPriceLine.tsx` und `cardFinder.ts` heißen so, weil sich `WishPrice.tsx`/`wishPrice.ts` bzw. `BinderFind.tsx`/`binderFind.ts` unter Windows nur in der Schreibweise unterschieden hätten.

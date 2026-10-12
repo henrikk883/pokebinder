@@ -27,12 +27,15 @@ import {
 } from './binderOrder'
 import { useDragSensors } from './dragSensors'
 import { shelfTotal, useShelfValues, type StoredValue } from './shelfValue'
+import { changeOf, seriesOf } from './valueHistory'
+import { ValueHistoryDialog } from './ValueHistoryDialog'
 import { DeckShelf } from '../decks/DeckShelf'
 import { NewBinderDialog } from './NewBinderDialog'
 
 type Listing = { status: 'loading' } | { status: 'ready'; binders: Binder[] } | { status: 'error' }
 
 const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' })
+const shortDay = (date: string) => dateFormat.format(new Date(`${date}T12:00:00.000Z`))
 // the same list every time, so that nothing is worked out anew while the shelf loads
 const NO_BINDERS: readonly Binder[] = []
 
@@ -187,7 +190,9 @@ export function BinderList() {
   }, [version, listVersion])
 
   const stored = listing.status === 'ready' ? listing.binders : NO_BINDERS
-  const values = useShelfValues(stored)
+  const { values, history } = useShelfValues(stored)
+  const [showingHistory, setShowingHistory] = useState(false)
+  const change = changeOf(seriesOf(history, null))
   const total = shelfTotal(stored, values)
   const binders = sortBinders(stored, prefs.sort, prefs.order)
   const custom = prefs.sort === 'custom'
@@ -283,6 +288,21 @@ export function BinderList() {
           {` · ${de.binderList.ownedOfAll(total.owned, total.cards)}`}
           {total.pending > 0 && ` · ${de.binderList.worthPending}`}
         </p>
+      )}
+      {total.cards > 0 && history.length > 0 && (
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+          {change && <span data-testid="shelf-change">{de.history.valueChange(change.amount, shortDay(change.since))}</span>}
+          <button
+            type="button"
+            onClick={() => setShowingHistory(true)}
+            className="underline-offset-2 hover:text-text hover:underline"
+          >
+            {de.history.valueOpen}
+          </button>
+        </p>
+      )}
+      {showingHistory && (
+        <ValueHistoryDialog history={history} binders={stored} onClose={() => setShowingHistory(false)} />
       )}
       {custom && binders.length > 1 && <p className="mt-3 text-sm text-muted">{de.binderList.customHint}</p>}
       {binders.length > 0 && (
