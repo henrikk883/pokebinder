@@ -530,3 +530,4 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 ## 2026-10-12 – Kartenlisten importieren in der Roadmap
 - Von Henrik gewünscht, als Punkt 15 vor dem Tauschabgleich einsortiert. Nur aufgenommen; welche Dateiformate und wohin die Karten zuerst sollen, ist vor dem Bauen zu klären.
 - Nachtrag: Henrik will Punkt 15 (Kartenlisten importieren) vorerst nur in den Anforderungen, nicht gebaut. Dazu neu Punkt 16, erweiterte Kartensuche (Illustrator, Farbe), ebenfalls nur aufgenommen. TCGdex kann nach Illustrator und Kartenart filtern (abgefragt); eine Bildfarbe gibt es dort nicht.
+- Nachtrag: Henriks Idee einer Tauschbörse im Umkreis (Punkt 17) ist als Idee für später aufgenommen, ausdrücklich ohne Plan. In der Roadmap steht, was sie voraussetzen würde (offene Registrierung, Standortdaten, Moderation, Rechtliches).
