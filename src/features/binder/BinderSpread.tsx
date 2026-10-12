@@ -12,6 +12,8 @@ import type { Spread } from './spreads'
 
 /** Width of the open binder at 100 % zoom. */
 const BASE_WIDTH_PX = 980
+/** The same for one page on its own, as a phone shows it. */
+const SINGLE_WIDTH_PX = 500
 
 const sideClass = 'flex min-w-0 flex-1 flex-col'
 // Spacing inside the binder is given in --u (one pixel at 100 % zoom), so it scales with the zoom.
@@ -156,10 +158,15 @@ export function BinderSpread({ binder, spread, zoom }: BinderSpreadProps) {
       data-testid="binder-spread"
       data-export="spread"
       className="mx-auto flex shrink-0 gap-[calc(var(--u)*10)] rounded-panel border border-line bg-panel p-[calc(var(--u)*14)] shadow-lg"
-      style={{ width: `${(BASE_WIDTH_PX * zoom) / 100}px`, '--u': `${zoom / 100}px` } as CSSProperties}
+      style={
+        {
+          width: `${((spread.single ? SINGLE_WIDTH_PX : BASE_WIDTH_PX) * zoom) / 100}px`,
+          '--u': `${zoom / 100}px`,
+        } as CSSProperties
+      }
     >
-      {side(spread.left)}
-      <Rings />
+      {!spread.single && side(spread.left)}
+      {!spread.single && <Rings />}
       {side(spread.right)}
     </div>
   )

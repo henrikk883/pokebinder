@@ -134,7 +134,7 @@ export function BackupMenu() {
           data-testid="backup-reminder"
           title={de.backup.reminderHint}
           onClick={handleFullBackup}
-          className="rounded-control border border-line px-2 py-1 text-xs text-muted hover:border-accent hover:text-text"
+          className="rounded-control border border-line px-2 py-1 text-xs text-muted hover:border-accent hover:text-text max-md:hidden"
         >
           {reminder.kind === 'never' ? de.backup.neverSaved : de.backup.savedDaysAgo(reminder.days)}
         </button>
@@ -151,7 +151,7 @@ export function BackupMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute top-full right-0 z-10 mt-2 w-72 rounded-panel border border-line bg-panel p-1 shadow-lg"
+          className="absolute top-full right-0 z-10 mt-2 w-72 rounded-panel border border-line bg-panel p-1 shadow-lg max-md:fixed max-md:inset-x-2 max-md:top-auto max-md:bottom-20 max-md:z-40 max-md:mt-0 max-md:max-h-[60vh] max-md:w-auto max-md:overflow-y-auto"
         >
           <button type="button" role="menuitem" onClick={handleFullBackup} className={itemClass}>
             {de.backup.saveAll}

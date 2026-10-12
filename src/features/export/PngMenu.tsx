@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { de } from '../../i18n/de'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
+import { isPhone } from '../../lib/phone'
 import { spreadOfPage } from '../binder/spreads'
 import { useDismiss } from '../../lib/useDismiss'
 
@@ -149,7 +150,7 @@ export function PngMenu({ binder, binderName, pageCount, openPages, buttonClass 
         binderName,
         pages,
         // turning the page also clears the selection: the image shows the binder, not what is selected
-        (page) => useEditorStore.getState().showSpread(spreadOfPage(page - 1)),
+        (page) => useEditorStore.getState().showSpread(spreadOfPage(page - 1, isPhone())),
         (done, total) => setProgress({ done, total }),
       )
     } catch {
@@ -184,7 +185,7 @@ export function PngMenu({ binder, binderName, pageCount, openPages, buttonClass 
             : de.png.button}
       </button>
       {open && (
-        <div role="menu" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-1 shadow-lg">
+        <div role="menu" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-1 shadow-lg max-md:fixed max-md:inset-x-2 max-md:top-auto max-md:bottom-20 max-md:z-40 max-md:mt-0 max-md:max-h-[60vh] max-md:w-auto max-md:overflow-y-auto">
           {openPages.map((page) => (
             <button
               key={page}

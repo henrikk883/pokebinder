@@ -428,6 +428,12 @@ export const de = {
     variants: 'Varianten',
     close: 'Schließen',
   },
+  panes: {
+    label: 'Bereich',
+    binder: 'Binder',
+    search: 'Suche',
+    selection: 'Auswahl',
+  },
   layout: {
     showSearch: 'Suche einblenden',
     hideSearch: 'Suche ausblenden',

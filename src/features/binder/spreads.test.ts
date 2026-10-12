@@ -112,3 +112,24 @@ describe('fitZoom', () => {
     expect(fitZoom(80, at(80), { width: 0, height: 0 })).toBe(80)
   })
 })
+
+describe('one page at a time (phone)', () => {
+  it('opens every page on its own, without the cover', () => {
+    expect(buildSpreads(3, true)).toEqual([
+      { index: 0, left: null, right: 0, single: true },
+      { index: 1, left: null, right: 1, single: true },
+      { index: 2, left: null, right: 2, single: true },
+    ])
+    expect(buildSpreads(3, true).map(pageNumbersOf)).toEqual([[1], [2], [3]])
+  })
+
+  it('still has something to show for a binder without pages', () => {
+    expect(buildSpreads(0, true)).toEqual([{ index: 0, left: null, right: null, single: true }])
+  })
+
+  it('finds a page at its own index', () => {
+    expect([0, 1, 2, 5].map((page) => spreadOfPage(page, true))).toEqual([0, 1, 2, 5])
+    // with two pages open, as before
+    expect([0, 1, 2, 5].map((page) => spreadOfPage(page))).toEqual([0, 1, 1, 3])
+  })
+})

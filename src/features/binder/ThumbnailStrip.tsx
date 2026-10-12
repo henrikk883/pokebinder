@@ -12,6 +12,7 @@ import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder, Page } from '../../types/binder'
 import { layoutDimensions } from './binderModel'
+import { isPhone } from '../../lib/phone'
 import { useDragSensors } from './dragSensors'
 import { pageNumbersOf, spreadOfPage, type Spread } from './spreads'
 
@@ -96,7 +97,7 @@ export function ThumbnailStrip({ binder, spreads, current }: ThumbnailStripProps
     if (!target || target.id === active.id) return
     movePage(String(active.id), target.index)
     // follow the page to where it now lies
-    showSpread(spreadOfPage(target.index))
+    showSpread(spreadOfPage(target.index, isPhone()))
   }
 
   return (
@@ -124,11 +125,11 @@ export function ThumbnailStrip({ binder, spreads, current }: ThumbnailStripProps
                 className="flex shrink-0 flex-col items-center gap-1"
               >
                 <span
-                  className={`flex h-14 w-22 gap-1 rounded-control border-2 bg-panel p-1 ${
+                  className={`flex h-14 gap-1 rounded-control border-2 bg-panel p-1 ${spread.single ? 'w-11' : 'w-22'} ${
                     active ? 'border-accent' : 'border-line hover:border-muted'
                   }`}
                 >
-                  <MiniSide binder={binder} content={spread.left} movable={movable} />
+                  {!spread.single && <MiniSide binder={binder} content={spread.left} movable={movable} />}
                   <MiniSide binder={binder} content={spread.right} movable={movable} />
                 </span>
                 <span className={`text-xs ${active ? 'text-accent-hover' : 'text-muted'}`}>{label}</span>

@@ -12,7 +12,8 @@ import { savedCardCount } from './watchlist'
 import { WatchlistPanel } from './WatchlistPanel'
 
 /** As many cards side by side as fit, each about as wide as a real card in the hand. */
-const WIDE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-x-4 gap-y-6'
+const WIDE_GRID =
+  'grid grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-x-4 gap-y-6 max-md:grid-cols-2 max-md:gap-x-3'
 
 /**
  * The search of one language over the whole page. Names, sets, rarities and types differ
@@ -24,15 +25,17 @@ function WideSearch({ lang }: { lang: CardLang }) {
 
   return (
     <>
-      <div className="grid shrink-0 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
+      <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
         <input
           type="search"
           value={form.text}
           onChange={(event) => form.setText(event.target.value)}
           placeholder={de.search.placeholder}
           aria-label={de.search.placeholder}
-          className="h-10 w-full rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
+          className="col-span-2 h-10 w-full rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none lg:col-span-1"
         />
+        {/* the list of sets needs the whole width where the filters stand in two columns */}
+        <div className="col-span-2 lg:col-span-1">
         <SetPicker
           catalog={form.catalog.status === 'ready' ? form.catalog.data : undefined}
           unavailableText={
@@ -45,6 +48,7 @@ function WideSearch({ lang }: { lang: CardLang }) {
           value={form.setId}
           onChange={form.setSetId}
         />
+        </div>
         <FilterSelect label={de.search.rarity} value={form.rarity} options={form.rarities} onChange={form.setRarity} />
         <FilterSelect label={de.search.type} value={form.type} options={form.types} onChange={form.setType} />
         <LanguageSelect label={de.search.language} value={lang} onChange={setSearchLang} />
@@ -78,7 +82,7 @@ export function CardBrowser() {
   const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
 
   return (
-    <section className="mx-auto flex min-h-full max-w-[110rem] flex-col p-5">
+    <section className="mx-auto flex min-h-full max-w-[110rem] flex-col p-5 max-md:p-3">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h2 className="text-2xl font-semibold">{de.browse.title}</h2>
         <div role="tablist" aria-label={de.browse.title} className="flex border-b border-line">

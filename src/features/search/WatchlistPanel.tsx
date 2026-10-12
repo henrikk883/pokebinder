@@ -142,7 +142,7 @@ export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap
     <div className={wide ? '' : 'flex min-h-0 flex-1 flex-col'}>
       <ListChooser wide={wide} />
       <div
-        className={wide ? 'mt-5' : 'min-h-0 flex-1 overflow-y-auto px-4 pb-4'}
+        className={wide ? 'mt-5' : 'min-h-0 flex-1 overflow-y-auto px-4 pb-4 max-md:flex-none max-md:overflow-visible'}
         data-testid={wide ? 'browse-watchlist' : 'watchlist'}
       >
         {cards.length === 0 ? (
@@ -182,7 +182,7 @@ export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap
         </div>
       )}
       {draggable && cards.length > 0 && (
-        <p className="shrink-0 border-t border-line px-4 py-2 text-xs text-muted">{de.search.dragHint}</p>
+        <p className="shrink-0 border-t border-line px-4 py-2 text-xs text-muted max-md:hidden">{de.search.dragHint}</p>
       )}
     </div>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
 import { de } from '../../i18n/de'
+import { useIsPhone } from '../../lib/phone'
 import { binderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
@@ -53,7 +54,13 @@ function useEditorKeys(spreadCount: number) {
  * folded away, the window resized, the tablet turned. Not when a notice appears above the
  * binder for a moment; the binder must not jump because of that.
  */
-function useAutoZoom(frame: RefObject<HTMLDivElement | null>, zoom: number, layoutKey: string) {
+function useAutoZoom(
+  frame: RefObject<HTMLDivElement | null>,
+  zoom: number,
+  layoutKey: string,
+  /** On a phone the page fills the width and the screen scrolls; its height is no limit. */
+  widthOnly: boolean,
+) {
   const autoZoom = useEditorStore((state) => state.autoZoom)
 
   useLayoutEffect(() => {
@@ -66,7 +73,7 @@ function useAutoZoom(frame: RefObject<HTMLDivElement | null>, zoom: number, layo
       const next = fitZoom(
         zoom,
         { width: spread.offsetWidth, height: spread.offsetHeight },
-        { width: element.clientWidth, height: element.clientHeight },
+        { width: element.clientWidth, height: widthOnly ? Number.MAX_SAFE_INTEGER : element.clientHeight },
       )
       if (next !== zoom) useEditorStore.getState().fitZoomTo(next)
     }
@@ -95,7 +102,7 @@ function useAutoZoom(frame: RefObject<HTMLDivElement | null>, zoom: number, layo
       window.removeEventListener('resize', fitSoon)
       observer?.disconnect()
     }
-  }, [frame, autoZoom, zoom, layoutKey])
+  }, [frame, autoZoom, zoom, layoutKey, widthOnly])
 }
 
 export function BinderEditor({ binder }: { binder: Binder }) {
@@ -104,18 +111,19 @@ export function BinderEditor({ binder }: { binder: Binder }) {
   const notice = useEditorStore((state) => state.notice)
   const collecting = useEditorStore((state) => state.mode === 'collection')
 
-  const spreads = buildSpreads(binder.pages.length)
+  const phone = useIsPhone()
+  const spreads = buildSpreads(binder.pages.length, phone)
   const current = clampSpread(spreadIndex, spreads.length)
   const spread = spreads[current]
   useEditorKeys(spreads.length)
   const frame = useRef<HTMLDivElement>(null)
   // the line that explains "Sammlung" takes room for as long as the mode lasts
-  useAutoZoom(frame, zoom, `${binder.id}:${binder.layout}:${collecting}`)
+  useAutoZoom(frame, zoom, `${binder.id}:${binder.layout}:${collecting}:${phone}`, phone)
 
   if (!spread) return null
 
   return (
-    <section className="flex h-full flex-col gap-4 p-5">
+    <section className="flex h-full flex-col gap-4 p-5 max-md:h-auto max-md:gap-3 max-md:p-3">
       <BinderToolbar binder={binder} spread={spread} />
       <PageControls spread={spread} spreadCount={spreads.length} />
       {collecting && (
@@ -128,7 +136,11 @@ export function BinderEditor({ binder }: { binder: Binder }) {
           {notice}
         </p>
       )}
-      <div ref={frame} data-testid="binder-frame" className="min-h-0 flex-1 overflow-auto">
+      <div
+        ref={frame}
+        data-testid="binder-frame"
+        className="min-h-0 flex-1 overflow-auto max-md:flex-none max-md:overflow-visible"
+      >
         <BinderSpread binder={binder} spread={spread} zoom={zoom} />
       </div>
       <ThumbnailStrip binder={binder} spreads={spreads} current={current} />

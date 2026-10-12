@@ -153,9 +153,10 @@ Das Mockup ist die verbindliche Vorlage für den Binder-Editor auf dem Desktop: 
 
 ## Nicht-funktionale Anforderungen
 
-- **Plattform:** läuft im Browser auf Desktop und Tablet. Das Smartphone wird nicht eigens unterstützt.
+- **Plattform:** läuft im Browser auf Desktop, Tablet und Smartphone.
 - **Bedienung per Finger:** Ein Finger greift eine Karte nach kurzem Halten (250 ms), ein Wischen scrollt; mit der Maus beginnt das Ziehen sofort. Was am PC nur beim Überfahren erscheint, ist auf Geräten ohne Maus erreichbar (der Knopf „Fehlt“ auf der angetippten Karte, „Löschen“ und die Knöpfe im Regal dauerhaft).
 - **Schmale Bildschirme:** Unter 1280 px Breite startet die rechte Spalte eingeklappt und schiebt sich über den Binder. Hochformat wird nicht eigens unterstützt.
+- **Smartphone (unter 768 px Breite):** ein Bereich zur Zeit – Binder, Suche oder Auswahl – mit einer Leiste am unteren Rand; der Binder liegt mit einer Seite offen, die die Breite füllt; Menüs klappen von unten auf.
 - **Performance:** Seitenwechsel unter 100 ms; Kartenbilder in der Suche lazy und klein, große nur im Binder.
 - **Offline:** TCGdex-Antworten liegen 24 Stunden in IndexedDB (danach als Rückfall); bereits gesehene Kartenbilder hält ein Service Worker vor. Der Bilder-Vorrat braucht `https` oder `localhost`.
 - **Datenhaltung:** lokal im Browser (IndexedDB), kein eigener Server. Jedes Gerät hat seinen eigenen Bestand.

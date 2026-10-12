@@ -217,7 +217,7 @@ export function BinderList() {
   }
 
   return (
-    <section className="mx-auto flex h-full max-w-5xl flex-col p-5">
+    <section className="mx-auto flex h-full max-w-5xl flex-col p-5 max-md:p-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-semibold">{de.binderList.title}</h2>
         <div className="flex items-center gap-3">
@@ -261,7 +261,7 @@ export function BinderList() {
       {binders.length > 0 && (
         <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
           {/* a shelf: the binders stand side by side, each showing its cover */}
-          <ul className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-x-5 gap-y-7">
+          <ul className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-x-5 gap-y-7 max-md:grid-cols-2 max-md:gap-x-3">
             {binders.map((binder, index) => (
               <BinderTile
                 key={binder.id}

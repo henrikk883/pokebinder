@@ -5,11 +5,17 @@ import { DEFAULT_LANG, type CardLang, type SlotPosition } from '../types/binder'
 export type EditorMode = 'edit' | 'collection'
 /** What fills the app: the binders (shelf or open binder), or the page to browse cards. */
 export type AppView = 'binders' | 'cards'
+/** The three columns of the app; a phone shows one of them at a time. */
+export type AppPane = 'search' | 'binder' | 'selection'
+export const APP_PANES: readonly AppPane[] = ['binder', 'search', 'selection']
 
 /** View state of the binder editor; nothing here is saved. */
 export interface EditorState {
   view: AppView
   showView: (view: AppView) => void
+  /** On a phone one of the three columns is shown at a time: this one. */
+  pane: AppPane
+  showPane: (pane: AppPane) => void
   /** Which spread lies open. Components clamp it to the spreads that exist. */
   spreadIndex: number
   zoom: number
@@ -72,6 +78,8 @@ function selectionOf(positions: SlotPosition[]): Pick<EditorState, 'selection' |
 export const useEditorStore = create<EditorState>()((set) => ({
   view: 'binders',
   showView: (view) => set({ view }),
+  pane: 'binder',
+  showPane: (pane) => set({ pane }),
   spreadIndex: 0,
   zoom: DEFAULT_ZOOM,
   autoZoom: true,
@@ -109,6 +117,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
     set((state) => ({
       // a binder that is opened is what the collector wants to see
       view: 'binders',
+      pane: 'binder',
       spreadIndex: 0,
       zoom: DEFAULT_ZOOM,
       autoZoom: true,

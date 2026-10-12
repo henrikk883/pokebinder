@@ -8,9 +8,23 @@ export interface Spread {
   /** `'cover'` for the inside of the cover, `null` where the binder has no page. */
   left: number | 'cover' | null
   right: number | null
+  /** On a phone one page lies open at a time: it is `right`, and `left` is not shown. */
+  single?: true
 }
 
-export function buildSpreads(pageCount: number): Spread[] {
+/**
+ * What can lie open, in order. `single` is for screens too narrow for two pages: then
+ * every page is opened on its own, and the cover is left out.
+ */
+export function buildSpreads(pageCount: number, single = false): Spread[] {
+  if (single) {
+    return Array.from({ length: Math.max(1, pageCount) }, (_, index) => ({
+      index,
+      left: null,
+      right: index < pageCount ? index : null,
+      single: true as const,
+    }))
+  }
   const spreads: Spread[] = [{ index: 0, left: 'cover', right: pageCount > 0 ? 0 : null }]
   for (let left = 1; left < pageCount; left += 2) {
     spreads.push({
@@ -22,9 +36,9 @@ export function buildSpreads(pageCount: number): Spread[] {
   return spreads
 }
 
-/** Index of the spread that shows the given page. */
-export function spreadOfPage(pageIndex: number): number {
-  return Math.floor((pageIndex + 1) / 2)
+/** Index of the spread that shows the given page; with one page at a time, that of the page. */
+export function spreadOfPage(pageIndex: number, single = false): number {
+  return single ? pageIndex : Math.floor((pageIndex + 1) / 2)
 }
 
 /** Page numbers as printed in the UI (starting at 1), left to right. */

@@ -11,7 +11,8 @@ export function SaveStatusBadge() {
         aria-hidden="true"
         className={`size-2.5 rounded-full ${saveStatus === 'saved' ? 'bg-success' : 'bg-muted'}`}
       />
-      {de.saveStatus[saveStatus]}
+      {/* on a phone the dot alone says it; the words stay for screen readers */}
+      <span className="max-md:sr-only">{de.saveStatus[saveStatus]}</span>
     </p>
   )
 }

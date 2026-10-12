@@ -60,7 +60,10 @@ function CardSearch({ lang }: { lang: CardLang }) {
         <LanguageSelect label={de.search.language} value={lang} onChange={setSearchLang} />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4" data-testid="search-results">
+      <div
+        className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 max-md:flex-none max-md:overflow-visible"
+        data-testid="search-results"
+      >
         <SearchResults
           search={form.search}
           sets={form.sets}
@@ -73,7 +76,7 @@ function CardSearch({ lang }: { lang: CardLang }) {
       </div>
 
       {binderOpen && (
-        <p className="shrink-0 border-t border-line px-4 py-2 text-xs text-muted">
+        <p className="shrink-0 border-t border-line px-4 py-2 text-xs text-muted max-md:hidden">
           {de.search.dragHint}
         </p>
       )}
@@ -90,7 +93,7 @@ export function SearchPanel() {
   const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
 
   return (
-    <section className="flex h-full flex-col">
+    <section className="flex h-full flex-col max-md:h-auto">
       <div className="shrink-0 space-y-3 p-4 pb-3">
         <h2 className="text-lg font-semibold">{de.search.title}</h2>
         <div role="tablist" className="flex border-b border-line">

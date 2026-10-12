@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { de } from '../i18n/de'
 import { useBinderStore } from '../store/binderStore'
-import { useEditorStore } from '../store/editorStore'
+import { useIsPhone } from '../lib/phone'
+import { APP_PANES, useEditorStore, type AppPane } from '../store/editorStore'
 
 interface AppLayoutProps {
   header: ReactNode
@@ -105,6 +106,7 @@ const WIDE_COLUMNS = {
  * their edge, which leaves the binder more room. The search always stands beside the
  * binder, so that cards can be dragged across. The selection does too where the screen is
  * wide enough; on a narrow one (a tablet upright, a small window) it slides over the binder.
+ * A phone shows one of the three at a time.
  */
 export function AppLayout({ header, left, center, right, footer, page }: AppLayoutProps) {
   const [stored, setOpen] = useState(readOpenColumns)
@@ -132,6 +134,14 @@ export function AppLayout({ header, left, center, right, footer, page }: AppLayo
     ? 'grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]'
     : 'grid-cols-[minmax(0,1fr)]'
 
+  // A phone has room for one of the three at a time; a bar at the bottom switches between
+  // them. The elements stay the same as on a wide screen, only how they are laid out
+  // differs, so that nothing loses its state when the screen is turned.
+  const phone = useIsPhone()
+  const pane = useEditorStore((state) => state.pane)
+  const showPane = useEditorStore((state) => state.showPane)
+  const shown = (which: AppPane, wide: boolean) => (phone ? pane === which : wide)
+
   return (
     <div className="flex h-full flex-col bg-bg text-text">
       {header}
@@ -142,43 +152,75 @@ export function AppLayout({ header, left, center, right, footer, page }: AppLayo
       )}
       <div
         className={
-          page !== undefined ? 'hidden' : `relative grid min-h-0 flex-1 ${narrowColumns} ${wideColumns}`
+          page !== undefined
+            ? 'hidden'
+            : phone
+              ? 'min-h-0 flex-1'
+              : `relative grid min-h-0 flex-1 ${narrowColumns} ${wideColumns}`
         }
       >
         <aside
           id="column-left"
           data-testid="column-left"
-          className={`min-h-0 overflow-y-auto border-r border-line bg-panel ${open.left ? '' : 'hidden'}`}
+          className={`min-h-0 overflow-y-auto bg-panel ${phone ? 'h-full' : 'border-r border-line'} ${
+            shown('search', open.left) ? '' : 'hidden'
+          }`}
         >
           {left}
         </aside>
-        <main data-testid="column-center" className="min-h-0 overflow-auto">
+        <main
+          data-testid="column-center"
+          className={`min-h-0 overflow-auto ${phone ? 'h-full' : ''} ${shown('binder', true) ? '' : 'hidden'}`}
+        >
           {center}
         </main>
         <aside
           id="column-right"
           data-testid="column-right"
-          className={`min-h-0 overflow-y-auto border-l border-line bg-panel max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-10 max-xl:w-sidebar max-xl:shadow-2xl ${
-            open.right ? '' : 'hidden'
-          }`}
+          className={`min-h-0 overflow-y-auto bg-panel ${
+            phone
+              ? 'h-full'
+              : 'border-l border-line max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-10 max-xl:w-sidebar max-xl:shadow-2xl'
+          } ${shown('selection', open.right) ? '' : 'hidden'}`}
         >
           {right}
         </aside>
-        <ColumnTab
-          side="left"
-          open={open.left}
-          controls="column-left"
-          label={open.left ? de.layout.hideSearch : de.layout.showSearch}
-          onToggle={() => toggle('left')}
-        />
-        <ColumnTab
-          side="right"
-          open={open.right}
-          controls="column-right"
-          label={open.right ? de.layout.hideSelection : de.layout.showSelection}
-          onToggle={() => toggle('right')}
-        />
+        {!phone && (
+          <>
+            <ColumnTab
+              side="left"
+              open={open.left}
+              controls="column-left"
+              label={open.left ? de.layout.hideSearch : de.layout.showSearch}
+              onToggle={() => toggle('left')}
+            />
+            <ColumnTab
+              side="right"
+              open={open.right}
+              controls="column-right"
+              label={open.right ? de.layout.hideSelection : de.layout.showSelection}
+              onToggle={() => toggle('right')}
+            />
+          </>
+        )}
       </div>
+      {phone && page === undefined && (
+        <nav aria-label={de.panes.label} className="flex shrink-0 border-t border-line bg-panel">
+          {APP_PANES.map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-current={pane === option ? 'page' : undefined}
+              onClick={() => showPane(option)}
+              className={`h-14 flex-1 border-t-2 text-sm font-medium ${
+                pane === option ? 'border-accent text-accent-hover' : 'border-transparent text-muted'
+              }`}
+            >
+              {de.panes[option]}
+            </button>
+          ))}
+        </nav>
+      )}
       {footer}
     </div>
   )

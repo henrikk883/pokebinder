@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { chronologicalSetIds, tcgdexFor } from '../../lib/tcgdex'
+import { isPhone } from '../../lib/phone'
 import { binderStore, useBinderStore } from '../../store/binderStore'
 import { confirmDialog, promptDialog } from '../../store/dialogStore'
 import { useEditorStore } from '../../store/editorStore'
@@ -15,9 +16,12 @@ import { buildSpreads, pageNumbersOf, type Spread } from './spreads'
 import { useDismiss } from '../../lib/useDismiss'
 
 const buttonClass =
-  'flex h-10 items-center gap-2 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
+  'flex h-10 items-center gap-2 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line max-md:h-9 max-md:px-2.5'
 
-const menuClass = 'absolute top-full z-10 mt-2 rounded-panel border border-line bg-panel p-1 shadow-lg'
+// On a phone a menu comes up from the bottom over the whole width instead of dropping down
+// beside its button, where it would hang over the edge of the screen.
+const menuClass =
+  'absolute top-full z-10 mt-2 rounded-panel border border-line bg-panel p-1 shadow-lg max-md:fixed max-md:inset-x-2 max-md:top-auto max-md:bottom-20 max-md:z-40 max-md:mt-0 max-md:max-h-[60vh] max-md:w-auto max-md:overflow-y-auto'
 const menuItemClass =
   'flex w-full items-center gap-2 rounded-control px-3 py-2 text-left text-sm hover:bg-raised'
 const menuHeadingClass = 'px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted uppercase'
@@ -103,7 +107,7 @@ function SortMenu({ binder, spread }: { binder: Binder; spread: Spread }) {
         {de.binder.sort}
       </button>
       {open && (
-        <div role="menu" className={`${menuClass} left-0 w-72`}>
+        <div role="menu" className={`${menuClass} left-0 w-72 max-md:w-auto`}>
           <p className={menuHeadingClass}>{de.binder.sortBySet}</p>
           {group('set')}
           <p className={menuHeadingClass}>{de.binder.sortByDex}</p>
@@ -197,7 +201,7 @@ function MoreMenu({ binder }: { binder: Binder }) {
         {de.binder.more}
       </button>
       {open && (
-        <div role="menu" className={`${menuClass} right-0 w-64`}>
+        <div role="menu" className={`${menuClass} right-0 w-64 max-md:w-auto`}>
           <button type="button" role="menuitem" onClick={handleRename} className={menuItemClass}>
             {de.binder.rename}
           </button>
@@ -274,12 +278,16 @@ export function BinderToolbar({ binder, spread }: { binder: Binder; spread: Spre
   function handleAddPage() {
     addPage()
     // open the binder where the new page is
-    showSpread(buildSpreads(binder.pages.length + 1).length - 1)
+    showSpread(buildSpreads(binder.pages.length + 1, isPhone()).length - 1)
   }
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <h2 className="mr-auto max-w-64 min-w-0 truncate text-2xl font-semibold" title={binder.name}>
+      <h2
+        // on a phone the name has a row of its own, the buttons wrap below it
+        className="mr-auto max-w-64 min-w-0 truncate text-2xl font-semibold max-md:w-full max-md:max-w-none max-md:text-xl"
+        title={binder.name}
+      >
         {binder.name}
       </h2>
       <SortMenu binder={binder} spread={spread} />

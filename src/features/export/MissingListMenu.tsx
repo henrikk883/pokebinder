@@ -59,7 +59,7 @@ export function MissingListMenu({ binder, buttonClass }: { binder: Binder; butto
         {progress ? de.missingList.working(progress.done, progress.total) : de.missingList.menu}
       </button>
       {open && (
-        <div role="menu" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-1 shadow-lg">
+        <div role="menu" className="absolute top-full left-0 z-10 mt-2 w-64 rounded-panel border border-line bg-panel p-1 shadow-lg max-md:fixed max-md:inset-x-2 max-md:top-auto max-md:bottom-20 max-md:z-40 max-md:mt-0 max-md:max-h-[60vh] max-md:w-auto max-md:overflow-y-auto">
           {ENTRIES.map((entry) => (
             <button
               key={entry.exporter}

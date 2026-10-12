@@ -88,7 +88,7 @@ export function PageControls({ spread, spreadCount }: PageControlsProps) {
         </button>
       </div>
 
-      <div role="group" aria-label={de.binder.zoom} className="flex items-center">
+      <div role="group" aria-label={de.binder.zoom} className="flex items-center max-md:hidden">
         <button
           type="button"
           aria-label={de.binder.zoomOut}

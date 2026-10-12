@@ -18,6 +18,7 @@ import { CardImage } from '../search/CardImage'
 import { LanguageSelect } from '../search/LanguageSelect'
 import { useReadyCatalog } from '../search/useCatalog'
 import { canCloseGap, copiesOf, MAX_COPIES } from './binderModel'
+import { isPhone } from '../../lib/phone'
 import { spreadOfPage } from './spreads'
 import { useCard, useCardDetail, useCardLangs, usePrice } from './useCard'
 
@@ -197,7 +198,7 @@ export function SelectionPanel() {
   /** Turns to where the selected page lies after it moved, and keeps its pocket selected. */
   function follow(toIndex: number) {
     if (!selection) return
-    showSpread(spreadOfPage(toIndex))
+    showSpread(spreadOfPage(toIndex, isPhone()))
     select(selection)
   }
 

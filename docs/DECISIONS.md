@@ -382,3 +382,11 @@ Im Abschnitt „Bild“ der rechten Spalte stehen vier Pfeile, die das Bild hint
 
 ## 2026-10-12 – Menüs schließen bei Klick daneben
 Alle aufklappbaren Menüs (Sortieren, Fehlliste, Als PNG, Mehr, Backup, Set-Auswahl) schließen sich, wenn man irgendwo außerhalb klickt oder tippt; bisher ging das nur mit Esc oder durch die Wahl eines Eintrags. Dadurch ist nie mehr als ein Menü offen. Der Klick wirkt zusätzlich normal weiter (ein Pocket wird z. B. trotzdem gewählt). Von Henrik gemeldet.
+
+## 2026-10-12 – Handy-Ansicht, Schritt 1: Aufbau
+- Unter 768 px Breite (`src/lib/phone.ts`) zeigt die App einen der drei Bereiche zur Zeit: „Binder“, „Suche“ oder „Auswahl“, umgeschaltet über eine Leiste am unteren Rand. Die Laschen an den Spalten entfallen dort. Die Elemente bleiben dieselben wie auf dem breiten Bildschirm, nur die Anordnung wechselt, damit beim Drehen nichts seinen Zustand verliert.
+- Der Binder liegt mit einer Seite offen statt mit zweien (ohne Cover-Innenseite); geblättert wird seitenweise, die Miniaturleiste zeigt eine Miniatur je Seite. Die Seite füllt die Breite, der Bereich scrollt senkrecht; der Zoom-Regler ist ausgeblendet.
+- Menüs klappen als Blatt vom unteren Rand über die ganze Breite auf. Kopfzeile ohne Schriftzug, Speicherstatus nur als Punkt, die Sicherungs-Erinnerung entfällt dort (sie steckt im Menü „Backup“). Der Rechtshinweis bleibt, kleiner gesetzt.
+- Regal und Seite „Karten“ stehen in zwei Spalten; in der Suche scrollen die Filter mit den Ergebnissen weg.
+- Bilder über zwei Seiten bleiben erhalten, auf dem Handy sieht man je Seite ihren Teil.
+- Von Henrik auf dem Handy getestet und freigegeben.
