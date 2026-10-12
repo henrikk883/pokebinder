@@ -1,0 +1,10 @@
+// Hosting at Cloudflare: the built app (dist/) is served as plain files, there is no
+// server code. Cloudflare builds from the private GitHub repository on every push to main
+// ("npm run build", then "npx wrangler deploy", which reads this file).
+{
+  "name": "pokebinder",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
