@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { buildSpreads, clampSpread, clampZoom, pageNumbersOf, spreadOfPage } from './spreads'
+import {
+  buildSpreads,
+  clampSpread,
+  clampZoom,
+  fitZoom,
+  pageNumbersOf,
+  spreadOfPage,
+} from './spreads'
 
 describe('buildSpreads', () => {
   it('puts page 1 alone on the right, next to the inside of the cover', () => {
@@ -66,5 +73,42 @@ describe('limits', () => {
     expect(clampSpread(1, 3)).toBe(1)
     expect(clampSpread(9, 3)).toBe(2)
     expect(clampSpread(2, 0)).toBe(0)
+  })
+})
+
+describe('fitZoom', () => {
+  // the binder as it is 784 × 540 at 80 %
+  const at = (zoom: number) => ({ width: (980 * zoom) / 100, height: (675 * zoom) / 100 })
+
+  it('keeps the usual zoom where the binder fits', () => {
+    expect(fitZoom(80, at(80), { width: 840, height: 560 })).toBe(80)
+    expect(fitZoom(80, at(80), at(80))).toBe(80)
+  })
+
+  it('goes down in steps of five until the binder fits, by height or by width', () => {
+    // a tablet in landscape: not high enough
+    expect(fitZoom(80, at(80), { width: 880, height: 479 })).toBe(70)
+    expect(fitZoom(70, at(70), { width: 880, height: 479 })).toBe(70)
+    // a narrow window: not wide enough
+    expect(fitZoom(80, at(80), { width: 600, height: 900 })).toBe(60)
+  })
+
+  it('takes at least one step when the binder is a hair too large', () => {
+    expect(fitZoom(80, { width: 784, height: 541 }, { width: 840, height: 540 })).toBe(75)
+  })
+
+  it('comes back up when there is more room, but not above the usual zoom', () => {
+    expect(fitZoom(60, at(60), { width: 880, height: 479 })).toBe(70)
+    expect(fitZoom(60, at(60), { width: 3000, height: 2000 })).toBe(80)
+  })
+
+  it('does not go below the smallest zoom', () => {
+    expect(fitZoom(80, at(80), { width: 200, height: 100 })).toBe(50)
+    expect(fitZoom(50, at(50), { width: 200, height: 100 })).toBe(50)
+  })
+
+  it('leaves the zoom alone while nothing is laid out yet', () => {
+    expect(fitZoom(80, { width: 0, height: 0 }, { width: 800, height: 600 })).toBe(80)
+    expect(fitZoom(80, at(80), { width: 0, height: 0 })).toBe(80)
   })
 })

@@ -175,3 +175,58 @@ test('binders on the shelf are rearranged by finger', async ({ page }) => {
   // letting go did not open the binder
   await expect(page.getByRole('heading', { name: 'Meine Binder' })).toBeVisible()
 })
+
+test('the search folds away too, and the binder then has the whole width', async ({ page }) => {
+  await createBinder(page, 'Breite')
+  const left = page.getByTestId('column-left')
+  const width = async () => (await page.getByTestId('column-center').boundingBox())?.width
+  await expect(left).toBeVisible()
+
+  await page.getByRole('button', { name: 'Suche ausblenden' }).tap()
+  await expect(left).toBeHidden()
+  expect(await width()).toBeCloseTo(1180, 0)
+
+  // what was typed is still there when the search comes back
+  await page.getByRole('button', { name: 'Suche einblenden' }).tap()
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  await page.getByRole('button', { name: 'Suche ausblenden' }).tap()
+  await page.getByRole('button', { name: 'Suche einblenden' }).tap()
+  await expect(page.getByRole('searchbox', { name: 'Name, Set oder Nummer' })).toHaveValue('Glurak')
+  expect(await width()).toBeCloseTo(1180 - 300, 0)
+})
+
+test('the zoom adapts so that the whole binder is in view, until one is picked by hand', async ({ page }) => {
+  await createBinder(page, 'Passend')
+  const value = page.getByTestId('zoom-value')
+  const zoom = async () => Number((await value.textContent())?.replace(' %', ''))
+  /** How far the binder reaches beyond its frame, in pixels; 0 or less means all of it shows. */
+  const overflow = () =>
+    page.getByTestId('binder-frame').evaluate((frame) => {
+      const spread = frame.firstElementChild as HTMLElement
+      return Math.max(spread.offsetWidth - frame.clientWidth, spread.offsetHeight - frame.clientHeight)
+    })
+
+  // the screen is too low for the usual 80 %
+  await expect(value).not.toHaveText('80 %')
+  const fitted = await zoom()
+  expect(fitted).toBeLessThan(80)
+  expect(await overflow()).toBeLessThanOrEqual(0)
+  // and it is the largest zoom that fits: one step more would not
+  await page.getByRole('button', { name: 'Vergrößern' }).tap()
+  expect(await zoom()).toBe(fitted + 5)
+  expect(await overflow()).toBeGreaterThan(0)
+
+  // a zoom picked by hand stays, whatever happens to the columns
+  await page.getByRole('button', { name: 'Suche ausblenden' }).tap()
+  await page.getByRole('button', { name: 'Suche einblenden' }).tap()
+  expect(await zoom()).toBe(fitted + 5)
+
+  // another binder starts fitted again; a higher screen gives it more room
+  await page.getByRole('banner').getByRole('button', { name: 'Meine Binder' }).tap()
+  await page.getByRole('button', { name: 'Passend öffnen' }).tap()
+  await expect(value).toHaveText(`${fitted} %`)
+  await page.setViewportSize({ width: 1180, height: 1100 })
+  await expect(value).toHaveText('80 %')
+  await page.setViewportSize({ width: 1180, height: 820 })
+  await expect(value).toHaveText(`${fitted} %`)
+})

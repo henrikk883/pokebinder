@@ -18,7 +18,9 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      // high enough for the open binder at its usual zoom; on lower screens the app zooms
+      // out by itself, which tests/e2e/tablet.spec.ts covers
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
     },
   ],
   webServer: {

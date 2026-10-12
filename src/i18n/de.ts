@@ -307,6 +307,8 @@ export const de = {
     unknownCard: 'Unbekannte Karte',
   },
   layout: {
+    showSearch: 'Suche einblenden',
+    hideSearch: 'Suche ausblenden',
     showSelection: 'Auswahl einblenden',
     hideSelection: 'Auswahl ausblenden',
   },

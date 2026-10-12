@@ -226,6 +226,14 @@ describe('changing images', () => {
     expect(clampCrop({ x: -1, y: 0.5, zoom: 0.2 })).toEqual({ x: 0, y: 0.5, zoom: 1 })
   })
 
+  it('drops the remainders that dragging leaves in the numbers', () => {
+    expect(clampCrop({ x: 1.3877787807814457e-17, y: 0.30000000000000004, zoom: 2.00004 })).toEqual({
+      x: 0,
+      y: 0.3,
+      zoom: 2,
+    })
+  })
+
   it('removes an image', () => {
     let placed = place(binder, 0, { fromSlot: 0, spanCols: 1, spanRows: 1 })
     placed = place(placed, 0, { fromSlot: 2, spanCols: 1, spanRows: 1 }, 'other')

@@ -280,3 +280,8 @@ Ein eingesetztes Bild wird an einem seiner Pockets gegriffen und auf einem ander
 - Unter 1280 px Breite ist die rechte Spalte eingeklappt und schiebt sich über eine Lasche am rechten Rand über den Binder. Hochformat wird nicht eigens unterstützt.
 - IDs kommen aus `src/lib/id.ts`: `crypto.randomUUID` gibt es nur auf https/localhost, nicht, wenn die App im Heimnetz über die IP-Adresse geöffnet wird.
 - Auf dem iPad von Henrik getestet und freigegeben.
+
+## 2026-10-12 – Suche einklappbar, Zoom passt sich an
+- Beide äußeren Spalten lassen sich auf jedem Bildschirm über eine Lasche an ihrem Rand weg- und wieder aufklappen (Henriks iPad ist breit genug für die Desktop-Ansicht, deshalb nicht nur auf schmalen Bildschirmen). Die Suche steht offen immer neben dem Binder, damit man Karten hinüberziehen kann; die Auswahl ebenfalls ab 1280 px Breite, darunter schiebt sie sich über den Binder. Start: alles offen, was passt (unter 1280 px ohne Auswahl). Der Zustand wird in diesem Browser gemerkt (`pokebinder:columns`).
+- Beim Öffnen eines Binders wählt die App den größten Zoom, bei dem die Doppelseite ganz zu sehen ist, höchstens die üblichen 80 %. Sie passt ihn neu an, wenn sich der Platz dauerhaft ändert (Spalte geklappt, Fenster verändert, Tablet gedreht), nicht wenn kurz ein Hinweis eingeblendet wird. Sobald man mit „+“/„–“ selbst einen Zoom wählt, bleibt der, bis ein Binder neu geöffnet wird. Auf großen Bildschirmen ändert sich dadurch nichts.
+- Zuschnitt-Werte werden auf vier Nachkommastellen gerundet (vorher blieben Reste wie 1e-17 stehen).

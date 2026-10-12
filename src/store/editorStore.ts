@@ -9,6 +9,11 @@ export interface EditorState {
   /** Which spread lies open. Components clamp it to the spreads that exist. */
   spreadIndex: number
   zoom: number
+  /**
+   * The zoom follows the room the binder has, until the collector picks one with the
+   * buttons; opening another binder hands it back.
+   */
+  autoZoom: boolean
   selection: SlotPosition | null
   /** `edit` arranges the binder; in `collection` a click on a card toggles owned / missing. */
   mode: EditorMode
@@ -24,7 +29,10 @@ export interface EditorState {
 
   setNotice: (notice: string | null) => void
   showSpread: (index: number) => void
+  /** The collector picks a zoom; it then stays. */
   setZoom: (zoom: number) => void
+  /** The app adapts the zoom to the room there is. */
+  fitZoomTo: (zoom: number) => void
   select: (position: SlotPosition | null) => void
   /** Back to the first spread, e.g. when another binder is opened. */
   reset: (searchLang?: CardLang) => void
@@ -33,6 +41,7 @@ export interface EditorState {
 export const useEditorStore = create<EditorState>()((set) => ({
   spreadIndex: 0,
   zoom: DEFAULT_ZOOM,
+  autoZoom: true,
   selection: null,
   mode: 'edit',
   notice: null,
@@ -44,11 +53,14 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setSearchLang: (searchLang) => set({ searchLang }),
   setNotice: (notice) => set({ notice }),
   showSpread: (index) => set({ spreadIndex: Math.max(0, index), selection: null, notice: null }),
-  setZoom: (zoom) => set({ zoom: clampZoom(zoom) }),
+  setZoom: (zoom) => set({ zoom: clampZoom(zoom), autoZoom: false }),
+  fitZoomTo: (zoom) => set({ zoom: clampZoom(zoom) }),
   select: (selection) => set({ selection, notice: null }),
   reset: (searchLang) =>
     set((state) => ({
       spreadIndex: 0,
+      zoom: DEFAULT_ZOOM,
+      autoZoom: true,
       selection: null,
       notice: null,
       mode: 'edit',

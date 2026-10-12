@@ -41,6 +41,31 @@ export function clampZoom(zoom: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(zoom / ZOOM_STEP) * ZOOM_STEP))
 }
 
+export interface Size {
+  width: number
+  height: number
+}
+
+/**
+ * The zoom at which the open binder fits into the room it has, never more than the usual
+ * one. `spread` is the size of the binder as shown at `zoom`. The result is a step on
+ * the way: a binder that is still too large after it gets one more, so asking again with
+ * the new size settles on the largest zoom that fits.
+ */
+export function fitZoom(zoom: number, spread: Size, available: Size): number {
+  if (spread.width <= 0 || spread.height <= 0 || available.width <= 0 || available.height <= 0) {
+    return zoom
+  }
+  const ratio = Math.min(available.width / spread.width, available.height / spread.height)
+  const target = Math.min(
+    DEFAULT_ZOOM,
+    Math.max(MIN_ZOOM, Math.floor((zoom * ratio) / ZOOM_STEP) * ZOOM_STEP),
+  )
+  // too large: at least one step smaller, also where rounding says it would just fit
+  if (ratio < 1) return Math.max(MIN_ZOOM, Math.min(target, zoom - ZOOM_STEP))
+  return Math.max(zoom, target)
+}
+
 export function clampSpread(index: number, spreadCount: number): number {
   return Math.min(Math.max(0, spreadCount - 1), Math.max(0, index))
 }

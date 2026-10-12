@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
 import { binderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
@@ -6,7 +6,7 @@ import { BinderSpread } from './BinderSpread'
 import { BinderToolbar } from './BinderToolbar'
 import { PageControls } from './PageControls'
 import { ProgressBar } from './ProgressBar'
-import { buildSpreads, clampSpread } from './spreads'
+import { buildSpreads, clampSpread, fitZoom } from './spreads'
 import { ThumbnailStrip } from './ThumbnailStrip'
 
 function isTyping(target: EventTarget | null): boolean {
@@ -40,6 +40,59 @@ function useEditorKeys(spreadCount: number) {
   }, [spreadCount])
 }
 
+/**
+ * Keeps the open binder as large as fits into its frame (see `fitZoom`), until the
+ * collector picks a zoom. `frame` is the scrolling area, the binder its only child.
+ *
+ * The zoom is fitted when a binder is opened and when the room changes for good: a column
+ * folded away, the window resized, the tablet turned. Not when a notice appears above the
+ * binder for a moment; the binder must not jump because of that.
+ */
+function useAutoZoom(frame: RefObject<HTMLDivElement | null>, zoom: number, layoutKey: string) {
+  const autoZoom = useEditorStore((state) => state.autoZoom)
+
+  useLayoutEffect(() => {
+    const element = frame.current
+    if (!autoZoom || !element) return
+
+    function fit() {
+      const spread = element?.firstElementChild
+      if (!element || !(spread instanceof HTMLElement)) return
+      const next = fitZoom(
+        zoom,
+        { width: spread.offsetWidth, height: spread.offsetHeight },
+        { width: element.clientWidth, height: element.clientHeight },
+      )
+      if (next !== zoom) useEditorStore.getState().fitZoomTo(next)
+    }
+    // each step towards the fitting zoom brings the effect back here for the next one
+    fit()
+
+    // later changes are answered a frame later: setting the zoom changes the layout again
+    let request = 0
+    const fitSoon = () => {
+      cancelAnimationFrame(request)
+      request = requestAnimationFrame(fit)
+    }
+    window.addEventListener('resize', fitSoon)
+    let width = element.clientWidth
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(() => {
+            if (element.clientWidth === width) return
+            width = element.clientWidth
+            fitSoon()
+          })
+    observer?.observe(element)
+    return () => {
+      cancelAnimationFrame(request)
+      window.removeEventListener('resize', fitSoon)
+      observer?.disconnect()
+    }
+  }, [frame, autoZoom, zoom, layoutKey])
+}
+
 export function BinderEditor({ binder }: { binder: Binder }) {
   const zoom = useEditorStore((state) => state.zoom)
   const spreadIndex = useEditorStore((state) => state.spreadIndex)
@@ -49,6 +102,8 @@ export function BinderEditor({ binder }: { binder: Binder }) {
   const current = clampSpread(spreadIndex, spreads.length)
   const spread = spreads[current]
   useEditorKeys(spreads.length)
+  const frame = useRef<HTMLDivElement>(null)
+  useAutoZoom(frame, zoom, `${binder.id}:${binder.layout}`)
 
   if (!spread) return null
 
@@ -61,7 +116,7 @@ export function BinderEditor({ binder }: { binder: Binder }) {
           {notice}
         </p>
       )}
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div ref={frame} data-testid="binder-frame" className="min-h-0 flex-1 overflow-auto">
         <BinderSpread binder={binder} spread={spread} zoom={zoom} />
       </div>
       <ThumbnailStrip binder={binder} spreads={spreads} current={current} />

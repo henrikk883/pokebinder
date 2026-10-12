@@ -34,7 +34,10 @@ export const MIN_CROP_ZOOM = 1
 export const MAX_CROP_ZOOM = 4
 
 export function clampCrop(crop: ImageCrop): ImageCrop {
-  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+  // Rounded to a ten-thousandth: dragging leaves remainders like 1e-17 behind, which are
+  // no part of the picture anyone could see.
+  const clamp = (value: number, min: number, max: number) =>
+    Math.round(Math.min(max, Math.max(min, value)) * 10_000) / 10_000
   return {
     x: clamp(crop.x, 0, 1),
     y: clamp(crop.y, 0, 1),
