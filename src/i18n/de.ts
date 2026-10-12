@@ -157,6 +157,7 @@ export const de = {
   },
   header: {
     myBinders: 'Meine Binder',
+    cards: 'Karten',
   },
   saveStatus: {
     saving: 'Speichert …',
@@ -315,12 +316,21 @@ export const de = {
     markOwnedLabel: 'Als vorhanden markieren',
     unknownCard: 'Unbekannte Karte',
   },
+  browse: {
+    title: 'Karten',
+    hint: 'Zum Stöbern: Karte anklicken für Details, Stern zum Merken. In den Binder kommen Karten über die Suche neben dem Binder.',
+    tabs: {
+      all: 'Alle Karten',
+      saved: 'Merkliste',
+    },
+  },
   watchlist: {
+    saveCard: (name: string) => `${name} merken`,
+    unsaveCard: (name: string) => `${name} von der Merkliste nehmen`,
     save: 'Merken',
     saved: 'Gemerkt',
-    empty: 'Noch nichts gemerkt. Über den Info-Knopf einer Karte kommt sie auf die Merkliste.',
+    empty: 'Noch nichts gemerkt. Der Stern auf einer Karte setzt sie auf die Merkliste.',
     count: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} gemerkt`,
-    marker: 'Auf der Merkliste',
   },
   cardInfo: {
     open: (name: string) => `Infos zu ${name}`,

@@ -1,11 +1,17 @@
 import { BackupMenu } from '../features/export/BackupMenu'
 import { de } from '../i18n/de'
 import { useBinderStore } from '../store/binderStore'
+import { useEditorStore } from '../store/editorStore'
 import { SaveStatusBadge } from './SaveStatusBadge'
+
+const linkClass = 'hover:text-text'
 
 export function AppHeader() {
   const binderName = useBinderStore((state) => state.binder?.name)
   const closeBinder = useBinderStore((state) => state.closeBinder)
+  const view = useEditorStore((state) => state.view)
+  const showView = useEditorStore((state) => state.showView)
+  const onShelf = view === 'binders' && binderName === undefined
 
   return (
     <header className="flex h-header shrink-0 items-center gap-6 border-b border-line bg-panel px-5">
@@ -17,19 +23,48 @@ export function AppHeader() {
         </svg>
         <span className="text-xl font-semibold tracking-tight">{de.app.name}</span>
       </div>
-      <nav className="flex items-center gap-3 border-l border-line pl-6 text-sm text-muted">
-        {binderName === undefined ? (
-          <span>{de.header.myBinders}</span>
+      <nav className="flex min-w-0 items-center gap-3 border-l border-line pl-6 text-sm text-muted">
+        {onShelf ? (
+          <span aria-current="page" className="text-text">
+            {de.header.myBinders}
+          </span>
         ) : (
-          <button type="button" onClick={closeBinder} className="hover:text-text">
+          <button
+            type="button"
+            onClick={() => {
+              // to the shelf, from the open binder as well as from another page
+              closeBinder()
+              showView('binders')
+            }}
+            className={linkClass}
+          >
             {de.header.myBinders}
           </button>
         )}
         {binderName !== undefined && (
           <>
             <span aria-hidden="true">/</span>
-            <span className="text-text">{binderName}</span>
+            {view === 'binders' ? (
+              <span aria-current="page" className="truncate text-text">
+                {binderName}
+              </span>
+            ) : (
+              // back to the binder that lies open underneath
+              <button type="button" onClick={() => showView('binders')} className={`truncate ${linkClass}`}>
+                {binderName}
+              </button>
+            )}
           </>
+        )}
+        <span aria-hidden="true" className="h-5 border-l border-line" />
+        {view === 'cards' ? (
+          <span aria-current="page" className="text-text">
+            {de.header.cards}
+          </span>
+        ) : (
+          <button type="button" onClick={() => showView('cards')} className={linkClass}>
+            {de.header.cards}
+          </button>
         )}
       </nav>
       <div className="ml-auto flex items-center gap-5">

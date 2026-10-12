@@ -8,7 +8,14 @@ import { CardTile } from './CardTile'
 import { useReadyCatalog } from './useCatalog'
 import type { SavedCard } from './watchlist'
 
-function SavedTile({ saved, draggable }: { saved: SavedCard; draggable: boolean }) {
+interface SavedTileProps {
+  saved: SavedCard
+  draggable: boolean
+  dragIdPrefix: string
+  browsing: boolean
+}
+
+function SavedTile({ saved, draggable, dragIdPrefix, browsing }: SavedTileProps) {
   const card = useCard(saved.cardId, saved.lang)
   const catalog = useReadyCatalog(saved.lang)
 
@@ -29,21 +36,28 @@ function SavedTile({ saved, draggable }: { saved: SavedCard; draggable: boolean 
       set={catalog?.setsById.get(setIdOfCard(card))}
       lang={saved.lang}
       draggable={draggable}
-      // the same card may also be among the search results, which stay mounted
-      dragIdPrefix="saved"
+      dragIdPrefix={dragIdPrefix}
+      browsing={browsing}
     />
   )
 }
 
-/** The "Merkliste": cards noted from the card info, ready to be dragged into a binder. */
-export function WatchlistPanel() {
+interface WatchlistPanelProps {
+  /** On the page "Karten": over the whole width, to look at, not to drag from. */
+  wide?: boolean
+  gridClass?: string
+}
+
+/** The "Merkliste": cards noted while browsing, ready to be dragged into a binder. */
+export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap-x-3 gap-y-4' }: WatchlistPanelProps) {
   const cards = useWatchlistStore((state) => state.cards)
   const editing = useEditorStore((state) => state.mode === 'edit')
   const binderOpen = useBinderStore((state) => state.binder !== null) && editing
+  const draggable = binderOpen && !wide
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4" data-testid="watchlist">
+    <div className={wide ? '' : 'flex min-h-0 flex-1 flex-col'}>
+      <div className={wide ? '' : 'min-h-0 flex-1 overflow-y-auto px-4 pb-4'} data-testid={wide ? 'browse-watchlist' : 'watchlist'}>
         {cards.length === 0 ? (
           <p className="text-sm text-muted">{de.watchlist.empty}</p>
         ) : (
@@ -51,15 +65,22 @@ export function WatchlistPanel() {
             <p role="status" className="mb-3 text-xs text-muted">
               {de.watchlist.count(cards.length)}
             </p>
-            <ul className="grid grid-cols-2 gap-x-3 gap-y-4">
+            <ul className={gridClass}>
               {cards.map((saved) => (
-                <SavedTile key={`${saved.lang}:${saved.cardId}`} saved={saved} draggable={binderOpen} />
+                <SavedTile
+                  key={`${saved.lang}:${saved.cardId}`}
+                  saved={saved}
+                  draggable={draggable}
+                  // the same card may be shown by several lists that are mounted at once
+                  dragIdPrefix={wide ? 'browse-saved' : 'saved'}
+                  browsing={wide}
+                />
               ))}
             </ul>
           </>
         )}
       </div>
-      {binderOpen && cards.length > 0 && (
+      {draggable && cards.length > 0 && (
         <p className="shrink-0 border-t border-line px-4 py-2 text-xs text-muted">{de.search.dragHint}</p>
       )}
     </div>

@@ -248,7 +248,8 @@ test('cards are noted from their info and wait on the "Merkliste" to be dragged 
   await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
   const found = page.getByTestId('search-results').locator('[data-card-id="sv03.5-001"]')
   await expect(found).toBeVisible()
-  await expect(found.getByRole('img', { name: 'Auf der Merkliste' })).toHaveCount(0)
+  // not noted: its star only shows when the card is pointed at
+  await expect(found.getByRole('button', { name: 'Bisasam merken' })).toHaveCSS('opacity', '0')
   await found.hover()
   await found.getByRole('button', { name: 'Infos zu Bisasam' }).click()
   const dialog = page.getByRole('dialog', { name: 'Bisasam' })
@@ -257,7 +258,8 @@ test('cards are noted from their info and wait on the "Merkliste" to be dragged 
   await dialog.getByRole('button', { name: 'Schließen' }).click()
 
   // the search result is marked, the tab counts
-  await expect(found.getByRole('img', { name: 'Auf der Merkliste' })).toBeVisible()
+  await page.mouse.move(5, 5)
+  await expect(found.getByRole('button', { name: 'Bisasam von der Merkliste nehmen' })).toHaveCSS('opacity', '1')
   await expect(page.getByTestId('saved-count')).toHaveText('1')
 
   // on the list it can be dragged into the binder like a search result

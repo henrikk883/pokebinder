@@ -9,6 +9,12 @@ interface AppLayoutProps {
   center: ReactNode
   right: ReactNode
   footer: ReactNode
+  /**
+   * A page of its own that takes the place of the three columns, e.g. "Karten". The
+   * columns stay as they are underneath, so the binder and its search are found again
+   * as they were left.
+   */
+  page?: ReactNode
 }
 
 interface OpenColumns {
@@ -100,7 +106,7 @@ const WIDE_COLUMNS = {
  * binder, so that cards can be dragged across. The selection does too where the screen is
  * wide enough; on a narrow one (a tablet upright, a small window) it slides over the binder.
  */
-export function AppLayout({ header, left, center, right, footer }: AppLayoutProps) {
+export function AppLayout({ header, left, center, right, footer, page }: AppLayoutProps) {
   const [stored, setOpen] = useState(readOpenColumns)
   // While cards are ticked off ("Sammlung") nothing is dragged in, so the search makes
   // room for the binder. The tab still brings it back; that is not remembered.
@@ -129,7 +135,16 @@ export function AppLayout({ header, left, center, right, footer }: AppLayoutProp
   return (
     <div className="flex h-full flex-col bg-bg text-text">
       {header}
-      <div className={`relative grid min-h-0 flex-1 ${narrowColumns} ${wideColumns}`}>
+      {page !== undefined && (
+        <main data-testid="page" className="min-h-0 flex-1 overflow-auto">
+          {page}
+        </main>
+      )}
+      <div
+        className={
+          page !== undefined ? 'hidden' : `relative grid min-h-0 flex-1 ${narrowColumns} ${wideColumns}`
+        }
+      >
         <aside
           id="column-left"
           data-testid="column-left"

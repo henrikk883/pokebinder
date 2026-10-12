@@ -318,3 +318,10 @@ Im Modus „Sammlung“ wird nichts hineingezogen, deshalb ist die Suche dort ei
 - Im Info-Fenster einer Karte gibt es den Knopf „Merken“ / „Gemerkt“. Gemerkte Karten stehen im dritten Reiter „Merkliste“ der linken Spalte (mit Anzahl), die zuletzt gemerkte zuerst, und lassen sich von dort wie Suchergebnisse in den Binder ziehen. In der Suche trägt eine gemerkte Karte einen violetten Punkt vor dem Namen.
 - Die Liste gilt für alle Binder. Eine Karte bleibt gemerkt, auch wenn sie in einen Binder gelegt wurde; entfernt wird sie über denselben Knopf.
 - Gemerkt wird Karte + Sprache. Gespeichert im `localStorage` dieses Browsers (`pokebinder:watchlist`), nicht im Backup – wie die Reihenfolge des Regals.
+
+## 2026-10-12 – Seite „Karten“ zum Stöbern
+- Zweiter Eintrag „Karten“ in der Kopfzeile neben „Meine Binder“. Die Seite zeigt die Kartensuche über die ganze Breite: Filter in einer Zeile, Karten als großes Raster (so viele nebeneinander, wie passen), dazu ein Umschalter „Alle Karten“ / „Merkliste“.
+- Dort wird nur gestöbert und gemerkt: Ein Klick auf eine Karte öffnet ihr Info-Fenster, ziehen lässt sich nichts. In den Binder kommen Karten weiter über die Suche neben dem Binder (bzw. deren Reiter „Merkliste“).
+- Schnell-Merken: Jede Karte hat oben links einen Stern, unter der Maus beim Überfahren, auf Touch-Geräten immer. Eine gemerkte Karte behält ihren Stern sichtbar; er ersetzt den violetten Punkt vor dem Namen. Der Stern gibt es auch in der schmalen Suche.
+- Ein offener Binder bleibt darunter offen: Sein Name in der Kopfzeile führt zurück, „Meine Binder“ ins Regal. Die Suche der Seite und die Suche neben dem Binder merken sich Text und Filter getrennt.
+- Mehrere Merklisten sind der nächste Schritt und noch nicht gebaut.
