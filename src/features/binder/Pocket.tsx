@@ -13,6 +13,7 @@ import {
 } from '../../types/binder'
 import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
+import { copiesOf } from './binderModel'
 import { pocketId, type DragSource, type DropTarget } from './dragDrop'
 import { useCard } from './useCard'
 
@@ -39,10 +40,12 @@ interface PocketCardProps {
   position: SlotPosition
   cardRef: CardRef
   owned: boolean
+  /** How many copies of the card there are; more than one is worth a word. */
+  copies: number
   selected: boolean
 }
 
-function PocketCard({ position, cardRef, owned, selected }: PocketCardProps) {
+function PocketCard({ position, cardRef, owned, copies, selected }: PocketCardProps) {
   const { cardId, variant, lang } = cardRef
   const card = useCard(cardId, lang)
   const catalog = useReadyCatalog(lang)
@@ -79,6 +82,16 @@ function PocketCard({ position, cardRef, owned, selected }: PocketCardProps) {
         isDragging ? 'opacity-30' : ''
       }`}
     >
+      {copies > 1 && (
+        <span
+          data-testid="copies-badge"
+          // the binder shows one of them; how many there are is no part of its picture
+          data-export-hide
+          className="pointer-events-none absolute top-1 left-1 z-10 rounded-control bg-bg/90 px-1.5 py-0.5 text-[0.65rem] font-semibold"
+        >
+          {de.binder.copiesBadge(copies)}
+        </span>
+      )}
       {showsVariant && (
         <span
           data-testid="variant-badge"
@@ -214,6 +227,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
           position={position}
           cardRef={slot.cardRef}
           owned={slot.owned}
+          copies={copiesOf(slot)}
           selected={selected}
         />
       ) : (

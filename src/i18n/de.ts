@@ -314,6 +314,7 @@ export const de = {
     markMissingLabel: 'Als fehlend markieren',
     markOwned: 'Vorhanden',
     markOwnedLabel: 'Als vorhanden markieren',
+    copiesBadge: (count: number) => `×${count}`,
     unknownCard: 'Unbekannte Karte',
   },
   browse: {
@@ -348,7 +349,14 @@ export const de = {
     emptyList: 'Diese Liste ist leer. Im Info-Fenster einer Karte legst du fest, auf welchen Listen sie steht.',
     count: (count: number) => `${count} ${count === 1 ? 'Karte' : 'Karten'} gemerkt`,
   },
+  trade: {
+    menu: 'Tauschliste (doppelte Karten)',
+    title: (name: string) => `Tauschliste – ${name}`,
+    hint: 'Karten, die du mehrfach hast: so viele, wie über das eine Exemplar für den Binder hinaus da sind, mit dem Cardmarket-Preistrend je Stück.',
+    empty: 'Du hast keine Karte doppelt. Die Anzahl stellst du rechts bei der gewählten Karte ein.',
+  },
   shopping: {
+    pieces: (count: number, price: string) => `${count} × ${price}`,
     menu: 'Einkaufsliste',
     title: (name: string) => `Einkaufsliste – ${name}`,
     hint: 'Was noch fehlt und was es bei Cardmarket kostet (Preistrend). Der Link öffnet die Karte dort in einem neuen Tab.',
@@ -409,6 +417,10 @@ export const de = {
     pocket: 'Pocket',
     page: 'Seite',
     position: 'Position',
+    copies: 'Anzahl',
+    copiesHint: 'Wie oft du die Karte hast. Was mehrfach da ist, steht auf der Tauschliste.',
+    fewerCopies: 'Anzahl verringern',
+    moreCopies: 'Anzahl erhöhen',
     clear: 'Pocket leeren',
     insertGap: 'Lücke einfügen',
     insertGapHint: 'Schiebt diese Karte und die folgenden um ein Pocket weiter, damit hier eine Karte dazwischen passt.',

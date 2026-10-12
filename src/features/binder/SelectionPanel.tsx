@@ -17,12 +17,14 @@ import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
 import { LanguageSelect } from '../search/LanguageSelect'
 import { useReadyCatalog } from '../search/useCatalog'
-import { canCloseGap } from './binderModel'
+import { canCloseGap, copiesOf, MAX_COPIES } from './binderModel'
 import { spreadOfPage } from './spreads'
 import { useCard, useCardDetail, useCardLangs, usePrice } from './useCard'
 
 const fieldClass =
   'flex h-10 items-center rounded-control border border-line bg-raised px-3 text-sm'
+const stepClass =
+  'flex size-9 items-center justify-center border border-line bg-raised hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
 const pageButtonClass =
   'flex h-10 w-full items-center justify-center rounded-control border border-line bg-raised px-2 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
 const outlineButtonClass =
@@ -37,6 +39,8 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
   const position = { pageId: page.id, slotIndex: slot.index }
   const setVariant = useBinderStore((state) => state.setVariant)
   const setCardLang = useBinderStore((state) => state.setCardLang)
+  const setCount = useBinderStore((state) => state.setCount)
+  const copies = copiesOf(slot)
   const detail = useCardDetail(slot.cardRef?.cardId, lang)
   const langs = useCardLangs(slot.cardRef?.cardId, lang)
   const price = usePrice(slot.cardRef?.cardId, slot.cardRef?.variant, lang)
@@ -128,6 +132,33 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
             {owned ? de.selection.owned : de.selection.missing}
           </button>
         ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-3 text-sm" title={de.selection.copiesHint}>
+        <span className="text-muted">{de.selection.copies}</span>
+        <div role="group" aria-label={de.selection.copies} className="flex items-center">
+          <button
+            type="button"
+            aria-label={de.selection.fewerCopies}
+            disabled={copies <= 1}
+            onClick={() => setCount(position, copies - 1)}
+            className={`${stepClass} rounded-l-control`}
+          >
+            <span aria-hidden="true">–</span>
+          </button>
+          <output data-testid="copies" className="flex h-9 w-12 items-center justify-center border-y border-line bg-raised">
+            {copies}
+          </output>
+          <button
+            type="button"
+            aria-label={de.selection.moreCopies}
+            disabled={!slot.owned || copies >= MAX_COPIES}
+            onClick={() => setCount(position, copies + 1)}
+            className={`${stepClass} rounded-r-control`}
+          >
+            <span aria-hidden="true">+</span>
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -15,6 +15,15 @@ export interface ShoppingRow {
   price?: number
   /** Cardmarket's number of the product, for the link to it. */
   cardmarketId?: number
+  /** How many of the card the line stands for; one if left out. */
+  count?: number
+}
+
+const piecesOf = (row: Pick<ShoppingRow, 'count'>) => Math.max(1, row.count ?? 1)
+
+/** How many cards the lines stand for together. */
+export function cardCount(rows: readonly ShoppingRow[]): number {
+  return rows.reduce((sum, row) => sum + piecesOf(row), 0)
 }
 
 export type ShoppingOrder = 'cheapest' | 'dearest' | 'binder'
@@ -52,7 +61,7 @@ export function withinBudget(rows: readonly ShoppingRow[], budget: number): Budg
   let spent = 0
   for (const row of sortShopping(rows, 'cheapest')) {
     if (row.price === undefined) break
-    const cents = Math.round(row.price * 100)
+    const cents = Math.round(row.price * 100) * piecesOf(row)
     if (spent + cents > limit) break
     spent += cents
     affordable.add(row.key)
@@ -65,8 +74,8 @@ export function shoppingTotal(rows: readonly ShoppingRow[]): { total: number; un
   let cents = 0
   let unpriced = 0
   for (const row of rows) {
-    if (row.price === undefined) unpriced++
-    else cents += Math.round(row.price * 100)
+    if (row.price === undefined) unpriced += piecesOf(row)
+    else cents += Math.round(row.price * 100) * piecesOf(row)
   }
   return { total: cents / 100, unpriced }
 }

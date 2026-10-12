@@ -15,6 +15,7 @@ import {
   removePage,
   renameBinder,
   setCard,
+  setCount,
   setCardLang,
   setOpeningSide,
   setOwned,
@@ -94,6 +95,8 @@ export interface BinderState {
   /** Closes the gap at an empty pocket: the cards behind it move one pocket back. */
   closeGap: (position: SlotPosition) => void
   setOwned: (position: SlotPosition, owned: boolean) => void
+  /** How many copies of the card in a pocket there are. */
+  setCount: (position: SlotPosition, count: number) => void
   setOpeningSide: (pageId: string, openingSide: OpeningSide) => void
   /** Drops a dragged card or library image on a pocket; an image may not fit there. */
   dropCard: (source: DragSource, target: DropTarget) => PlacementError | null
@@ -245,6 +248,7 @@ export function createBinderStore(deps: BinderStoreDeps) {
       insertGap: (position) => change((binder) => insertGap(binder, position)),
       closeGap: (position) => change((binder) => closeGap(binder, position)),
       setOwned: (position, owned) => change((binder) => setOwned(binder, position, owned)),
+      setCount: (position, count) => change((binder) => setCount(binder, position, count)),
       setOpeningSide: (pageId, openingSide) =>
         change((binder) => setOpeningSide(binder, pageId, openingSide)),
       dropCard: (source, target) => {

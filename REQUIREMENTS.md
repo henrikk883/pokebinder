@@ -83,6 +83,7 @@ Die Michi Method ist der Kern: Statt jede Tasche gleich zu füllen, mischt sie E
 11. **Fehlende Karten markieren.** Ein Klick auf eine Karte im Modus „Sammlung“, der Knopf auf der Karte oder der Umschalter „Vorhanden / Fehlt“ markiert sie; fehlende Karten erscheinen schwarz-weiß.
     - Im Modus „Sammlung“ ist die Suche eingeklappt und eine Zeile über dem Binder erklärt, was ein Klick bewirkt.
     - Fortschritt pro Binder sichtbar, z. B. 142 / 191 Karten.
+    - **Stückzahl:** Für eine vorhandene Karte lässt sich festhalten, wie oft sie da ist; im Binder zeigt ein Schildchen die Zahl. Daraus entsteht die **Tauschliste** (Menü „Fehlliste“): alle überzähligen Exemplare mit Preis je Stück und Summe.
 12. **Preise.** Für die gewählte Karte zeigt die App den Cardmarket-Preistrend; „Wert berechnen“ summiert den Binder.
 13. **Holo-Effekt.** Folienkarten, die ich besitze, schimmern unter der Maus.
 
@@ -172,7 +173,7 @@ Die App speichert nur Verweise auf Karten (Karten-ID + Sprache + Variante), nie 
 | --- | --- | --- |
 | Binder | id, name, mode (`empty` \| `masterSet`), setId?, withReverseHolo, withSecretRares, withPromos, layout (`2x2` \| `3x3` \| `4x4`), lang, defaultOpeningSide, cover (title, assetId?), pages[], createdAt, updatedAt | Wurzel, als JSON exportierbar |
 | Page | id, index, openingSide (`left` \| `right` \| `mixed`), slots[], images[] | slots.length = rows × cols |
-| Slot | index, cardRef?, owned | owned = false heißt „fehlt“ |
+| Slot | index, cardRef?, owned, count? | owned = false heißt „fehlt“; count = Anzahl der Exemplare, fehlt bei einem |
 | CardRef | cardId (z. B. `swsh3-136`), lang (`de` \| `en` \| `ja`), variant | Variante ist eine offene Liste: `normal`, `holo`, `reverse` oder ein Muster wie `pokeball`, `masterball` |
 | PlacedImage | id, assetId, fromSlot, spanCols, spanRows, crop (x, y, zoom) | liegt hinter den Karten; darf von einer linken Seite auf die rechte reichen |
 | Asset | id, blob, mimeType, width, height, createdAt? | hochgeladene Bilder und Cover, in IndexedDB |
@@ -223,9 +224,8 @@ Claude Code hat die App in sieben Phasen gebaut; jede endete mit einer Definitio
 
 Von Henrik am 12.10.2026 aufgenommen, in dieser Reihenfolge geplant:
 
-1. **Doppelte Karten:** Stückzahl pro Karte, daraus eine Tauschliste.
-2. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
-3. **Fortschritt pro Set** in gemischten Bindern.
-4. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
-5. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
-6. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.
+1. **Mehrere Karten auf einmal:** mehrere Pockets markieren und zusammen verschieben, leeren oder als „fehlt“ setzen.
+2. **Fortschritt pro Set** in gemischten Bindern.
+3. **Varianten korrigieren:** Karten, die als „normal“ im Binder liegen, aber nur als Holo existieren, per Knopf umstellen.
+4. **Knopf „Bild verschieben“** für Bilder, die ganz mit Karten belegt sind.
+5. **Smartphone-Ansicht:** eigener Umbau (eine Seite statt Doppelseite, Suche als eigener Bildschirm), nur bei Bedarf.

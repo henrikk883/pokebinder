@@ -20,6 +20,7 @@ export function MissingListMenu({ binder, buttonClass }: { binder: Binder; butto
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [failed, setFailed] = useState(false)
   const [shopping, setShopping] = useState<Binder | null>(null)
+  const [trading, setTrading] = useState<Binder | null>(null)
 
   async function run(exporter: Exporter) {
     setOpen(false)
@@ -79,7 +80,28 @@ export function MissingListMenu({ binder, buttonClass }: { binder: Binder; butto
           >
             {de.shopping.menu}
           </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              setTrading(binder)
+            }}
+            className={menuItemClass}
+          >
+            {de.trade.menu}
+          </button>
         </div>
+      )}
+      {trading && (
+        <ShoppingDialog
+          title={de.trade.title(trading.name)}
+          hint={de.trade.hint}
+          emptyText={de.trade.empty}
+          withBudget={false}
+          load={async (onProgress) => (await import('./missingListTransfer')).loadTradeRows(trading, onProgress)}
+          onClose={() => setTrading(null)}
+        />
       )}
       {shopping && (
         <ShoppingDialog

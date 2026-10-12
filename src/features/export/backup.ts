@@ -178,7 +178,13 @@ function readSlot(value: unknown, index: number, path: string): Slot {
   if (raw.index !== index) invalid(`${path}.index`)
   const owned = readBoolean(raw.owned, `${path}.owned`)
   if (raw.cardRef === undefined) return { index, owned }
-  return { index, cardRef: readCardRef(raw.cardRef, `${path}.cardRef`), owned }
+  const slot: Slot = { index, cardRef: readCardRef(raw.cardRef, `${path}.cardRef`), owned }
+  // missing in files from before cards could be counted; kept only where it says something
+  if (raw.count !== undefined) {
+    const count = readInt(raw.count, `${path}.count`, 1)
+    if (owned && count > 1) slot.count = count
+  }
+  return slot
 }
 
 function readPlacedImage(value: unknown, slotCount: number, path: string): PlacedImage {

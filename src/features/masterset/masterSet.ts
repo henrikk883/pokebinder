@@ -1,6 +1,7 @@
 import { baseVariant, type CardDetail, type Catalog } from '../../lib/tcgdex'
 import type { Binder, CardLang, CardRef, Layout, OpeningSide, Slot } from '../../types/binder'
 import {
+  copiesOf,
   createBinder,
   createPage,
   defaultContext,
@@ -177,12 +178,27 @@ export function rebuildMasterSet(
   const belongsToSet = (cardId: string) => ownSets.some((setId) => cardId.startsWith(`${setId}-`))
 
   const existing = binder.pages.flatMap((page) =>
-    page.slots.flatMap((slot) => (slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned }] : [])),
+    page.slots.flatMap((slot) =>
+      slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned, copies: copiesOf(slot) }] : [],
+    ),
   )
   const owned = new Set(existing.filter((card) => card.owned).map((card) => refKey(card.cardRef)))
+  // how many copies there are of each card; a card in several pockets counts with its largest number
+  const copies = new Map<string, number>()
+  for (const card of existing) {
+    const key = refKey(card.cardRef)
+    copies.set(key, Math.max(copies.get(key) ?? 0, card.copies))
+  }
   const extras = existing.filter((card) => !belongsToSet(card.cardRef.cardId))
 
-  const cards = [...wanted.map((cardRef) => ({ cardRef, owned: owned.has(refKey(cardRef)) })), ...extras]
+  const cards = [
+    ...wanted.map((cardRef) => ({
+      cardRef,
+      owned: owned.has(refKey(cardRef)),
+      copies: copies.get(refKey(cardRef)) ?? 0,
+    })),
+    ...extras,
+  ]
   const perPage = slotsPerPage(binder.layout)
   const lastImagePage = binder.pages.reduce((last, page) => (page.images.length > 0 ? page.index : last), -1)
   const pageCount = Math.max(pagesNeeded(cards.length, binder.layout), lastImagePage + 1)
@@ -194,7 +210,10 @@ export function rebuildMasterSet(
       ...page,
       slots: page.slots.map((slot): Slot => {
         const card = cards[pageIndex * perPage + slot.index]
-        return card ? { index: slot.index, cardRef: card.cardRef, owned: card.owned } : { index: slot.index, owned: false }
+        if (!card) return { index: slot.index, owned: false }
+        const kept: Slot = { index: slot.index, cardRef: card.cardRef, owned: card.owned }
+        if (card.owned && card.copies > 1) kept.count = card.copies
+        return kept
       }),
     }
   })

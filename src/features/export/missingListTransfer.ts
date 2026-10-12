@@ -6,6 +6,7 @@ import {
   tcgdexFor,
 } from '../../lib/tcgdex'
 import type { Binder, CardLang } from '../../types/binder'
+import { copiesOf } from '../binder/binderModel'
 import { buildMissingList, missingListCsv, type CardInfo, type MissingRow } from './missingList'
 import { createMissingListPdf } from './missingListPdf'
 import { wideFontFor } from './pdfFont'
@@ -102,6 +103,43 @@ async function loadList(binder: Binder, withPrices: boolean, onProgress?: Progre
 
 export async function loadMissingList(binder: Binder, onProgress?: Progress): Promise<MissingRow[]> {
   return (await loadList(binder, true, onProgress)).rows
+}
+
+/**
+ * The cards of a binder there are more than one copy of, as lines of a list to trade
+ * from: each with the copies beyond the one the binder holds, and what one is worth.
+ */
+export async function loadTradeRows(binder: Binder, onProgress?: Progress): Promise<ShoppingRow[]> {
+  const spare = binder.pages.flatMap((page) =>
+    page.slots.flatMap((slot) => {
+      const extra = copiesOf(slot) - 1
+      return slot.cardRef && extra > 0 ? [{ cardRef: slot.cardRef, extra }] : []
+    }),
+  )
+  return mapWithConcurrency(
+    spare,
+    PARALLEL_REQUESTS,
+    async ({ cardRef, extra }, index) => {
+      const card = await loadCard(cardRef.cardId, cardRef.lang)
+      const price = await tcgdexFor(cardRef.lang)
+        .getPrice(cardRef.cardId, cardRef.variant)
+        .catch(() => undefined)
+      const line: ShoppingRow = {
+        key: `${index}:${cardRef.lang}:${cardRef.cardId}:${cardRef.variant}`,
+        cardId: cardRef.cardId,
+        lang: cardRef.lang,
+        variant: cardRef.variant,
+        name: card?.name ?? cardRef.cardId,
+        setName: card?.setName ?? '',
+        number: card ? (card.officialCount === undefined ? card.localId : `${card.localId}/${card.officialCount}`) : '',
+        count: extra,
+      }
+      if (price) line.price = price.amount
+      if (price?.productId !== undefined) line.cardmarketId = price.productId
+      return line
+    },
+    onProgress,
+  )
 }
 
 /** The missing cards of a binder as lines of a shopping list, in binder order. */

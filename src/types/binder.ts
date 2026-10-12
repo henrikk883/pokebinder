@@ -60,6 +60,11 @@ export interface Slot {
   cardRef?: CardRef
   /** Only meaningful when a card is set; `false` means the card is missing. */
   owned: boolean
+  /**
+   * How many copies of the card the collector has; left out for one. Only with a card
+   * that is owned: what is there more than once can be traded.
+   */
+  count?: number
 }
 
 /** Which part of an image shows: focus point (0–1 on both axes, 0.5 = centre) and magnification (1 = fills the area). */

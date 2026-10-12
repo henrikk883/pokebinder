@@ -355,3 +355,11 @@ Jede Merkliste hat „Wert berechnen“ wie der Binder: die Summe der Cardmarket
 - „Lücke einfügen“ (nur bei belegtem Pocket): Die Karte dort und alle Karten, die ohne Lücke darauf folgen, rücken um ein Pocket weiter, auch über Seitengrenzen, in das nächste freie Pocket. Reicht die Reihe bis ans Ende des Binders, kommt eine Seite dazu. Das gewählte Pocket ist danach leer und bleibt gewählt.
 - „Lücke schließen“ (nur bei leerem Pocket mit Karte direkt dahinter): Die folgenden Karten rücken um ein Pocket zurück, bis zur nächsten Lücke. Karten hinter einer weiteren Lücke bleiben stehen, damit bewusst gelassene Lücken nicht verschwinden.
 - Besitz-Markierungen wandern mit den Karten; eigene Bilder bleiben, wo sie sind. Im Modus „Sammlung“ ausgeblendet. Ein Schritt „Rückgängig“ nimmt alles zurück, auch die neue Seite.
+
+## 2026-10-12 – Doppelte Karten: Stückzahl und Tauschliste
+- `Slot.count` ergänzt: wie oft die Karte da ist (1 bis 99). Gespeichert wird nur mehr als eins, und nur bei einer vorhandenen Karte; „Fehlt“ vergisst die Zahl. Alte Binder und Backups ohne das Feld gelten als „einmal“.
+- Eingestellt wird die Anzahl rechts bei der gewählten Karte (– / Zahl / +). Im Binder trägt die Karte ab zwei Exemplaren ein Schildchen „×3“; im PNG-Export fehlt es.
+- Die Zahl bleibt bei der Karte: beim Verschieben, Tauschen, Sortieren, Layout-Wechsel, Lücke einfügen/schließen, Seite duplizieren, Variante oder Sprache ändern, beim Anpassen eines Master Sets und im Backup.
+- „Fehlliste“ → „Tauschliste (doppelte Karten)“: jede Karte mit den Exemplaren über das eine im Binder hinaus, Preistrend je Stück und Summe. Dieselbe Ansicht wie die Einkaufsliste, ohne Budget.
+- „Wert berechnen“ zählt jedes Exemplar einer vorhandenen Karte.
+- Gezählt wird pro Pocket in einem Binder. Dieselbe Karte in zwei Pockets oder zwei Bindern wird nicht zusammengezählt.

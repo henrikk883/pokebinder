@@ -282,3 +282,86 @@ test.describe('shopping list', () => {
     await expect(dialog).toBeHidden()
   })
 })
+
+test.describe('cards there are several of', () => {
+  test('a card is counted, shows its number, and what is spare stands on the trade list', async ({ page }) => {
+    await createMasterSet(page)
+    const copies = page.getByTestId('copies')
+    const more = page.getByRole('button', { name: 'Anzahl erhöhen' })
+    const fewer = page.getByRole('button', { name: 'Anzahl verringern' })
+
+    // a card that is missing cannot be counted
+    await pocket(page, 1, 1).click()
+    await expect(copies).toHaveText('0')
+    await expect(more).toBeDisabled()
+    await expect(fewer).toBeDisabled()
+
+    // there once, then three times
+    await page.getByRole('group', { name: 'Besitz' }).getByRole('button', { name: 'Vorhanden' }).click()
+    await expect(copies).toHaveText('1')
+    await expect(fewer).toBeDisabled()
+    await expect(pocket(page, 1, 1).getByTestId('copies-badge')).toHaveCount(0)
+    await more.click()
+    await more.click()
+    await expect(copies).toHaveText('3')
+    await expect(pocket(page, 1, 1).getByTestId('copies-badge')).toHaveText('×3')
+
+    // a second card twice
+    await pocket(page, 1, 2).click()
+    await page.getByRole('group', { name: 'Besitz' }).getByRole('button', { name: 'Vorhanden' }).click()
+    await more.click()
+    await expect(pocket(page, 1, 2).getByTestId('copies-badge')).toHaveText('×2')
+
+    // the trade list: what is there beyond the one copy in the binder
+    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+    await page.getByRole('menuitem', { name: /^Tauschliste/ }).click()
+    const dialog = page.getByRole('dialog', { name: 'Tauschliste – 151' })
+    const rows = dialog.getByTestId('shopping-row')
+    await expect(rows).toHaveCount(2)
+    await expect(dialog.getByTestId('shopping-total')).toContainText(/^3 Karten · Summe: [0-9.]+,[0-9]{2} €/)
+    // two spare copies of the first card, priced per piece
+    await expect(dialog.locator('[data-card-id="sv03.5-001"]').getByTestId('shopping-price')).toHaveText(/^2 × [0-9.]+,[0-9]{2} €$/)
+    // nothing to buy here, so no budget
+    await expect(dialog.getByLabel('Budget in €')).toHaveCount(0)
+    await dialog.getByRole('button', { name: 'Schließen' }).click()
+
+    // the number is stored, and it counts in the value of the binder
+    await expect(page.getByRole('banner').getByRole('status')).toHaveText('Lokal gespeichert')
+    await page.reload()
+    await expect(pocket(page, 1, 1).getByTestId('copies-badge')).toHaveText('×3')
+    await page.getByRole('button', { name: 'Wert berechnen' }).click()
+    const value = page.getByTestId('binder-value')
+    await expect(value).toContainText('vorhanden')
+    const owned = euros((/Wert: ([0-9.,]+ €) vorhanden/.exec((await value.textContent()) ?? '')?.[1] ?? ''))
+    await pocket(page, 1, 1).click()
+    await fewer.click()
+    await fewer.click()
+    await expect(pocket(page, 1, 1).getByTestId('copies-badge')).toHaveCount(0)
+    await page.getByRole('button', { name: 'Wert berechnen' }).click()
+    await expect(value).toContainText('vorhanden')
+    const ownedOnce = euros((/Wert: ([0-9.,]+ €) vorhanden/.exec((await value.textContent()) ?? '')?.[1] ?? ''))
+    expect(ownedOnce).toBeLessThan(owned)
+
+    // marked as missing, the card is no longer counted
+    await page.getByRole('group', { name: 'Besitz' }).getByRole('button', { name: 'Fehlt' }).click()
+    await expect(copies).toHaveText('0')
+  })
+
+  test('without spare cards the trade list says how to count them', async ({ page }) => {
+    await createMasterSet(page)
+    await page.getByRole('button', { name: 'Fehlliste', exact: true }).click()
+    await page.getByRole('menuitem', { name: /^Tauschliste/ }).click()
+
+    await expect(page.getByRole('dialog', { name: 'Tauschliste – 151' })).toContainText('Du hast keine Karte doppelt.')
+  })
+
+  test('the number is no part of an exported page', async ({ page }) => {
+    await createMasterSet(page)
+    await pocket(page, 1, 1).click()
+    await page.getByRole('group', { name: 'Besitz' }).getByRole('button', { name: 'Vorhanden' }).click()
+    await page.getByRole('button', { name: 'Anzahl erhöhen' }).click()
+
+    // marked like the buttons that an export leaves out
+    await expect(pocket(page, 1, 1).getByTestId('copies-badge')).toHaveAttribute('data-export-hide', /.*/)
+  })
+})

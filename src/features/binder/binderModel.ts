@@ -137,10 +137,24 @@ function findSlot(binder: Binder, position: SlotPosition): Slot {
   return slot
 }
 
-type SlotContent = Pick<Slot, 'cardRef' | 'owned'>
+type SlotContent = Pick<Slot, 'cardRef' | 'owned' | 'count'>
+
+export const MAX_COPIES = 99
+
+/** How many copies of its card a pocket stands for: none without a card or while it is missing. */
+export function copiesOf(slot: Pick<Slot, 'cardRef' | 'owned' | 'count'>): number {
+  return slot.cardRef && slot.owned ? Math.max(1, slot.count ?? 1) : 0
+}
+
+/** The count as it is stored: only for more than one copy of a card that is there. */
+function stored(owned: boolean, count: number | undefined): { count?: number } {
+  return owned && count !== undefined && count > 1 ? { count } : {}
+}
 
 function contentOf(slot: Slot): SlotContent {
-  return slot.cardRef ? { cardRef: slot.cardRef, owned: slot.owned } : { owned: false }
+  return slot.cardRef
+    ? { cardRef: slot.cardRef, owned: slot.owned, ...stored(slot.owned, slot.count) }
+    : { owned: false }
 }
 
 function writeSlots(
@@ -230,15 +244,39 @@ export function setOwned(
   return writeSlots(binder, [{ position, content: { cardRef: slot.cardRef, owned } }], ctx)
 }
 
+/**
+ * Says how many copies of the card in a pocket there are (1 to 99). Only a card that is
+ * there can be there several times; marking it as missing forgets the number.
+ */
+export function setCount(
+  binder: Binder,
+  position: SlotPosition,
+  count: number,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  const slot = findSlot(binder, position)
+  if (!slot.cardRef || !slot.owned) return binder
+  const copies = Math.max(1, Math.min(MAX_COPIES, Math.round(count)))
+  if (copies === copiesOf(slot)) return binder
+  return writeSlots(
+    binder,
+    [{ position, content: { cardRef: slot.cardRef, owned: true, ...stored(true, copies) } }],
+    ctx,
+  )
+}
+
 /** A card together with its owned state, detached from the pocket it sits in. */
 export interface PlacedCard {
   cardRef: CardRef
   owned: boolean
+  count?: number
 }
 
 function cardsOf(pages: readonly Page[]): PlacedCard[] {
   return pages.flatMap((page) =>
-    page.slots.flatMap((slot) => (slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned }] : [])),
+    page.slots.flatMap((slot) =>
+      slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned, ...stored(slot.owned, slot.count) }] : [],
+    ),
   )
 }
 
@@ -248,7 +286,9 @@ function fillPage(page: Page, cards: PlacedCard[]): Page {
     ...page,
     slots: page.slots.map((slot): Slot => {
       const card = cards.shift()
-      return card ? { index: slot.index, cardRef: card.cardRef, owned: card.owned } : emptySlot(slot.index)
+      return card
+        ? { index: slot.index, cardRef: card.cardRef, owned: card.owned, ...stored(card.owned, card.count) }
+        : emptySlot(slot.index)
     }),
   }
 }
@@ -321,7 +361,7 @@ export function setVariant(
   if (!slot.cardRef || slot.cardRef.variant === variant) return binder
   return writeSlots(
     binder,
-    [{ position, content: { cardRef: { ...slot.cardRef, variant }, owned: slot.owned } }],
+    [{ position, content: { ...contentOf(slot), cardRef: { ...slot.cardRef, variant } } }],
     ctx,
   )
 }
@@ -337,7 +377,7 @@ export function setCardLang(
   if (!slot.cardRef || slot.cardRef.lang === lang) return binder
   return writeSlots(
     binder,
-    [{ position, content: { cardRef: { ...slot.cardRef, lang }, owned: slot.owned } }],
+    [{ position, content: { ...contentOf(slot), cardRef: { ...slot.cardRef, lang } } }],
     ctx,
   )
 }

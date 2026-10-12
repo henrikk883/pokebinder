@@ -5,6 +5,7 @@ import { useCard } from '../binder/useCard'
 import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
 import {
+  cardCount,
   cardmarketUrl,
   parseBudget,
   SHOPPING_ORDERS,
@@ -17,6 +18,12 @@ import {
 
 interface ShoppingDialogProps {
   title: string
+  /** What the list is, in a sentence under the title. */
+  hint?: string
+  /** Said when the list has no lines. */
+  emptyText?: string
+  /** A list of cards to give away has no use for a budget. */
+  withBudget?: boolean
   /** Looks the cards and their prices up; `onProgress` reports how far that is. */
   load: (onProgress: (done: number, total: number) => void) => Promise<ShoppingRow[]>
   onClose: () => void
@@ -54,7 +61,11 @@ function Line({ row, dimmed }: { row: ShoppingRow; dimmed: boolean }) {
         </span>
       </span>
       <span data-testid="shopping-price" className={`shrink-0 ${row.price === undefined ? 'text-muted' : 'font-medium'}`}>
-        {row.price === undefined ? de.price.none : de.price.amount(row.price)}
+        {row.price === undefined
+          ? de.price.none
+          : (row.count ?? 1) > 1
+            ? de.shopping.pieces(row.count ?? 1, de.price.amount(row.price))
+            : de.price.amount(row.price)}
       </span>
       <a
         href={cardmarketUrl(row)}
@@ -73,7 +84,14 @@ function Line({ row, dimmed }: { row: ShoppingRow; dimmed: boolean }) {
  * The cards still to buy, with what they cost: cheapest first by default, with the sum and
  * how far a budget would go. Each line links to the card at Cardmarket.
  */
-export function ShoppingDialog({ title, load, onClose }: ShoppingDialogProps) {
+export function ShoppingDialog({
+  title,
+  hint = de.shopping.hint,
+  emptyText = de.shopping.empty,
+  withBudget = true,
+  load,
+  onClose,
+}: ShoppingDialogProps) {
   const [loading, setLoading] = useState<Loading>({ status: 'loading', done: 0, total: 0 })
   const [order, setOrder] = useState<ShoppingOrder>('cheapest')
   const [budgetText, setBudgetText] = useState('')
@@ -99,7 +117,7 @@ export function ShoppingDialog({ title, load, onClose }: ShoppingDialogProps) {
   const rows = loading.status === 'ready' ? loading.rows : []
   const { total, unpriced } = shoppingTotal(rows)
   const budget = parseBudget(budgetText)
-  const within = budget === undefined ? undefined : withinBudget(rows, budget)
+  const within = budget === undefined || !withBudget ? undefined : withinBudget(rows, budget)
 
   return (
     <div
@@ -120,7 +138,7 @@ export function ShoppingDialog({ title, load, onClose }: ShoppingDialogProps) {
           <h2 id="shopping-title" className="text-xl font-semibold text-text">
             {title}
           </h2>
-          <p className="mt-1 text-sm text-muted">{de.shopping.hint}</p>
+          <p className="mt-1 text-sm text-muted">{hint}</p>
         </div>
 
         {loading.status === 'loading' && (
@@ -133,7 +151,7 @@ export function ShoppingDialog({ title, load, onClose }: ShoppingDialogProps) {
             {de.price.failed}
           </p>
         )}
-        {loading.status === 'ready' && rows.length === 0 && <p className="text-sm text-muted">{de.shopping.empty}</p>}
+        {loading.status === 'ready' && rows.length === 0 && <p className="text-sm text-muted">{emptyText}</p>}
 
         {rows.length > 0 && (
           <>
@@ -155,6 +173,7 @@ export function ShoppingDialog({ title, load, onClose }: ShoppingDialogProps) {
                   ))}
                 </select>
               </label>
+              {withBudget && (
               <label className="space-y-1">
                 <span className="block text-muted">{de.shopping.budget}</span>
                 <input
@@ -166,9 +185,14 @@ export function ShoppingDialog({ title, load, onClose }: ShoppingDialogProps) {
                   className={`${fieldClass} w-36 placeholder:text-muted`}
                 />
               </label>
+              )}
               {within && (
                 <p data-testid="shopping-budget" className="pb-2 text-text">
-                  {de.shopping.within(within.affordable.size, rows.length, within.spent)}
+                  {de.shopping.within(
+                    cardCount(rows.filter((row) => within.affordable.has(row.key))),
+                    cardCount(rows),
+                    within.spent,
+                  )}
                 </p>
               )}
             </div>
@@ -180,7 +204,7 @@ export function ShoppingDialog({ title, load, onClose }: ShoppingDialogProps) {
             </ul>
 
             <p data-testid="shopping-total" className="text-sm font-medium text-text">
-              {de.shopping.total(rows.length, total)}
+              {de.shopping.total(cardCount(rows), total)}
               {unpriced > 0 && <span className="font-normal text-muted"> · {de.price.unpriced(unpriced)}</span>}
             </p>
           </>
