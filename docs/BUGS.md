@@ -33,7 +33,7 @@ _Zurzeit keine._
 
 | Nr. | Gemeldet | Von | Fehler | Behoben mit | Stand |
 |---|---|---|---|---|---|
-| B-001 | 12.10.2026 | Henrik | Binder-Seiten laden langsam, „man sieht anfangs nur den Namen“ – in Sets, von denen TCGdex keine Bilder hat (gemeldet als „graue Karten laden langsam“) | Einzelheiten unten | behoben, Bestätigung offen |
+| B-001 | 12.10.2026 | Henrik | Binder-Seiten laden langsam, „man sieht anfangs nur den Namen“ – in Sets, von denen TCGdex keine Bilder hat (gemeldet als „graue Karten laden langsam“) | `1ae913b`, Einzelheiten unten | bestätigt |
 | B-002 | 12.10.2026 | Henrik | Die Suche fand ein Pokémon nur unter dem Namen in der eingestellten Kartensprache („psyduck“ fand bei Deutsch nichts) | `fba67f8`, Einzelheiten unten | bestätigt |
 | – | 12.10.2026 | Henrik | Kartenbilder blieben in Suche, Binder und Info-Anzeige leer oder luden erst nach einem Fensterwechsel | `554a043` (TCGdex schickt eine Kopfzeile teils doppelt; Bilder werden jetzt schlicht angezeigt) | bestätigt |
 | – | 12.10.2026 | Henrik | Menüs der Werkzeugleiste schlossen nicht bei einem Klick daneben | `6188e97` | bestätigt |
@@ -57,5 +57,5 @@ _Zurzeit keine._
   - Geprüft wird ein Ersatzbild nur noch über den Status der Antwort, nicht mehr durch Herunterladen.
   - Die Nachbarseiten werden auch für solche Karten vorab geholt.
 - **Gemessen danach (Chromium, dieselbe Doppelseite):** zweites und drittes Aufschlagen 30–40 ms statt 520–550 ms; eine vorab geholte Seite steht nach 1 ms. Das erste Aufschlagen einer noch nie gesehenen Seite dauert weiterhin rund 1,5 s: Die Bilder müssen einmal aus dem Netz kommen.
-- **Nicht gemessen:** Firefox und das Handy, wo Henrik den Fehler sieht. Darum „Bestätigung offen“.
+- **Nicht gemessen:** Firefox und das Handy, wo Henrik den Fehler sah. Von Henrik am 12.10.2026 bestätigt: „viel besser“.
 - **Aufgeräumt:** Der Schalter `?grau=aus` zum Vergleichen ist wieder entfernt.
