@@ -179,7 +179,7 @@ function Tray({ binder }: { binder: Binder }) {
         ) : found.length === 0 ? (
           <p className="text-sm text-muted">{de.tray.nothingFound}</p>
         ) : (
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-4">
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))] gap-x-3 gap-y-4">
             {found.map((entry) => (
               <TrayTile key={entry.id} entry={entry} />
             ))}

@@ -626,6 +626,11 @@ export const de = {
     allFine: 'Alle Karten liegen in einer Variante im Binder, die es gibt.',
     failed: 'Die Varianten konnten nicht geprüft werden. Besteht eine Internetverbindung?',
   },
+  cardmarketLink: {
+    label: 'Bei Cardmarket ansehen',
+    productHint: 'Öffnet die Seite dieser Karte bei Cardmarket in einem neuen Tab',
+    searchHint: 'Öffnet bei Cardmarket eine Suche nach dieser Karte in einem neuen Tab',
+  },
   tray: {
     button: (cards: number) => (cards > 0 ? `Ablage (${cards})` : 'Ablage'),
     buttonHint: 'Karten zum Umsortieren aus dem Binder nehmen und beiseitelegen. Sie bleiben dort liegen, bis du sie wieder einsortierst.',
@@ -637,6 +642,7 @@ export const de = {
     search: 'In der Ablage suchen',
     nothingFound: 'Keine abgelegte Karte passt zur Suche.',
     lay: 'In die Ablage',
+    layCard: 'In die Ablage legen',
     layHint: 'Nimmt die Karte aus dem Pocket und legt sie zum Umsortieren beiseite',
     laySelected: (cards: number) => (cards > 1 ? `${cards} markierte ablegen` : 'Markierte ablegen'),
     layPage: (page: number) => `Seite ${page} ablegen`,
@@ -832,6 +838,8 @@ export const de = {
     hideSearch: 'Suche ausblenden',
     showSelection: 'Auswahl einblenden',
     hideSelection: 'Auswahl ausblenden',
+    resizeLeft: 'Linke Spalte größer oder kleiner ziehen (auch mit den Pfeiltasten; Doppelklick setzt zurück)',
+    resizeRight: 'Rechte Spalte größer oder kleiner ziehen (auch mit den Pfeiltasten; Doppelklick setzt zurück)',
   },
   selection: {
     title: 'Auswahl',

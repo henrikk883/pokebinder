@@ -55,7 +55,7 @@ function Fitting({ binder }: { binder: Binder }) {
             {found.status === 'unknown' && <p className="text-sm text-muted">{de.fitting.unknown}</p>}
             {found.status === 'ready' && (
               <>
-                <ul className="grid grid-cols-2 gap-x-3 gap-y-4">
+                <ul className="grid grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))] gap-x-3 gap-y-4">
                   {found.cards.map(({ card, lang }) => (
                     <CardTile
                       key={card.id}

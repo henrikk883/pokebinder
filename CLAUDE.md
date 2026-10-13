@@ -63,6 +63,6 @@ tests/e2e/      Playwright-Tests
 - Binder speichern nur `CardRef` (cardId, lang, variant), nie Kartendaten aus TCGdex.
 - Jeder TCGdex-Aufruf läuft über `src/lib/tcgdex/`; Antworten und Bilder werden gecacht.
 - Reine Logik (Seiten erzeugen, sortieren, Spannweiten prüfen, Fehlliste bauen) in Funktionen ohne React, mit Unit-Tests.
-- Farben, Radien und Abstände als Tailwind-Theme-Tokens: dunkler Hintergrund mit Blaustich, Violett nur für Hauptaktion und aktive Zustände, Rot nur für Löschen, Grün nur für „gespeichert“.
+- Farben, Radien und Abstände als Tailwind-Theme-Tokens: dunkler Hintergrund mit Blaustich, Violett nur für Hauptaktion und aktive Zustände, Rot nur für Löschen und für Regelverstöße in einem Deck (seit 13.10.2026, von Henrik gewünscht), Grün nur für „gespeichert“.
 - Footer-Hinweis: inoffizielles Fanprojekt, Kartenbilder © The Pokémon Company.
 - Commits pro Phase oder Teilschritt, Format `feat(phase-N): kurze Beschreibung`.

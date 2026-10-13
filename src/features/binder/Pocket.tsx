@@ -52,6 +52,7 @@ function PocketCard({ position, cardRef, owned, copies, selected }: PocketCardPr
   const card = useCard(cardId, lang)
   const catalog = useReadyCatalog(lang)
   const setOwned = useBinderStore((state) => state.setOwned)
+  const toTray = useBinderStore((state) => state.toTray)
   const collecting = useEditorStore((state) => state.mode === 'collection')
   const source: DragSource = { kind: 'pocket', position, cardId, lang }
   const { setNodeRef, listeners, isDragging } = useDraggable({
@@ -142,6 +143,28 @@ function PocketCard({ position, cardRef, owned, copies, selected }: PocketCardPr
       >
         {owned ? de.binder.markMissing : de.binder.markOwned}
       </button>
+      {!collecting && (
+        <button
+          type="button"
+          aria-label={de.tray.layCard}
+          title={de.tray.layHint}
+          data-export-hide
+          onClick={(event) => {
+            event.stopPropagation()
+            toTray([position])
+          }}
+          // shows like the button above: under the mouse, or on the card a finger tapped
+          className={`absolute right-1 bottom-1 flex size-6 items-center justify-center rounded-control border border-line bg-bg/90 opacity-0 group-hover:opacity-100 hover:border-accent focus-visible:opacity-100 touch:size-8 ${
+            selected ? 'touch:opacity-100' : 'touch:pointer-events-none'
+          }`}
+        >
+          {/* out of the pocket, into the tray */}
+          <svg viewBox="0 0 20 20" className="size-3.5 touch:size-4" aria-hidden="true">
+            <path d="M3 11v5h14v-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M10 3v8m-3-3 3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

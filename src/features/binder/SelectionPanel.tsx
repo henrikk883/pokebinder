@@ -15,6 +15,7 @@ import {
   type Slot,
   type SlotPosition,
 } from '../../types/binder'
+import { CardmarketLink } from '../export/CardmarketLink'
 import { CoverDialog } from '../images/CoverDialog'
 import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
@@ -122,6 +123,12 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
           {price === undefined ? de.price.loading : price === null ? de.price.none : de.price.amount(price)}
         </span>
       </p>
+      <CardmarketLink
+        cardId={slot.cardRef.cardId}
+        variant={slot.cardRef.variant}
+        lang={lang}
+        name={card?.name ?? slot.cardRef.cardId}
+      />
 
       <div role="group" aria-label={de.selection.ownedState} className="flex rounded-control bg-raised p-0.5 text-sm">
         {[true, false].map((owned) => (

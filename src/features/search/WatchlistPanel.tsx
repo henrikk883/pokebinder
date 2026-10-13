@@ -191,7 +191,7 @@ const fieldClass =
   'h-10 w-full min-w-0 rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none'
 
 /** The "Merklisten": cards noted while browsing, ready to be dragged into a binder. */
-export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-2 gap-x-3 gap-y-4' }: WatchlistPanelProps) {
+export function WatchlistPanel({ wide = false, gridClass = 'grid grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))] gap-x-3 gap-y-4' }: WatchlistPanelProps) {
   const active = useActiveList()
   const editing = useEditorStore((state) => state.mode === 'edit')
   const binderOpen = useBinderStore((state) => state.binder !== null) && editing

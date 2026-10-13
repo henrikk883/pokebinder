@@ -82,7 +82,7 @@ function CardSearch({ lang, carried }: { lang: CardLang; carried: SearchCarrier 
           selectedSet={form.selectedSet}
           lang={lang}
           draggable={binderOpen}
-          gridClass="grid grid-cols-2 gap-x-3 gap-y-4"
+          gridClass="grid grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))] gap-x-3 gap-y-4"
           dragIdPrefix="search"
         />
       </div>

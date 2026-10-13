@@ -669,3 +669,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - **28 – Merkliste in Binder:** in die Ablage, als „vorhanden“, die Karten bleiben auf der Liste – so, als hätte man jede einzeln hineingezogen. Übernommen wird, was gerade gezeigt wird; mit Rückfrage, weil es viele Karten auf einmal sind.
 - **29 – Binder auf Merkliste:** über die Auswahl rechts, für eine oder alle markierten Karten. Was schon auf der Liste steht, bleibt unverändert. Eine ganze Seite geht über „Mehrere auswählen“.
 - **32:** dieselbe Suche wie in den Merklisten.
+
+## 2026-10-13 – Cardmarket-Link, Deck-Warnung, Ablege-Knopf, Spaltenbreite
+- **26:** Der Link nutzt die Cardmarket-Produktnummer, die TCGdex mit dem Preis liefert (`…/Products?idProduct=…`), sonst eine Suche nach dem Namen. Er ist ein gewöhnlicher Link in einen neuen Tab; die App fragt Cardmarket nicht ab. Ob die Adresse bei Cardmarket wirklich ankommt, ließ sich von hier nicht prüfen (Cardmarket weist automatische Abrufe ab) – dieselbe Adresse verwendet die Kaufliste schon.
+- **27:** Rot bekommt eine zweite Bedeutung: Regelverstoß in einem Deck (CLAUDE.md entsprechend ergänzt). Nur echte Verstöße sind rot – zu viele Karten gleichen Namens, im Format nicht erlaubte Karten. Ein Deck, das noch nicht voll ist, wäre sonst beim Bauen dauerhaft rot.
+- **30:** Der Knopf sitzt unten rechts (oben links steht die Anzahl, oben rechts „fehlt“/„vorhanden“). Als Zeichen ein Pfeil in eine Ablage statt eines Plus, das nach Hinzufügen aussähe. Nicht im Modus „Sammlung“.
+- **31:** Beide Spalten getrennt verstellbar, auch mit den Pfeiltasten. Die Kartenraster in den Spalten füllen jetzt die Breite (vorher immer zwei nebeneinander); bei der üblichen Breite bleiben es zwei.

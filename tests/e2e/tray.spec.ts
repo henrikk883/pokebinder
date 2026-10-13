@@ -266,3 +266,76 @@ test('a card noted in one language shows that in another', async ({ page }) => {
   await tile.getByRole('button', { name: 'Infos zu Bulbasaur' }).click()
   await expect(page.getByTestId('card-info-other-lang')).toHaveText('Auf Deutsch gemerkt auf: Schnellmerken.')
 })
+
+test('a button on the card in its pocket lays it aside', async ({ page }) => {
+  await binderWithThreeCards(page)
+
+  await pocket(page, 2).hover()
+  await pocket(page, 2).getByRole('button', { name: 'In die Ablage legen' }).click()
+
+  await expect(pocket(page, 2)).toHaveAttribute('data-card-id', '')
+  await expect(modes(page).getByRole('button', { name: 'Ablage (1)' })).toBeVisible()
+  // while cards are ticked off, nothing is taken out of the binder
+  await modes(page).getByRole('button', { name: 'Sammlung' }).click()
+  await pocket(page, 1).hover()
+  await expect(pocket(page, 1).getByRole('button', { name: 'In die Ablage legen' })).toHaveCount(0)
+})
+
+test('the selected card and the info of a card link to Cardmarket', async ({ page }) => {
+  await binderWithThreeCards(page)
+  await pocket(page, 1).click()
+
+  const link = page.getByTestId('column-right').getByRole('link', { name: 'Bei Cardmarket ansehen' })
+  await expect(link).toHaveAttribute('href', /^https:\/\/www\.cardmarket\.com\/de\/Pokemon\/Products(\?idProduct=\d+|\/Search\?searchString=Bisasam)$/)
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+
+  const tile = page.getByTestId('column-left').getByTestId('search-results').locator('[data-card-id="sv03.5-004"]')
+  await tile.hover()
+  await tile.getByRole('button', { name: 'Infos zu Glumanda' }).click()
+  await expect(page.getByRole('dialog', { name: 'Glumanda' }).getByRole('link', { name: 'Bei Cardmarket ansehen' })).toHaveAttribute(
+    'href',
+    /^https:\/\/www\.cardmarket\.com\/de\/Pokemon\/Products/,
+  )
+})
+
+test('the side columns are made wider and narrower by dragging their edges', async ({ page }) => {
+  await binderWithThreeCards(page)
+  const left = page.getByTestId('column-left')
+  const right = page.getByTestId('column-right')
+  const widthOf = async (column: Locator) => Math.round((await column.boundingBox())?.width ?? 0)
+  const perRow = async () => {
+    const tops = await left.getByTestId('search-results').getByTestId('card-tile').evaluateAll((tiles) => tiles.slice(0, 8).map((tile) => tile.getBoundingClientRect().top))
+    return tops.filter((top) => Math.abs(top - (tops[0] ?? 0)) < 1).length
+  }
+  expect(await widthOf(left)).toBe(300)
+  expect(await perRow()).toBe(2)
+
+  // the left one wider: more cards side by side
+  const handle = page.getByTestId('resize-left')
+  const box = await handle.boundingBox()
+  if (!box) throw new Error('no handle')
+  await page.mouse.move(box.x + box.width / 2, box.y + 200)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2 + 160, box.y + 200, { steps: 8 })
+  await page.mouse.up()
+  expect(await widthOf(left)).toBe(460)
+  expect(await perRow()).toBe(3)
+  // the right one keeps its width, and the widths are kept on this device
+  expect(await widthOf(right)).toBe(300)
+  await page.reload()
+  await expect(left.getByRole('searchbox').first()).toBeVisible()
+  expect(await widthOf(left)).toBe(460)
+
+  // by the arrow keys, and back to the usual width by a double click
+  await page.getByTestId('resize-right').focus()
+  await page.keyboard.press('ArrowLeft')
+  expect(await widthOf(right)).toBe(316)
+  // not in the middle of the edge: the tab that folds the column away sits there
+  await page.getByTestId('resize-left').dblclick({ position: { x: 4, y: 60 } })
+  expect(await widthOf(left)).toBe(300)
+  // never so narrow that two cards no longer fit
+  await page.getByTestId('resize-left').focus()
+  for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowLeft')
+  expect(await widthOf(left)).toBe(280)
+})

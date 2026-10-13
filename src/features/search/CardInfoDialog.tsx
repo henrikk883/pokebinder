@@ -4,6 +4,7 @@ import type { CardSummary, SetSummary } from '../../lib/tcgdex'
 import { compareVariants, type CardLang, type CardVariant } from '../../types/binder'
 import { useWatchlistStore } from '../../store/watchlistStore'
 import { AddToBinder } from '../binder/AddToBinder'
+import { CardmarketLink } from '../export/CardmarketLink'
 import { useCardDetail, useCardLangs, usePrice } from '../binder/useCard'
 import { SimilarCardsSection } from '../similar/SimilarCardsSection'
 import { CardHoldingsInfo } from './CardHoldingsInfo'
@@ -110,11 +111,21 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
                 {variants.length === 0 ? (
                   <p className="text-muted">{detail ? de.selection.unknown : de.price.loading}</p>
                 ) : (
-                  <ul className="space-y-1">
-                    {variants.map((variant) => (
-                      <VariantPrice key={variant} cardId={card.id} variant={variant} lang={lang} />
-                    ))}
-                  </ul>
+                  <>
+                    <ul className="space-y-1">
+                      {variants.map((variant) => (
+                        <VariantPrice key={variant} cardId={card.id} variant={variant} lang={lang} />
+                      ))}
+                    </ul>
+                    {/* the finishes of a card are one product at Cardmarket */}
+                    <CardmarketLink
+                      cardId={card.id}
+                      variant={variants[0] ?? 'normal'}
+                      lang={lang}
+                      name={card.name}
+                      className="mt-2"
+                    />
+                  </>
                 )}
               </dd>
             </div>

@@ -107,6 +107,10 @@ test('more than four cards of one name are pointed out', async ({ page }) => {
   await expect(page.getByTestId('deck-too-many')).toHaveText(
     'Höchstens 4 Karten mit gleichem Namen (außer Basis-Energie): Bisasam (5)',
   )
+  // a broken rule stands out: in red, with a sign of warning
+  await expect(page.getByTestId('deck-too-many')).toHaveCSS('color', 'rgb(239, 68, 68)')
+  await expect(page.getByTestId('deck-too-many').locator('svg')).toBeVisible()
+  await expect(page.getByTestId('deck-too-many')).toHaveAttribute('role', 'alert')
   await expect(check(page)).toHaveAttribute('data-valid', 'false')
 })
 

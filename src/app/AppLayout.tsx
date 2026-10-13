@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { de } from '../i18n/de'
 import { useBinderStore } from '../store/binderStore'
 import { useIsPhone } from '../lib/phone'
 import { APP_PANES, useEditorStore, type AppPane } from '../store/editorStore'
+import { clampColumnWidth, DEFAULT_COLUMN_WIDTH, readColumnWidths, storeColumnWidths, type ColumnWidths } from './columnWidths'
 
 interface AppLayoutProps {
   header: ReactNode
@@ -67,8 +68,8 @@ function ColumnTab({ side, open, controls, label, onToggle }: ColumnTabProps) {
   const pointsLeft = side === 'left' ? open : !open
   const place =
     side === 'left'
-      ? `rounded-r-control border-l-0 ${open ? 'left-sidebar' : 'left-0'}`
-      : `rounded-l-control border-r-0 ${open ? 'right-sidebar' : 'right-0'}`
+      ? `rounded-r-control border-l-0 ${open ? 'left-[var(--left-width)]' : 'left-0'}`
+      : `rounded-l-control border-r-0 ${open ? 'right-[var(--right-width)]' : 'right-0'}`
 
   return (
     <button
@@ -95,10 +96,66 @@ function ColumnTab({ side, open, controls, label, onToggle }: ColumnTabProps) {
 
 // Written out in full, so that Tailwind finds the classes.
 const WIDE_COLUMNS = {
-  both: 'xl:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)_var(--spacing-sidebar)]',
-  left: 'xl:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]',
-  right: 'xl:grid-cols-[minmax(0,1fr)_var(--spacing-sidebar)]',
+  both: 'xl:grid-cols-[var(--left-width)_minmax(0,1fr)_var(--right-width)]',
+  left: 'xl:grid-cols-[var(--left-width)_minmax(0,1fr)]',
+  right: 'xl:grid-cols-[minmax(0,1fr)_var(--right-width)]',
   none: 'xl:grid-cols-[minmax(0,1fr)]',
+}
+
+interface ColumnHandleProps {
+  side: 'left' | 'right'
+  width: number
+  label: string
+  /** Asked for a width in pixels; what is possible is decided by whoever shows the columns. */
+  onResize: (width: number) => void
+  /** The edges of the area the columns stand in, to tell the width from where the pointer is. */
+  edges: () => { left: number; right: number } | undefined
+}
+
+/**
+ * The inner edge of a side column, to be dragged: wider for more cards side by side,
+ * narrower for more of the binder. The arrow keys do the same; a double click sets the
+ * width back.
+ */
+function ColumnHandle({ side, width, label, onResize, edges }: ColumnHandleProps) {
+  const [dragging, setDragging] = useState(false)
+
+  function follow(event: PointerEvent<HTMLDivElement>) {
+    if (!dragging) return
+    const area = edges()
+    if (area) onResize(side === 'left' ? event.clientX - area.left : area.right - event.clientX)
+  }
+  function handleKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+    event.preventDefault()
+    // towards the binder makes the column wider
+    const wider = (event.key === 'ArrowRight') === (side === 'left')
+    onResize(width + (wider ? 16 : -16))
+  }
+
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={label}
+      aria-valuenow={Math.round(width)}
+      tabIndex={0}
+      data-testid={`resize-${side}`}
+      onPointerDown={(event) => {
+        event.preventDefault()
+        event.currentTarget.setPointerCapture(event.pointerId)
+        setDragging(true)
+      }}
+      onPointerMove={follow}
+      onPointerUp={() => setDragging(false)}
+      onPointerCancel={() => setDragging(false)}
+      onDoubleClick={() => onResize(DEFAULT_COLUMN_WIDTH)}
+      onKeyDown={handleKey}
+      className={`absolute inset-y-0 z-[4] w-2 cursor-col-resize touch-none focus-visible:outline-none ${
+        side === 'left' ? 'left-[var(--left-width)] -translate-x-1/2' : 'right-[var(--right-width)] translate-x-1/2'
+      } ${dragging ? 'bg-accent/60' : 'hover:bg-accent/40 focus-visible:bg-accent/40'}`}
+    />
+  )
 }
 
 /**
@@ -110,6 +167,8 @@ const WIDE_COLUMNS = {
  */
 export function AppLayout({ header, left, center, right, footer, page }: AppLayoutProps) {
   const [stored, setOpen] = useState(readOpenColumns)
+  const [widths, setWidths] = useState(readColumnWidths)
+  const columns = useRef<HTMLDivElement>(null)
   // While cards are ticked off ("Sammlung") nothing is dragged in, so the search makes
   // room for the binder. The tab still brings it back; that is not remembered.
   const collecting = useEditorStore((state) => state.mode === 'collection')
@@ -134,10 +193,21 @@ export function AppLayout({ header, left, center, right, footer, page }: AppLayo
     storeOpenColumns(next)
   }
 
+  /** Gives a side column another width, as far as the binder between them keeps its room. */
+  function resize(side: keyof ColumnWidths, wanted: number) {
+    const area = columns.current?.getBoundingClientRect().width ?? window.innerWidth
+    const other = side === 'left' ? (open.right ? widths.right : 0) : open.left ? widths.left : 0
+    const next = { ...widths, [side]: clampColumnWidth(wanted, area, other) }
+    setWidths(next)
+    storeColumnWidths(next)
+  }
+  const edges = () => columns.current?.getBoundingClientRect()
+  const widthStyle = { '--left-width': `${widths.left}px`, '--right-width': `${widths.right}px` } as CSSProperties
+
   const wideColumns =
     WIDE_COLUMNS[open.left && open.right ? 'both' : open.left ? 'left' : open.right ? 'right' : 'none']
   const narrowColumns = open.left
-    ? 'grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]'
+    ? 'grid-cols-[var(--left-width)_minmax(0,1fr)]'
     : 'grid-cols-[minmax(0,1fr)]'
 
   // A phone has room for one of the three at a time; a bar at the bottom switches between
@@ -157,6 +227,8 @@ export function AppLayout({ header, left, center, right, footer, page }: AppLayo
         </main>
       )}
       <div
+        ref={columns}
+        style={widthStyle}
         className={
           page !== undefined
             ? 'hidden'
@@ -186,13 +258,31 @@ export function AppLayout({ header, left, center, right, footer, page }: AppLayo
           className={`min-h-0 overflow-y-auto bg-panel ${
             phone
               ? 'h-full'
-              : 'border-l border-line max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-10 max-xl:w-sidebar max-xl:shadow-2xl'
+              : 'border-l border-line max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-10 max-xl:w-[var(--right-width)] max-xl:shadow-2xl'
           } ${shown('selection', open.right) ? '' : 'hidden'}`}
         >
           {right}
         </aside>
         {!phone && (
           <>
+            {open.left && (
+              <ColumnHandle
+                side="left"
+                width={widths.left}
+                label={de.layout.resizeLeft}
+                onResize={(width) => resize('left', width)}
+                edges={edges}
+              />
+            )}
+            {open.right && (
+              <ColumnHandle
+                side="right"
+                width={widths.right}
+                label={de.layout.resizeRight}
+                onResize={(width) => resize('right', width)}
+                edges={edges}
+              />
+            )}
             <ColumnTab
               side="left"
               open={open.left}

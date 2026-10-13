@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { binderRepository } from '../../db/binderRepository'
 import { de } from '../../i18n/de'
 import { setIdOfCard } from '../../lib/tcgdex'
@@ -33,6 +33,26 @@ const stepClass =
   'flex size-8 items-center justify-center rounded-control border border-line bg-raised text-base hover:border-accent'
 
 /** One card of the deck: its picture, how often it is in, and the two buttons that change that. */
+/**
+ * A deck that breaks a rule cannot be played: that is said in red with a sign of warning,
+ * so that it is not read over. A deck that is merely not full yet is not a broken rule.
+ */
+function RuleWarning({ testId, children }: { testId: string; children: ReactNode }) {
+  return (
+    <p
+      data-testid={testId}
+      role="alert"
+      className="mt-2 flex items-start gap-2 rounded-control border border-danger/60 bg-danger/10 px-3 py-2 text-sm text-danger"
+    >
+      <svg viewBox="0 0 20 20" className="mt-0.5 size-4 shrink-0" aria-hidden="true">
+        <path d="M10 2.5 18.5 17h-17z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M10 8v4.2M10 14.6v.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+      <span>{children}</span>
+    </p>
+  )
+}
+
 interface DeckCardTileProps {
   card: DeckCard
   name: string | undefined
@@ -246,15 +266,11 @@ export function DeckEditor({ deck }: { deck: Deck }) {
         </p>
       )}
       {check.notAllowed.length > 0 && (
-        <p data-testid="deck-not-allowed" role="status" className="mt-1 text-sm text-muted">
+        <RuleWarning testId="deck-not-allowed">
           {de.decks.notAllowed(de.decks.formats[deck.format], check.notAllowed)}
-        </p>
+        </RuleWarning>
       )}
-      {check.tooMany.length > 0 && (
-        <p data-testid="deck-too-many" role="status" className="mt-1 text-sm text-muted">
-          {de.decks.tooMany(check.tooMany)}
-        </p>
-      )}
+      {check.tooMany.length > 0 && <RuleWarning testId="deck-too-many">{de.decks.tooMany(check.tooMany)}</RuleWarning>}
 
       <div role="tablist" aria-label={deck.name} className="mt-4 flex border-b border-line">
         {(['deck', 'add'] as const).map((option) => (
