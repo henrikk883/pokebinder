@@ -391,7 +391,10 @@ test('an image is removed from the page but stays in the library until deleted t
   // still used by the binder: the library keeps it
   await libraryImage.hover()
   await page.getByRole('button', { name: 'Eigenes Bild 1 löschen' }).click()
-  await expect(page.getByTestId('column-left').getByRole('alert')).toContainText('wird noch in einem Binder verwendet')
+  // said at the image itself, with where it is still shown
+  await expect(libraryImage.getByRole('alert')).toHaveText(
+    'Das Bild wird noch verwendet und bleibt deshalb erhalten: Seite 1 von „Entfernen“. Nimm es dort heraus, dann lässt es sich löschen.',
+  )
   await expect(libraryImage).toHaveCount(1)
 
   await pocket(page, 1, 1).click()
@@ -418,7 +421,8 @@ test('the cover gets its own title and picture', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'Cover bearbeiten' })
   await dialog.getByLabel('Titel').fill('Meine ersten 151')
   await dialog.getByLabel('Cover-Bild auswählen').setInputFiles(sunset)
-  await expect(dialog.locator('img')).toBeVisible()
+  // the preview; the image is offered below as well, among those of the library
+  await expect(dialog.locator('img').first()).toBeVisible()
   await dialog.getByRole('button', { name: 'Speichern' }).click()
 
   await expect(cover).toContainText('Meine ersten 151')
@@ -451,10 +455,38 @@ test('the cover gets its own title and picture', async ({ page }) => {
   await withPicture.getByTestId('binder-cover').click()
   await expect(page.getByRole('heading', { name: 'Kanto Collection' })).toBeVisible()
 
+  // the picture of a cover is in use: deleting it in the library says so, and where
+  await page.getByRole('tab', { name: 'Bilder' }).click()
+  const libraryImage = page.getByTestId('library-image')
+  await expect(libraryImage).toHaveCount(1)
+  await libraryImage.hover()
+  await page.getByRole('button', { name: 'Eigenes Bild 1 löschen' }).click()
+  await expect(libraryImage.getByRole('alert')).toContainText('Cover von „Kanto Collection“')
+  await expect(libraryImage).toHaveCount(1)
+
   await page.getByRole('button', { name: 'Cover bearbeiten' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Bild entfernen' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click()
   await expect(cover.getByTestId('cover-image')).toHaveCount(0)
+
+  // an image that is there already can be taken as the cover, without loading it up again
+  await page.getByRole('button', { name: 'Cover bearbeiten' }).click()
+  const again = page.getByRole('dialog', { name: 'Cover bearbeiten' })
+  await expect(again.getByTestId('cover-library').getByRole('button')).toHaveCount(1)
+  await again.getByRole('button', { name: 'Eigenes Bild 1 als Cover nehmen' }).click()
+  await expect(again.getByRole('button', { name: 'Eigenes Bild 1 als Cover nehmen' })).toHaveAttribute('aria-pressed', 'true')
+  await again.getByRole('button', { name: 'Speichern' }).click()
+  await loaded(cover.getByTestId('cover-image'))
+  await expect(page.getByTestId('library-image')).toHaveCount(1)
+
+  // taken off the cover again, the image can be deleted
+  await page.getByRole('button', { name: 'Cover bearbeiten' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Bild entfernen' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click()
+  await saved(page)
+  await libraryImage.hover()
+  await page.getByRole('button', { name: 'Eigenes Bild 1 löschen' }).click()
+  await expect(page.getByTestId('library-image')).toHaveCount(0)
 })
 
 test('large photos are scaled down to 2000 px, other files are refused', async ({ page }) => {

@@ -14,9 +14,11 @@ interface LibraryImageProps {
   number: number
   draggable: boolean
   onDelete: () => void
+  /** Why the image was not deleted when that was asked for; shown right at it. */
+  refusal?: string | undefined
 }
 
-function LibraryImage({ asset, number, draggable, onDelete }: LibraryImageProps) {
+function LibraryImage({ asset, number, draggable, onDelete, refusal }: LibraryImageProps) {
   const source: DragSource = { kind: 'asset', assetId: asset.id }
   const { setNodeRef, listeners, isDragging } = useDraggable({
     id: `asset:${asset.id}`,
@@ -46,6 +48,11 @@ function LibraryImage({ asset, number, draggable, onDelete }: LibraryImageProps)
       >
         {de.images.delete}
       </button>
+      {refusal !== undefined && (
+        <p role="alert" className="mt-1 text-xs text-muted">
+          {refusal}
+        </p>
+      )}
     </li>
   )
 }
@@ -56,6 +63,7 @@ export function ImageLibrary() {
   const editing = useEditorStore((state) => state.mode === 'edit')
   const binderOpen = useBinderStore((state) => state.binder !== null) && editing
   const [message, setMessage] = useState<string | null>(null)
+  const [refused, setRefused] = useState<{ assetId: string; text: string }>()
   const fileInput = useRef<HTMLInputElement>(null)
 
   async function handleFiles(event: ChangeEvent<HTMLInputElement>) {
@@ -71,8 +79,10 @@ export function ImageLibrary() {
 
   async function handleDelete(asset: Asset) {
     setMessage(null)
-    const deleted = await assetStore.getState().remove(asset.id)
-    if (!deleted) setMessage(de.images.inUse)
+    setRefused(undefined)
+    const uses = await assetStore.getState().remove(asset.id)
+    // said at the image itself: in a long library the top of the column is out of view
+    if (uses.length > 0) setRefused({ assetId: asset.id, text: de.images.inUseAt(uses.map(de.images.use)) })
   }
 
   return (
@@ -113,6 +123,7 @@ export function ImageLibrary() {
                 number={index + 1}
                 draggable={binderOpen}
                 onDelete={() => handleDelete(asset)}
+                refusal={refused?.assetId === asset.id ? refused.text : undefined}
               />
             ))}
           </ul>

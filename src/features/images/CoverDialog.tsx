@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { de } from '../../i18n/de'
-import { useAssetUrl } from '../../store/assetStore'
+import { assetUrl, useAssetStore, useAssetUrl } from '../../store/assetStore'
 import type { BinderCover } from '../../types/binder'
 import { ACCEPTED_IMAGE_TYPES } from './upload'
 import { uploadErrorText, uploadImages } from './uploadActions'
@@ -19,6 +19,7 @@ export function CoverDialog({ cover, onSave, onCancel }: CoverDialogProps) {
   const [assetId, setAssetId] = useState(cover.assetId)
   const [message, setMessage] = useState<string | null>(null)
   const imageUrl = useAssetUrl(assetId)
+  const library = useAssetStore((state) => state.assets)
   const fileInput = useRef<HTMLInputElement>(null)
 
   async function handleFile(event: ChangeEvent<HTMLInputElement>) {
@@ -107,6 +108,28 @@ export function CoverDialog({ cover, onSave, onCancel }: CoverDialogProps) {
             <p role="alert" className="text-muted">
               {message}
             </p>
+          )}
+          {library.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <p className="text-muted">{de.images.cover.fromLibrary}</p>
+              <ul data-testid="cover-library" className="grid max-h-44 grid-cols-5 gap-2 overflow-y-auto pr-1">
+                {library.map((asset, index) => (
+                  <li key={asset.id}>
+                    <button
+                      type="button"
+                      aria-label={de.images.cover.pick(index + 1)}
+                      aria-pressed={asset.id === assetId}
+                      onClick={() => setAssetId(asset.id)}
+                      className={`block w-full overflow-hidden rounded-pocket border-2 ${
+                        asset.id === assetId ? 'border-accent' : 'border-transparent hover:border-line'
+                      }`}
+                    >
+                      <img src={assetUrl(asset)} alt="" className="aspect-square w-full object-cover" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 

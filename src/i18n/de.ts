@@ -1,3 +1,4 @@
+import type { AssetUse } from '../features/images/assetUses'
 const euro = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const formatEuro = (amount: number) => euro.format(amount)
 
@@ -896,7 +897,14 @@ export const de = {
     libraryImage: (index: number) => `Eigenes Bild ${index}`,
     deleteLabel: (index: number) => `Eigenes Bild ${index} löschen`,
     delete: 'Löschen',
-    inUse: 'Das Bild wird noch in einem Binder verwendet und bleibt deshalb erhalten.',
+    inUseAt: (places: readonly string[]) =>
+      `Das Bild wird noch verwendet und bleibt deshalb erhalten: ${places.join(', ')}. Nimm es dort heraus, dann lässt es sich löschen.`,
+    use: (use: AssetUse): string =>
+      use.kind === 'cover'
+        ? `Cover von „${use.binder}“`
+        : use.kind === 'page'
+          ? `Seite ${use.page} von „${use.binder}“`
+          : `Deck-Box „${use.deck}“`,
     unsupported: 'Die Datei ist kein Bild im Format JPG, PNG oder WebP.',
     uploadFailed: 'Das Bild konnte nicht gespeichert werden.',
     errors: {
@@ -930,8 +938,10 @@ export const de = {
       title: 'Cover bearbeiten',
       name: 'Titel',
       image: 'Cover-Bild',
-      choose: 'Bild wählen',
+      choose: 'Bild hochladen',
       chooseInput: 'Cover-Bild auswählen',
+      fromLibrary: 'Oder eines deiner Bilder nehmen:',
+      pick: (index: number) => `Eigenes Bild ${index} als Cover nehmen`,
       remove: 'Bild entfernen',
       none: 'Kein Bild',
       save: 'Speichern',

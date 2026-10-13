@@ -33,6 +33,7 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 | Nr. | Gemeldet | Von | Fehler | Behoben mit | Stand |
 |---|---|---|---|---|---|
 | B-001 | 12.10.2026 | Henrik | Binder-Seiten laden langsam, „man sieht anfangs nur den Namen“ – in Sets, von denen TCGdex keine Bilder hat (gemeldet als „graue Karten laden langsam“) | `1ae913b`, Einzelheiten unten | bestätigt |
+| B-006 | 13.10.2026 | Henrik | Im Fenster „Cover bearbeiten“ lassen sich schon hochgeladene Bilder nicht wählen; ein hochgeladenes Bild ließ sich „nicht mehr löschen“ | siehe unten | behoben |
 | B-005 | 13.10.2026 | Henrik | „Enton“ bei englischen Karten findet keine Psyduck-Karten | siehe unten | behoben |
 | B-003 | 13.10.2026 | Henrik | Japanische Karten lassen sich mit deutschem oder englischem Namen nicht (immer) finden | siehe unten | behoben |
 | B-002 | 12.10.2026 | Henrik | Die Suche fand ein Pokémon nur unter dem Namen in der eingestellten Kartensprache („psyduck“ fand bei Deutsch nichts) | `fba67f8`, Einzelheiten unten | bestätigt |
@@ -75,4 +76,11 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 - **Nachgestellt (13.10.2026, TCGdex):** Die englische Suche nach „Enton“ findet genau eine Karte, „Professor Laventon“. Weil der Name damit etwas fand, wurde nicht mehr nachgesehen, ob er in einer anderen Sprache ein Pokémon ist. Über die Pokédex-Nummer gibt es 43 englische Psyduck-Karten. Derselbe Fehler wie B-003, dort nur für Japanisch behoben.
 - **Behoben:** Findet ein Name in der eingestellten Sprache etwas, wird zusätzlich gefragt, ob er in einer anderen Sprache **genau** der Name eines Pokémon ist. Dann kommen dessen Karten zuerst, die Zufallstreffer dahinter. Ein Namensteil („Ento“) gilt nicht als Name, damit beim Tippen keine fremden Pokémon dazwischengeraten.
 - **Nebenwirkung:** Je Suchbegriff eine zusätzliche Anfrage je anderer Sprache an TCGdex; die Antwort wird wie alle einen Tag aufbewahrt.
+- **Offen:** Henriks Bestätigung.
+
+### B-006 – Cover-Bild aus den eigenen Bildern; Löschen ohne erkennbaren Grund verweigert
+
+- **Gemeldet:** Bei „Cover bearbeiten“ kann man kein Bild nehmen, das schon hochgeladen ist; und das Löschen hochgeladener Bilder gehe nicht mehr. Nachtrag von Henrik: Er hatte versucht, das Bild eines Covers zu löschen.
+- **Nachgestellt (13.10.2026):** (1) Das Cover-Fenster kannte nur „Bild wählen“ als Datei-Upload, nie eine Auswahl aus den vorhandenen Bildern – das fehlte von Anfang an. (2) Das Löschen ging: Ein Bild, das noch gezeigt wird (hier als Cover), wird absichtlich nicht gelöscht. Der Hinweis dazu erschien aber oben in der Spalte, außer Sicht, und nannte nicht, wo das Bild steckt. So sah es aus, als passiere nichts.
+- **Behoben:** (1) Das Cover-Fenster zeigt unter dem Upload die eigenen Bilder zum Anklicken. (2) Der Hinweis steht jetzt direkt am Bild und nennt jede Stelle: Cover oder Seite welches Binders, Box welches Decks.
 - **Offen:** Henriks Bestätigung.

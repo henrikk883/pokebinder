@@ -2,7 +2,7 @@ import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import { binderRepository } from '../db/binderRepository'
 import { deckRepository } from '../db/deckRepository'
-import { referencedAssetIds } from '../features/export/backup'
+import { assetUses, type AssetUse } from '../features/images/assetUses'
 import type { Asset } from '../types/binder'
 import { binderStore } from './binderStore'
 
@@ -12,8 +12,11 @@ export interface AssetState {
   /** Reads the library from the database, e.g. at start or after a backup import. */
   load: () => Promise<void>
   add: (assets: Asset[]) => Promise<void>
-  /** Deletes an image; refuses (`false`) while a binder or a deck box still uses it. */
-  remove: (assetId: string) => Promise<boolean>
+  /**
+   * Deletes an image. While a binder or a deck box still shows it, it stays, and the places
+   * it is shown at are given back; an empty list says that it is gone.
+   */
+  remove: (assetId: string) => Promise<AssetUse[]>
 }
 
 export const assetStore = createStore<AssetState>()((set, get) => ({
@@ -31,13 +34,13 @@ export const assetStore = createStore<AssetState>()((set, get) => ({
   remove: async (assetId) => {
     await binderStore.getState().whenSaved()
     const binders = await binderRepository.listBinders()
-    if (binders.some((binder) => referencedAssetIds(binder).includes(assetId))) return false
     const decks = await deckRepository.listDecks().catch(() => [])
-    if (decks.some((deck) => deck.coverAssetId === assetId)) return false
+    const uses = assetUses(binders, decks, assetId)
+    if (uses.length > 0) return uses
     await binderRepository.deleteAsset(assetId)
     releaseUrl(assetId)
     await get().load()
-    return true
+    return []
   },
 }))
 
