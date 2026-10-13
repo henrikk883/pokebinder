@@ -14,7 +14,7 @@ import {
   readPicture,
 } from '../../lib/tcgdex'
 import type { Binder, CardLang } from '../../types/binder'
-import { copiesOf } from '../binder/binderModel'
+import { copiesOf, countedPages } from '../binder/binderModel'
 import { buildMissingList, missingListCsv, type CardInfo, type MissingRow } from './missingList'
 import { createMissingListPdf } from './missingListPdf'
 import { wideFontFor } from './pdfFont'
@@ -118,7 +118,7 @@ export async function loadMissingList(binder: Binder, onProgress?: Progress): Pr
  * from: each with the copies beyond the one the binder holds, and what one is worth.
  */
 export async function loadTradeRows(binder: Binder, onProgress?: Progress): Promise<ShoppingRow[]> {
-  const spare = binder.pages.flatMap((page) =>
+  const spare = countedPages(binder).flatMap((page) =>
     page.slots.flatMap((slot) => {
       const extra = copiesOf(slot) - 1
       return slot.cardRef && extra > 0 ? [{ cardRef: slot.cardRef, extra }] : []
@@ -180,7 +180,7 @@ export async function loadCardmarketList(
   binder: Binder,
   onProgress?: Progress,
 ): Promise<{ lines: string[]; skipped: number }> {
-  const missing = binder.pages.flatMap((page) =>
+  const missing = countedPages(binder).flatMap((page) =>
     page.slots.flatMap((slot) => (slot.cardRef && !slot.owned ? [slot.cardRef] : [])),
   )
   const english = tcgdexFor('en')
@@ -287,6 +287,7 @@ export async function downloadMissingListCsv(binder: Binder, onProgress?: Progre
   const csv = missingListCsv(rows, {
     columns: de.missingList.csvColumns,
     total: de.missingList.csvTotal,
+    tray: de.tray.pane,
     variantLabel: de.variantLabel,
     languageLabel: (lang) => de.languages[lang],
   })

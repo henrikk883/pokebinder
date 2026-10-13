@@ -8,6 +8,8 @@ import { LangFlag } from './LanguageSelect'
 
 interface CardHoldingsInfoProps {
   cardId: string
+  /** Counted up by whoever shows this when the binders have changed. */
+  version?: number
 }
 
 /** The flag of a language, readable as its name. */
@@ -24,7 +26,7 @@ function Lang({ lang }: { lang: CardLang }) {
  * In a card's info: how often the card is in the collection, in which languages, and in
  * which binders it lies.
  */
-export function CardHoldingsInfo({ cardId }: CardHoldingsInfoProps) {
+export function CardHoldingsInfo({ cardId, version = 0 }: CardHoldingsInfoProps) {
   const [loaded, setLoaded] = useState<{ cardId: string; holdings: CardHoldings }>()
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function CardHoldingsInfo({ cardId }: CardHoldingsInfoProps) {
     return () => {
       cancelled = true
     }
-  }, [cardId])
+  }, [cardId, version])
 
   const holdings = loaded?.cardId === cardId ? loaded.holdings : undefined
   // the copies per language, for a card that is there in more than one

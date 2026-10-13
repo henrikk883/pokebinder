@@ -52,6 +52,23 @@ export function imagesOfBinder(data: string): Set<string> {
   return ids
 }
 
+/**
+ * The binder as a link shows it: without the cards laid aside while it is rearranged. They
+ * are not on any page, and a visitor is shown the pages.
+ */
+function withoutTray(data: string): string {
+  let binder: unknown
+  try {
+    binder = JSON.parse(data)
+  } catch {
+    return data
+  }
+  if (!isRecord(binder) || binder.tray === undefined) return data
+  const shown = { ...binder }
+  delete shown.tray
+  return JSON.stringify(shown)
+}
+
 export async function handleShared(request: Request, store: SyncStore): Promise<Response> {
   const [, shared, token, kind, assetId, ...rest] = new URL(request.url).pathname.split('/')
   if (shared !== 'shared' || rest.length > 0) return json({ error: 'not found' }, 404)
@@ -64,7 +81,7 @@ export async function handleShared(request: Request, store: SyncStore): Promise<
   if (!share || data === undefined) return json({ error: 'not found' }, 404)
 
   if (kind === undefined) {
-    return new Response(`{"binder":${data}}`, {
+    return new Response(`{"binder":${withoutTray(data)}}`, {
       headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
     })
   }

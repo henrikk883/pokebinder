@@ -1,4 +1,5 @@
 import type { Binder, CardLang } from '../../types/binder'
+import { countedPages } from './binderModel'
 
 /** How far the cards of one set are collected, within one binder. */
 export interface SetProgress {
@@ -24,7 +25,7 @@ export type SetLookup = (cardId: string, lang: CardLang) => { id: string; name: 
  */
 export function progressBySet(binder: Binder, setOf: SetLookup): SetProgress[] {
   const rows = new Map<string, SetProgress>()
-  for (const page of binder.pages) {
+  for (const page of countedPages(binder)) {
     for (const slot of page.slots) {
       if (!slot.cardRef) continue
       const { cardId, lang } = slot.cardRef

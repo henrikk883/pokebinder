@@ -1,6 +1,6 @@
 import type { Binder } from '../../types/binder'
 import type { Deck, DeckCard } from '../../types/deck'
-import { copiesOf } from '../binder/binderModel'
+import { copiesOf, countedPages } from '../binder/binderModel'
 import type { InfoOf } from './deckModel'
 
 const keyOf = (card: Pick<DeckCard, 'cardId' | 'lang'>) => `${card.lang}:${card.cardId}`
@@ -11,7 +11,7 @@ export type OwnedCopies = ReadonlyMap<string, number>
 export function ownedCopies(binders: readonly Binder[]): OwnedCopies {
   const owned = new Map<string, number>()
   for (const binder of binders) {
-    for (const page of binder.pages) {
+    for (const page of countedPages(binder)) {
       for (const slot of page.slots) {
         const copies = copiesOf(slot)
         if (!slot.cardRef || copies === 0) continue

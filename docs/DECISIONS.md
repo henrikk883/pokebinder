@@ -647,3 +647,14 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Suchtext, Set und Illustrator werden unverändert übernommen. Typ, Kartenart und Seltenheit werden in den Namen der neuen Sprache übersetzt (feste Tabelle Deutsch ↔ Englisch in `src/lib/tcgdex/filterNames.ts`; Japanisch nutzt bei TCGdex die englischen Namen).
 - Was es in der neuen Sprache nicht gibt, fällt weg: ein Set, das dort nie erschienen ist (japanische Sets haben eigene Kennungen), oder eine Seltenheit, die die Sprache nicht kennt.
 - Gilt für alle drei Suchen: neben dem Binder, „Karten stöbern“ und im Deck.
+
+## 2026-10-13 – Ablage im Binder; Karten-Info mit „Zu Binder hinzufügen“
+- Die Ablage ist Teil des Binders (`tray` im Datenmodell, weggelassen, solange sie leer ist): Sie wird mit ihm gespeichert, abgeglichen und gesichert. Jede abgelegte Karte behält Sprache, Variante, „vorhanden“ und Anzahl.
+- „Ablage“ ist kein eigener Modus neben Bearbeiten und Sammlung, sondern Bearbeiten mit der Ablage in der linken Spalte: Pockets lassen sich weiter ziehen, markieren und verschieben. Die Suche bleibt dahinter erhalten.
+- Abgelegte Karten zählen mit (Entscheidung Henrik): Fortschritt, Wert, „Was fehlt?“, Tauschliste, Tauschabgleich, „In deiner Sammlung“ und Deck-Abdeckung gehen über die Ablage wie über eine weitere Seite. In Listen mit Seitenangabe steht dort „Ablage“.
+- Eine Karte auf ein belegtes Pocket ziehen tauscht: Die Karte dort kommt an dieselbe Stelle der Ablage. So geht nichts verloren.
+- Das kleine rote Kreuz an einer abgelegten Karte nimmt sie ganz aus dem Binder.
+- Der Teilen-Link gibt die Ablage nicht heraus: Der Server entfernt sie aus der Antwort. Die geteilte Ansicht zählt deshalb nur, was auf den Seiten liegt.
+- Master Set neu aufbauen: Karten des Sets aus der Ablage zählen als vorhanden und stehen danach wieder in ihrem Pocket; fremde Karten bleiben in der Ablage.
+- „Zu Binder hinzufügen“ in der Karten-Info legt die Karte als vorhanden in die Ablage des gewählten Binders, in der Sprache, in der sie angesehen wird, und in ihrer Grundvariante. Ein Auswahlmenü, das nach dem Wählen wieder auf dem ersten Eintrag steht: Das Wählen ist die Handlung.
+- Merklisten in der Karten-Info: eine eingeklappte Zeile statt eines Kästchens je Liste (Henrik: bei vielen Listen zu viele Anklickpunkte). Aufgeklappt wie bisher Ankreuzen und „Neue Liste“.

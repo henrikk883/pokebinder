@@ -177,11 +177,19 @@ export function rebuildMasterSet(
   const ownSets = [source.setId, ...(source.promoSetId === undefined ? [] : [source.promoSetId])]
   const belongsToSet = (cardId: string) => ownSets.some((setId) => cardId.startsWith(`${setId}-`))
 
-  const existing = binder.pages.flatMap((page) =>
-    page.slots.flatMap((slot) =>
-      slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned, copies: copiesOf(slot) }] : [],
+  // Cards of the set that were laid aside go back to where the set has them; other cards
+  // laid aside stay in the tray.
+  const laidAside = binder.tray ?? []
+  const existing = [
+    ...binder.pages.flatMap((page) =>
+      page.slots.flatMap((slot) =>
+        slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned, copies: copiesOf(slot) }] : [],
+      ),
     ),
-  )
+    ...laidAside
+      .filter((card) => belongsToSet(card.cardRef.cardId))
+      .map((card) => ({ cardRef: card.cardRef, owned: card.owned, copies: copiesOf(card) })),
+  ]
   const owned = new Set(existing.filter((card) => card.owned).map((card) => refKey(card.cardRef)))
   // how many copies there are of each card; a card in several pockets counts with its largest number
   const copies = new Map<string, number>()
@@ -218,7 +226,8 @@ export function rebuildMasterSet(
     }
   })
 
-  return {
+  const stillAside = laidAside.filter((card) => !belongsToSet(card.cardRef.cardId))
+  const next: Binder = {
     ...binder,
     pages,
     withReverseHolo: options.withVariants,
@@ -226,6 +235,9 @@ export function rebuildMasterSet(
     withPromos: options.withPromos,
     updatedAt: ctx.now(),
   }
+  if (stillAside.length > 0) next.tray = stillAside
+  else delete next.tray
+  return next
 }
 
 /**

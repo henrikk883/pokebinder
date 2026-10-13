@@ -12,6 +12,7 @@ import {
   type Page,
   type PlacedImage,
   type Slot,
+  type TrayCard,
 } from '../../types/binder'
 import { DECK_FORMATS, type Deck } from '../../types/deck'
 import { slotsPerPage } from '../binder/binderModel'
@@ -188,6 +189,17 @@ function readSlot(value: unknown, index: number, path: string): Slot {
   return slot
 }
 
+function readTrayCard(value: unknown, path: string): TrayCard {
+  const raw = readRecord(value, path)
+  const owned = readBoolean(raw.owned, `${path}.owned`)
+  const card: TrayCard = { id: readString(raw.id, `${path}.id`), cardRef: readCardRef(raw.cardRef, `${path}.cardRef`), owned }
+  if (raw.count !== undefined) {
+    const count = readInt(raw.count, `${path}.count`, 1)
+    if (owned && count > 1) card.count = count
+  }
+  return card
+}
+
 function readPlacedImage(value: unknown, slotCount: number, path: string): PlacedImage {
   const raw = readRecord(value, path)
   const crop = readRecord(raw.crop, `${path}.crop`)
@@ -252,6 +264,11 @@ export function readBinder(value: unknown): Binder {
     updatedAt: readString(raw.updatedAt, 'binder.updatedAt'),
   }
   if (raw.setId !== undefined) binder.setId = readString(raw.setId, 'binder.setId')
+  // missing in files from before cards could be laid aside
+  if (raw.tray !== undefined) {
+    const tray = readArray(raw.tray, 'binder.tray').map((card, i) => readTrayCard(card, `binder.tray[${i}]`))
+    if (tray.length > 0) binder.tray = tray
+  }
   if (cover.assetId !== undefined) {
     binder.cover.assetId = readString(cover.assetId, 'binder.cover.assetId')
   }

@@ -3,6 +3,7 @@ import { de } from '../../i18n/de'
 import type { CardSummary, SetSummary } from '../../lib/tcgdex'
 import { compareVariants, type CardLang, type CardVariant } from '../../types/binder'
 import { useWatchlistStore } from '../../store/watchlistStore'
+import { AddToBinder } from '../binder/AddToBinder'
 import { useCardDetail, useCardLangs, usePrice } from '../binder/useCard'
 import { SimilarCardsSection } from '../similar/SimilarCardsSection'
 import { CardHoldingsInfo } from './CardHoldingsInfo'
@@ -42,6 +43,9 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
   const createList = useWatchlistStore((state) => state.create)
   const [newList, setNewList] = useState('')
   const [showingSimilar, setShowingSimilar] = useState(false)
+  // counted up when the card is put into a binder from here: what is in the collection is read anew
+  const [added, setAdded] = useState(0)
+  const savedOn = lists.filter((list) => isSaved(list.cards, card.id, lang)).map(listName)
   // the info of a similar card opens on top of this one, so the title needs an id of its own
   const titleId = useId()
 
@@ -113,45 +117,52 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
                 )}
               </dd>
             </div>
-            <CardHoldingsInfo cardId={card.id} />
+            <CardHoldingsInfo cardId={card.id} version={added} />
           </dl>
 
-          <fieldset className="space-y-2">
-            <legend className="text-muted">{de.watchlist.lists}</legend>
-            <div className="flex flex-wrap gap-2">
-              {lists.map((list) => (
-                <label
-                  key={list.id}
-                  className="flex h-9 cursor-pointer items-center gap-2 rounded-control border border-line bg-raised px-3 has-checked:border-accent"
+          <AddToBinder cardId={card.id} lang={lang} onAdded={() => setAdded((count) => count + 1)} />
+
+          {/* folded: with many lists, a row of boxes each would fill the window */}
+          <details data-testid="card-info-lists" className="rounded-control border border-line bg-raised open:pb-3">
+            <summary className="flex h-10 cursor-pointer items-center gap-2 px-3 text-sm marker:text-muted">
+              <span className="text-muted">{de.watchlist.lists}:</span>
+              <span className="min-w-0 truncate">{savedOn.length === 0 ? de.watchlist.onNone : savedOn.join(', ')}</span>
+            </summary>
+            <div className="space-y-2 px-3 pt-1">
+              <ul className="max-h-48 space-y-1 overflow-y-auto">
+                {lists.map((list) => (
+                  <li key={list.id}>
+                    <label className="flex h-9 cursor-pointer items-center gap-2 rounded-control px-1 hover:bg-panel">
+                      <input
+                        type="checkbox"
+                        checked={isSaved(list.cards, card.id, lang)}
+                        onChange={() => toggleSaved(list.id, card.id, lang)}
+                        className="size-4 shrink-0 accent-accent"
+                      />
+                      <span className="min-w-0 truncate">{listName(list)}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <form onSubmit={handleNewList} className="flex gap-2">
+                <input
+                  type="text"
+                  value={newList}
+                  onChange={(event) => setNewList(event.target.value)}
+                  placeholder={de.watchlist.newListPlaceholder}
+                  aria-label={de.watchlist.newListField}
+                  className="h-9 min-w-0 flex-1 rounded-control border border-line bg-panel px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={newList.trim() === ''}
+                  className="h-9 rounded-control border border-line bg-panel px-3 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line"
                 >
-                  <input
-                    type="checkbox"
-                    checked={isSaved(list.cards, card.id, lang)}
-                    onChange={() => toggleSaved(list.id, card.id, lang)}
-                    className="size-4 shrink-0 accent-accent"
-                  />
-                  {listName(list)}
-                </label>
-              ))}
+                  {de.watchlist.create}
+                </button>
+              </form>
             </div>
-            <form onSubmit={handleNewList} className="flex gap-2">
-              <input
-                type="text"
-                value={newList}
-                onChange={(event) => setNewList(event.target.value)}
-                placeholder={de.watchlist.newListPlaceholder}
-                aria-label={de.watchlist.newListField}
-                className="h-9 min-w-0 flex-1 rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={newList.trim() === ''}
-                className="h-9 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line"
-              >
-                {de.watchlist.create}
-              </button>
-            </form>
-          </fieldset>
+          </details>
 
           <div className="mt-auto flex flex-wrap justify-end gap-3">
             <button

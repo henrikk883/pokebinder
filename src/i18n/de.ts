@@ -576,6 +576,7 @@ export const de = {
     unsaveCard: (name: string) => `${name} von der Merkliste nehmen`,
     quick: 'Schnellmerken',
     lists: 'Merken auf',
+    onNone: 'keiner Liste',
     choose: 'Merkliste',
     option: (name: string, count: number) => `${name} (${count})`,
     newList: 'Neue Liste',
@@ -604,6 +605,28 @@ export const de = {
     confirm: 'Korrigieren',
     allFine: 'Alle Karten liegen in einer Variante im Binder, die es gibt.',
     failed: 'Die Varianten konnten nicht geprüft werden. Besteht eine Internetverbindung?',
+  },
+  tray: {
+    button: (cards: number) => (cards > 0 ? `Ablage (${cards})` : 'Ablage'),
+    buttonHint: 'Karten zum Umsortieren aus dem Binder nehmen und beiseitelegen. Sie bleiben dort liegen, bis du sie wieder einsortierst.',
+    pane: 'Ablage',
+    title: (cards: number) => (cards > 0 ? `Ablage (${cards})` : 'Ablage'),
+    hint: 'Karten aus dem Binder hierher ziehen und von hier in ein Pocket. Liegt dort schon eine Karte, kommt sie dafür in die Ablage. Die Karten bleiben hier, auch wenn du den Binder schließt, und zählen weiter zum Binder.',
+    hintPhone: 'Karten legst du unter „Auswahl“ in die Ablage. Ein Tipp auf eine Karte hier legt sie in das gewählte oder das nächste freie Pocket. Die Karten bleiben hier, auch wenn du den Binder schließt.',
+    empty: 'Die Ablage ist leer.',
+    lay: 'In die Ablage',
+    layHint: 'Nimmt die Karte aus dem Pocket und legt sie zum Umsortieren beiseite',
+    laySelected: (cards: number) => (cards > 1 ? `${cards} markierte ablegen` : 'Markierte ablegen'),
+    layPage: (page: number) => `Seite ${page} ablegen`,
+    remove: (name: string) => `${name} aus dem Binder nehmen`,
+    removeHint: 'Nimmt die Karte ganz aus dem Binder',
+    copies: (copies: number) => (copies > 1 ? `${copies}× vorhanden` : 'vorhanden'),
+    missing: 'fehlt',
+    addTo: 'Zu Binder hinzufügen',
+    addToPick: 'Binder wählen …',
+    addToNone: 'Noch kein Binder angelegt',
+    added: (binder: string) => `Liegt jetzt in der Ablage von „${binder}“.`,
+    addFailed: 'Die Karte konnte nicht hinzugefügt werden.',
   },
   multi: {
     toggle: 'Mehrere auswählen',
@@ -678,7 +701,15 @@ export const de = {
     none: 'Noch in keinem Binder',
     times: (copies: number) => `${copies}×`,
     copies: (copies: number) => (copies === 0 ? 'Kein Exemplar vorhanden' : copies === 1 ? '1 Exemplar' : `${copies} Exemplare`),
-    pages: (pages: readonly number[]) => (pages.length === 1 ? `Seite ${pages[0]}` : `Seiten ${pages.join(', ')}`),
+    // page 0 stands for the tray of the binder
+    pages: (pages: readonly number[]) => {
+      const real = pages.filter((page) => page > 0)
+      const parts = [
+        ...(real.length === 0 ? [] : [real.length === 1 ? `Seite ${real[0]}` : `Seiten ${real.join(', ')}`]),
+        ...(real.length < pages.length ? ['Ablage'] : []),
+      ]
+      return parts.join(', ')
+    },
     state: (copies: number, missing: number) =>
       [copies > 0 ? `${copies}× vorhanden` : '', missing > 0 ? (missing === 1 ? 'fehlt' : `${missing}× fehlt`) : '']
         .filter(Boolean)

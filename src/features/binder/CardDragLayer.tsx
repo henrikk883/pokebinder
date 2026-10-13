@@ -14,7 +14,7 @@ import { useEditorStore } from '../../store/editorStore'
 import { CardImage } from '../search/CardImage'
 import type { CardLang } from '../../types/binder'
 import { useReadyCatalog } from '../search/useCatalog'
-import { isDragSource, isDropTarget, type DragSource } from './dragDrop'
+import { isDragSource, isDropTarget, isTrayTarget, type DragSource } from './dragDrop'
 import { baseVariantOf } from './placeCard'
 import { useDragSensors } from './dragSensors'
 import { useCard } from './useCard'
@@ -60,10 +60,20 @@ export function CardDragLayer({ children }: { children: ReactNode }) {
     setDragging(null)
     const dragged: unknown = event.active.data.current
     const target: unknown = event.over?.data.current
-    if (!isDragSource(dragged) || !isDropTarget(target)) return
+    if (!isDragSource(dragged)) return
+    const editor = useEditorStore.getState()
+    if (isTrayTarget(target)) {
+      // a card dropped on the tray is laid aside; one of several selected takes the others along
+      if (dragged.kind !== 'pocket') return
+      const { position } = dragged
+      const together = editor.multi.some((other) => other.pageId === position.pageId && other.slotIndex === position.slotIndex)
+      binderStore.getState().toTray(together ? editor.multi : [position])
+      editor.select(null)
+      return
+    }
+    if (!isDropTarget(target)) return
 
     let source = dragged
-    const editor = useEditorStore.getState()
     const grabbed = source.kind === 'pocket' ? source.position : undefined
     if (
       grabbed &&
@@ -97,7 +107,9 @@ export function CardDragLayer({ children }: { children: ReactNode }) {
       {children}
       <DragOverlay dropAnimation={null}>
         {dragging?.kind === 'search' && <Preview card={dragging.card} lang={dragging.lang} />}
-        {dragging?.kind === 'pocket' && <PocketPreview cardId={dragging.cardId} lang={dragging.lang} />}
+        {(dragging?.kind === 'pocket' || dragging?.kind === 'tray') && (
+          <PocketPreview cardId={dragging.cardId} lang={dragging.lang} />
+        )}
         {(dragging?.kind === 'asset' || dragging?.kind === 'image') && (
           <AssetPreview assetId={dragging.assetId} />
         )}

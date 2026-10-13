@@ -116,7 +116,13 @@ export function AppLayout({ header, left, center, right, footer, page }: AppLayo
   const binderOpen = useBinderStore((state) => state.binder !== null)
   const searchShownWhileCollecting = useEditorStore((state) => state.searchShownWhileCollecting)
   const foldedForCollecting = collecting && binderOpen
-  const open: OpenColumns = foldedForCollecting ? { ...stored, left: searchShownWhileCollecting } : stored
+  // the tray takes the place of the search and is there to be dragged to: it is always shown
+  const trayShown = useEditorStore((state) => state.showTray) && binderOpen
+  const open: OpenColumns = trayShown
+    ? { ...stored, left: true }
+    : foldedForCollecting
+      ? { ...stored, left: searchShownWhileCollecting }
+      : stored
 
   function toggle(side: keyof OpenColumns) {
     if (side === 'left' && foldedForCollecting) {
@@ -216,7 +222,7 @@ export function AppLayout({ header, left, center, right, footer, page }: AppLayo
                 pane === option ? 'border-accent text-accent-hover' : 'border-transparent text-muted'
               }`}
             >
-              {de.panes[option]}
+              {option === 'search' && trayShown ? de.tray.pane : de.panes[option]}
             </button>
           ))}
         </nav>

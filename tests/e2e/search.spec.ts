@@ -262,7 +262,7 @@ test('the star notes into "Schnellmerken"; the list waits beside the binder to b
   await found.hover()
   await found.getByRole('button', { name: 'Infos zu Bisasam' }).click()
   const dialog = page.getByRole('dialog', { name: 'Bisasam' })
-  await expect(dialog.getByRole('checkbox', { name: 'Schnellmerken' })).toBeChecked()
+  await expect(dialog.getByTestId('card-info-lists')).toContainText(/Merken auf:\s*Schnellmerken/)
   await dialog.getByRole('button', { name: 'Schließen' }).click()
 
   // on the list it can be dragged into the binder like a search result
@@ -314,6 +314,8 @@ test('a card is noted on lists of its own from its info; lists are made, renamed
   // a new list made from the info of a card holds that card
   await first.hover()
   await first.getByRole('button', { name: 'Infos zu Bisasam' }).click()
+  // the lists are folded away until asked for
+  await dialog.getByTestId('card-info-lists').locator('summary').click()
   await expect(dialog.getByRole('checkbox')).toHaveCount(1)
   await expect(dialog.getByRole('button', { name: 'Anlegen' })).toBeDisabled()
   await dialog.getByLabel('Name einer neuen Liste').fill('Kaufen')
@@ -333,6 +335,7 @@ test('a card is noted on lists of its own from its info; lists are made, renamed
   // a second card goes onto both lists
   await second.hover()
   await second.getByRole('button', { name: /^Infos zu/ }).click()
+  await dialog.getByTestId('card-info-lists').locator('summary').click()
   await dialog.getByRole('checkbox', { name: 'Kaufen' }).check()
   await dialog.getByRole('checkbox', { name: 'Schnellmerken' }).check()
   await dialog.getByRole('button', { name: 'Schließen' }).click()

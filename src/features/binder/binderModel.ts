@@ -12,6 +12,7 @@ import {
   type PocketOpening,
   type Slot,
   type SlotPosition,
+  type TrayCard,
 } from '../../types/binder'
 
 export interface LayoutDimensions {
@@ -388,7 +389,7 @@ export function setCardLang(
 
 /** Languages of the cards in the binder, the binder's own language first. */
 export function cardLangs(binder: Binder): CardLang[] {
-  return [...new Set([binder.lang, ...cardsOf(binder.pages).map((card) => card.cardRef.lang)])]
+  return [...new Set([binder.lang, ...heldCards(binder).map((card) => card.cardRef.lang)])]
 }
 
 export interface Progress {
@@ -399,14 +400,14 @@ export interface Progress {
 }
 
 export function countProgress(binder: Binder): Progress {
-  const cards = cardsOf(binder.pages)
+  const cards = heldCards(binder)
   const owned = cards.filter((card) => card.owned).length
   return { total: cards.length, owned, missing: cards.length - owned }
 }
 
-/** Number of pockets that hold a card. */
+/** Number of cards in the binder: those in pockets and those laid aside. */
 export function countCards(binder: Binder): number {
-  return cardsOf(binder.pages).length
+  return heldCards(binder).length
 }
 
 export function setOpeningSide(
@@ -620,4 +621,104 @@ export function moveCards(
     if (place) writes.push({ position: place.position, content: other ? contentOf(other.slot) : { owned: false } })
   })
   return { binder: writeSlots(binder, writes, ctx), moved }
+}
+
+// The tray: cards laid aside while the binder is rearranged. They are out of their pockets
+// but belong to the binder, and count wherever its cards are counted.
+
+/** The cards laid aside, in the order they were laid there. */
+export function trayOf(binder: Binder): readonly TrayCard[] {
+  return binder.tray ?? []
+}
+
+function withTray(binder: Binder, tray: readonly TrayCard[], ctx: ModelContext): Binder {
+  const next: Binder = { ...binder, updatedAt: ctx.now() }
+  // an empty tray is left out, as in binders from before there was one
+  if (tray.length > 0) next.tray = [...tray]
+  else delete next.tray
+  return next
+}
+
+/** All cards of the binder with what is known of them: those in pockets, then those laid aside. */
+export function heldCards(binder: Binder): PlacedCard[] {
+  return [
+    ...cardsOf(binder.pages),
+    ...trayOf(binder).map((card) => ({ cardRef: card.cardRef, owned: card.owned, ...stored(card.owned, card.count) })),
+  ]
+}
+
+/** Page number (from 1) that stands for the tray where cards are listed with their page. */
+export const TRAY_PAGE = 0
+
+/**
+ * The pages of the binder for counting, with the tray as one more "page" behind them
+ * (`index` is `TRAY_PAGE - 1`, so that its number is `TRAY_PAGE`): whatever goes
+ * through the pockets to count cards, copies or missing ones meets the cards laid aside too.
+ */
+export function countedPages(binder: Binder): Pick<Page, 'index' | 'slots'>[] {
+  const tray = trayOf(binder)
+  if (tray.length === 0) return binder.pages
+  return [
+    ...binder.pages,
+    {
+      index: TRAY_PAGE - 1,
+      slots: tray.map((card, index): Slot => ({ index, cardRef: card.cardRef, owned: card.owned, ...stored(card.owned, card.count) })),
+    },
+  ]
+}
+
+/** Lays the cards of the given pockets aside, in the order given; empty pockets are passed over. */
+export function toTray(binder: Binder, positions: readonly SlotPosition[], ctx: ModelContext = defaultContext): Binder {
+  const seen = new Set<string>()
+  const laid: TrayCard[] = []
+  const emptied: SlotPosition[] = []
+  for (const position of positions) {
+    const key = `${position.pageId}:${position.slotIndex}`
+    const slot = findSlot(binder, position)
+    if (!slot.cardRef || seen.has(key)) continue
+    seen.add(key)
+    laid.push({ id: ctx.newId(), cardRef: slot.cardRef, owned: slot.owned, ...stored(slot.owned, slot.count) })
+    emptied.push(position)
+  }
+  if (laid.length === 0) return binder
+  const cleared = writeSlots(binder, emptied.map((position) => ({ position, content: { owned: false } })), ctx)
+  return withTray(cleared, [...trayOf(binder), ...laid], ctx)
+}
+
+/** Lays all cards of a page aside, in reading order. */
+export function pageToTray(binder: Binder, pageId: string, ctx: ModelContext = defaultContext): Binder {
+  const page = findPage(binder, pageId)
+  return toTray(binder, page.slots.map((slot) => ({ pageId, slotIndex: slot.index })), ctx)
+}
+
+/**
+ * Puts a card from the tray into a pocket. A card that lies there takes its place in the
+ * tray, so nothing is lost.
+ */
+export function fromTray(binder: Binder, trayId: string, position: SlotPosition, ctx: ModelContext = defaultContext): Binder {
+  const tray = trayOf(binder)
+  const card = tray.find((entry) => entry.id === trayId)
+  if (!card) return binder
+  const target = findSlot(binder, position)
+  const placed = writeSlots(
+    binder,
+    [{ position, content: { cardRef: card.cardRef, owned: card.owned, ...stored(card.owned, card.count) } }],
+    ctx,
+  )
+  const swapped: TrayCard[] = target.cardRef
+    ? [{ id: ctx.newId(), cardRef: target.cardRef, owned: target.owned, ...stored(target.owned, target.count) }]
+    : []
+  return withTray(placed, tray.flatMap((entry) => (entry.id === trayId ? swapped : [entry])), ctx)
+}
+
+/** Lays a card aside that was in no pocket, e.g. one picked for the binder elsewhere. */
+export function addToTray(binder: Binder, cardRef: CardRef, owned = true, ctx: ModelContext = defaultContext): Binder {
+  return withTray(binder, [...trayOf(binder), { id: ctx.newId(), cardRef, owned }], ctx)
+}
+
+/** Takes a card out of the tray, and with that out of the binder. */
+export function removeFromTray(binder: Binder, trayId: string, ctx: ModelContext = defaultContext): Binder {
+  const tray = trayOf(binder)
+  const rest = tray.filter((entry) => entry.id !== trayId)
+  return rest.length === tray.length ? binder : withTray(binder, rest, ctx)
 }

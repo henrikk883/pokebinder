@@ -26,6 +26,11 @@ import {
   sortCards,
   type NewBinderInput,
   type PlacedCard,
+  addToTray,
+  fromTray,
+  pageToTray,
+  removeFromTray,
+  toTray,
 } from '../features/binder/binderModel'
 import { applyDrop, type DragSource, type DropTarget } from '../features/binder/dragDrop'
 import { createCardComparator } from '../features/binder/sorting'
@@ -99,6 +104,16 @@ export interface BinderState {
    */
   moveCards: (positions: SlotPosition[], dragged: SlotPosition, target: SlotPosition) => SlotPosition[] | null
   clearSlots: (positions: SlotPosition[]) => void
+  /** Lays the cards of these pockets aside, into the tray of the binder. */
+  toTray: (positions: SlotPosition[]) => void
+  /** Lays all cards of a page aside. */
+  pageToTray: (pageId: string) => void
+  /** Puts a card from the tray into a pocket; a card lying there takes its place in the tray. */
+  fromTray: (trayId: string, position: SlotPosition) => void
+  /** Lays a card aside that was in no pocket. */
+  addToTray: (cardRef: CardRef) => void
+  /** Takes a card out of the tray, and with that out of the binder. */
+  removeFromTray: (trayId: string) => void
   setOwnedMany: (positions: SlotPosition[], owned: boolean) => void
   /** Makes room at a pocket: its card and those behind it move one pocket on. */
   insertGap: (position: SlotPosition) => void
@@ -266,6 +281,11 @@ export function createBinderStore(deps: BinderStoreDeps) {
         return result.moved
       },
       clearSlots: (positions) => change((binder) => clearSlots(binder, positions)),
+      toTray: (positions) => change((binder) => toTray(binder, positions)),
+      pageToTray: (pageId) => change((binder) => pageToTray(binder, pageId)),
+      fromTray: (trayId, position) => change((binder) => fromTray(binder, trayId, position)),
+      addToTray: (cardRef) => change((binder) => addToTray(binder, cardRef)),
+      removeFromTray: (trayId) => change((binder) => removeFromTray(binder, trayId)),
       setOwnedMany: (positions, owned) => change((binder) => setOwnedMany(binder, positions, owned)),
       insertGap: (position) => change((binder) => insertGap(binder, position)),
       closeGap: (position) => change((binder) => closeGap(binder, position)),
@@ -280,6 +300,10 @@ export function createBinderStore(deps: BinderStoreDeps) {
         }
         if (source.kind === 'image') {
           return attempt((binder) => moveImage(binder, source.position, target.position))
+        }
+        if (source.kind === 'tray') {
+          change((binder) => fromTray(binder, source.trayId, target.position))
+          return null
         }
         change((binder) => applyDrop(binder, source, target))
         return null

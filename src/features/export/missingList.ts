@@ -1,4 +1,5 @@
 import type { Binder, CardLang, CardVariant } from '../../types/binder'
+import { countedPages, TRAY_PAGE } from '../binder/binderModel'
 
 /** What the list needs to know about a card; comes from TCGdex. */
 export interface CardInfo {
@@ -40,7 +41,7 @@ export function buildMissingList(
   priceOf: PriceLookup = () => undefined,
 ): MissingRow[] {
   const rows: MissingRow[] = []
-  for (const page of binder.pages) {
+  for (const page of countedPages(binder)) {
     for (const slot of page.slots) {
       if (!slot.cardRef || slot.owned) continue
       const { cardId, variant, lang } = slot.cardRef
@@ -88,6 +89,8 @@ export function totalPrice(rows: readonly Pick<MissingRow, 'price'>[]): PriceTot
 export interface CsvLabels {
   columns: { set: string; number: string; name: string; variant: string; rarity: string; lang: string; page: string; price: string }
   total: string
+  /** What stands in place of the page for a card laid aside in the tray. */
+  tray?: string
   variantLabel: (variant: CardVariant) => string
   languageLabel: (lang: CardLang) => string
 }
@@ -120,7 +123,7 @@ export function missingListCsv(rows: readonly MissingRow[], labels: CsvLabels): 
       labels.variantLabel(row.variant),
       row.rarity,
       labels.languageLabel(row.lang),
-      String(row.page),
+      row.page === TRAY_PAGE ? (labels.tray ?? '') : String(row.page),
       row.price === undefined ? '' : plainEuro(row.price),
     ]),
   ]

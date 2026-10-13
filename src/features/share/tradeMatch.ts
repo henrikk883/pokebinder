@@ -1,5 +1,5 @@
 import type { Binder, CardRef } from '../../types/binder'
-import { copiesOf } from '../binder/binderModel'
+import { copiesOf, countedPages } from '../binder/binderModel'
 
 /**
  * Who could give whom what: the spare cards of one collector that another is missing. A
@@ -25,7 +25,7 @@ function add(cards: Map<string, Counted>, cardRef: CardRef, count: number): void
 export function spareCards(binders: readonly Binder[]): Map<string, Counted> {
   const spare = new Map<string, Counted>()
   for (const binder of binders) {
-    for (const page of binder.pages) {
+    for (const page of countedPages(binder)) {
       for (const slot of page.slots) {
         const extra = copiesOf(slot) - 1
         if (slot.cardRef && extra > 0) add(spare, slot.cardRef, extra)
@@ -39,7 +39,7 @@ export function spareCards(binders: readonly Binder[]): Map<string, Counted> {
 export function missingCards(binders: readonly Binder[]): Map<string, Counted> {
   const missing = new Map<string, Counted>()
   for (const binder of binders) {
-    for (const page of binder.pages) {
+    for (const page of countedPages(binder)) {
       for (const slot of page.slots) {
         if (slot.cardRef && !slot.owned) add(missing, slot.cardRef, 1)
       }

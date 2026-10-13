@@ -1,6 +1,6 @@
 import { mapWithConcurrency, tcgdexFor } from '../../lib/tcgdex'
 import type { Binder, CardRef } from '../../types/binder'
-import { copiesOf } from './binderModel'
+import { copiesOf, countedPages } from './binderModel'
 
 export interface BinderValue {
   /** Cardmarket value of the cards marked as owned, in euros. */
@@ -42,7 +42,7 @@ export async function loadBinderValue(
   binder: Binder,
   onProgress?: (done: number, total: number) => void,
 ): Promise<BinderValue> {
-  const cards = binder.pages.flatMap((page) =>
+  const cards = countedPages(binder).flatMap((page) =>
     page.slots.flatMap((slot) =>
       slot.cardRef ? [{ cardRef: slot.cardRef, owned: slot.owned, copies: Math.max(1, copiesOf(slot)) }] : [],
     ),

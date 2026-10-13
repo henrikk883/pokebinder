@@ -95,6 +95,13 @@ export interface EditorState {
   mode: EditorMode
   setMode: (mode: EditorMode) => void
   /**
+   * While arranging: the column beside the binder shows the tray, the cards laid aside
+   * while the binder is rearranged, in place of the search.
+   */
+  showTray: boolean
+  /** Shows the tray; that is arranging the binder, so the mode becomes `edit`. */
+  openTray: () => void
+  /**
    * In `collection` the search is folded away, since nothing is dragged then. This says
    * the collector brought it back for the time being; changing the mode forgets it.
    */
@@ -161,7 +168,10 @@ export const useEditorStore = create<EditorState>()((set) => ({
   notice: null,
 
   setMode: (mode) =>
-    set({ mode, notice: null, searchShownWhileCollecting: false, multi: [], multiMode: false, moving: null }),
+    set({ mode, showTray: false, notice: null, searchShownWhileCollecting: false, multi: [], multiMode: false, moving: null }),
+  showTray: false,
+  // what is selected stays: it may be what is to be laid aside
+  openTray: () => set({ mode: 'edit', showTray: true, notice: null, searchShownWhileCollecting: false, moving: null }),
   multi: [],
   multiMode: false,
   // leaving the mode keeps what is selected, so that it can be acted on
@@ -216,6 +226,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
       moving: null,
       notice: null,
       mode: 'edit',
+      showTray: false,
       searchShownWhileCollecting: false,
       searchLang: searchLang ?? state.searchLang,
     })),

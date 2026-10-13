@@ -84,6 +84,19 @@ describe('what a link shows', () => {
     expect(text).not.toContain('ash')
   })
 
+  it('leaves out the cards laid aside while the binder is rearranged', async () => {
+    const laid = { ...binder('kanto'), tray: [{ id: 't1', cardRef: { cardId: 'sv03.5-006', lang: 'de', variant: 'holo' }, owned: true }] }
+    await api('ash', 'PUT', '/api/binders/kanto', { binder: laid, base: monday })
+    const token = await share('ash', 'kanto')
+
+    const shown = (await (await open(`/shared/${token}`)).json()) as { binder: Record<string, unknown> }
+    expect(shown.binder).not.toHaveProperty('tray')
+    expect(shown.binder.id).toBe('kanto')
+    // the collector still gets them
+    const own = (await (await api('ash', 'GET', '/api/binders/kanto')).json()) as { binder: Record<string, unknown> }
+    expect(own.binder.tray).toHaveLength(1)
+  })
+
   it('hands out the pictures of that binder and no others', async () => {
     await upload('ash', 'forest', [1, 2, 3])
     await upload('ash', 'private', [9, 9, 9])

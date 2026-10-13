@@ -2,6 +2,7 @@ import { de } from '../../i18n/de'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
 import { BinderFind } from './BinderFind'
+import { trayOf } from './binderModel'
 import { MAX_ZOOM, MIN_ZOOM, pageNumbersOf, ZOOM_STEP, type Spread } from './spreads'
 
 const squareClass =
@@ -34,6 +35,9 @@ export function PageControls({ binder, spread, spreadCount }: PageControlsProps)
   const showSpread = useEditorStore((state) => state.showSpread)
   const mode = useEditorStore((state) => state.mode)
   const setMode = useEditorStore((state) => state.setMode)
+  const showTray = useEditorStore((state) => state.showTray)
+  const openTray = useEditorStore((state) => state.openTray)
+  const laidAside = trayOf(binder).length
   const multiMode = useEditorStore((state) => state.multiMode)
   const setMultiMode = useEditorStore((state) => state.setMultiMode)
 
@@ -44,16 +48,26 @@ export function PageControls({ binder, spread, spreadCount }: PageControlsProps)
           <button
             key={option}
             type="button"
-            aria-pressed={mode === option}
+            aria-pressed={mode === option && !showTray}
             title={option === 'collection' ? de.binder.collectionHint : undefined}
             onClick={() => setMode(option)}
             className={`h-9 rounded-control px-4 font-medium ${
-              mode === option ? 'bg-accent text-white' : 'text-muted hover:text-text'
+              mode === option && !showTray ? 'bg-accent text-white' : 'text-muted hover:text-text'
             }`}
           >
             {de.binder.modes[option]}
           </button>
         ))}
+        {/* the cards laid aside while rearranging; their number shows whatever the mode */}
+        <button
+          type="button"
+          aria-pressed={showTray}
+          title={de.tray.buttonHint}
+          onClick={openTray}
+          className={`h-9 rounded-control px-4 font-medium ${showTray ? 'bg-accent text-white' : 'text-muted hover:text-text'}`}
+        >
+          {de.tray.button(laidAside)}
+        </button>
       </div>
       {mode === 'edit' && (
         <button

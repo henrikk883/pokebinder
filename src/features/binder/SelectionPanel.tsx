@@ -183,6 +183,7 @@ export function SelectionPanel() {
   const selection = useEditorStore((state) => state.selection)
   const multi = useEditorStore((state) => state.multi)
   const clearSlots = useBinderStore((state) => state.clearSlots)
+  const toTray = useBinderStore((state) => state.toTray)
   const setOwnedMany = useBinderStore((state) => state.setOwnedMany)
   const [editingCover, setEditingCover] = useState(false)
 
@@ -228,6 +229,18 @@ export function SelectionPanel() {
                 {de.multi.allMissing}
               </button>
             </div>
+            <button
+              type="button"
+              disabled={selectedCards === 0}
+              title={de.tray.layHint}
+              onClick={() => {
+                toTray(multi)
+                select(null)
+              }}
+              className={pageButtonClass}
+            >
+              {de.tray.lay}
+            </button>
             <button
               type="button"
               disabled={selectedCards === 0}
@@ -278,6 +291,17 @@ export function SelectionPanel() {
                 className={pageButtonClass}
               >
                 {de.move.start}
+              </button>
+            )}
+            {!collecting && (
+              <button
+                type="button"
+                disabled={!slot.cardRef}
+                title={de.tray.layHint}
+                onClick={() => toTray([{ pageId: page.id, slotIndex: slot.index }])}
+                className={pageButtonClass}
+              >
+                {de.tray.lay}
               </button>
             )}
             <button

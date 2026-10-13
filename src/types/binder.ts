@@ -98,6 +98,18 @@ export interface Page {
   images: PlacedImage[]
 }
 
+/**
+ * A card laid aside while the binder is rearranged: out of its pocket, but still part of
+ * the binder, with all that was known of it there.
+ */
+export interface TrayCard {
+  id: string
+  cardRef: CardRef
+  owned: boolean
+  /** As in a pocket: only for more than one copy of a card that is there. */
+  count?: number
+}
+
 export interface BinderCover {
   title: string
   assetId?: string
@@ -118,6 +130,8 @@ export interface Binder {
   defaultOpeningSide: OpeningSide
   cover: BinderCover
   pages: Page[]
+  /** Cards laid aside while rearranging, in the order they were laid there; left out while empty. */
+  tray?: TrayCard[]
   /** ISO 8601 timestamps. */
   createdAt: string
   updatedAt: string

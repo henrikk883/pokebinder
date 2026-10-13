@@ -287,3 +287,39 @@ test('on a phone a card is moved by tapping it, "Verschieben", and the pocket it
   await pockets.nth(8).tap()
   await expect(pockets.nth(8)).toHaveAttribute('data-card-id', 'sv03.5-001')
 })
+
+test('on a phone the tray takes the place of the search, and a tap brings a card back', async ({ page }) => {
+  await createBinder(page, 'Umsortieren')
+  const pockets = page.getByTestId('pocket')
+  // a card into the first pocket, by a tap in the search
+  await bar(page).getByRole('button', { name: 'Suche' }).tap()
+  await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
+  await page.getByTestId('search-results').locator('[data-card-id="sv03.5-006"]').getByRole('button', { name: /legen|platzieren|Pocket/ }).tap()
+  await bar(page).getByRole('button', { name: 'Binder' }).tap()
+  await expect(pockets.first()).toHaveAttribute('data-card-id', 'sv03.5-006')
+
+  // laid aside from the selection
+  await pockets.first().tap()
+  await bar(page).getByRole('button', { name: 'Auswahl' }).tap()
+  await page.getByTestId('column-right').getByRole('button', { name: 'In die Ablage' }).tap()
+  await bar(page).getByRole('button', { name: 'Binder' }).tap()
+  await expect(pockets.first()).toHaveAttribute('data-card-id', '')
+
+  // the tray is where the search was
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Ablage (1)' }).tap()
+  await expect(bar(page).getByRole('button')).toHaveText(['Binder', 'Ablage', 'Auswahl'])
+  await bar(page).getByRole('button', { name: 'Ablage' }).tap()
+  const laid = page.getByTestId('tray').getByTestId('tray-card')
+  await expect(laid).toHaveCount(1)
+  expect(await noSidewaysScroll(page)).toBe(true)
+
+  // a tap puts it into the next free pocket
+  await laid.first().getByRole('button', { name: /Pocket|legen|platzieren/ }).first().tap()
+  await expect(laid).toHaveCount(0)
+  await bar(page).getByRole('button', { name: 'Binder' }).tap()
+  await expect(pockets.first()).toHaveAttribute('data-card-id', 'sv03.5-006')
+
+  // arranging again brings the search back
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Bearbeiten' }).tap()
+  await expect(bar(page).getByRole('button')).toHaveText(['Binder', 'Suche', 'Auswahl'])
+})

@@ -304,6 +304,7 @@ test.describe('bringing devices in line', () => {
     const second = results.locator('[data-card-id="sv03.5-002"]')
     await second.hover()
     await second.getByRole('button', { name: /^Infos zu/ }).click()
+    await page.getByRole('dialog').getByTestId('card-info-lists').locator('summary').click()
     await page.getByRole('dialog').getByLabel('Name einer neuen Liste').fill('Kaufen')
     await page.getByRole('dialog').getByRole('button', { name: 'Anlegen' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Schließen' }).click()
