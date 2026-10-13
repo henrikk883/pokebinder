@@ -96,8 +96,8 @@ test('German and English cards lie side by side in one binder', async ({ page })
   await expect(pocket(page, 1, 1)).toHaveAttribute('data-lang', 'de')
 
   await searchLanguage(page).selectOption('en')
-  // another language starts the search afresh
-  await expect(page.getByRole('searchbox', { name: searchField })).toHaveValue('')
+  // what was typed stays when the language changes
+  await expect(page.getByRole('searchbox', { name: searchField })).toHaveValue('Glurak')
   await page.getByRole('searchbox', { name: searchField }).fill('Charizard')
   await expect(tile).toContainText('Charizard ex')
   await drag(page, tile.locator('img'), pocket(page, 1, 2))
@@ -107,7 +107,7 @@ test('German and English cards lie side by side in one binder', async ({ page })
   await expect(pocket(page, 1, 2)).toHaveAttribute('data-lang', 'en')
 })
 
-test('changing the search language resets the filters and offers that language\'s sets', async ({ page }) => {
+test('changing the search language keeps the set and offers that language\'s filters', async ({ page }) => {
   await page.getByRole('button', { name: 'Set', exact: true }).click()
   await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
   await expect(page.getByTestId('card-tile')).toHaveCount(207)
@@ -116,8 +116,9 @@ test('changing the search language resets the filters and offers that language\'
 
   await searchLanguage(page).selectOption('en')
 
-  await expect(page.getByRole('button', { name: 'Set', exact: true })).toHaveText('Alle Sets')
-  await expect(page.getByTestId('card-tile')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Set', exact: true })).toContainText('151')
+  await expect(page.getByTestId('card-tile')).toHaveCount(207)
+  await expect(page.getByTestId('card-tile').first()).toContainText('Bulbasaur')
   await expect(page.getByLabel('Typ').locator('option').nth(1)).toHaveText('Colorless')
   await expect(page.getByLabel('Seltenheit').locator('option', { hasText: 'Double rare' })).toHaveCount(1)
   // the Pocket rarities stay hidden in English as well
