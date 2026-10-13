@@ -635,3 +635,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Damit vier Reiter in die schmale Spalte passen, heißt „Eigene Bilder“ dort nur noch „Bilder“.
 - Vorgemerkt, nicht gebaut (Henrik, 12.10.2026): jede Karte von einem großen Sprachmodell beschreiben lassen (Stichworte zu Jahreszeit, Ort, Stimmung) für eine freie Textsuche. Braucht einen bezahlten Dienst und einen API-Schlüssel; erst an etwa 50 Karten Kosten und Nutzen testen.
 - Nebenbei: Ein Test zum Teilen-Link schlug zufällig fehl, wenn der zufällige Link auf „x“ endete (der Test tauschte das letzte Zeichen gegen „x“). Der Test ist korrigiert; am Server war nichts falsch.
+
+## 2026-10-13 – Karten-Info zeigt die eigene Sammlung
+- Von Henrik vorgeschlagen: Die Karten-Info nennt unter „In deiner Sammlung“, wie viele Exemplare der Karte vorhanden sind und in welchen Bindern sie liegt (Binder, Seiten, vorhanden oder fehlt).
+- Gezählt wird wie überall: ein abgehaktes Pocket mit seiner Anzahl. Pockets, in denen die Karte liegt, aber noch fehlt, erscheinen als „fehlt“.
+- Die Karte zählt in jeder Sprache und Variante; liegt sie in einer anderen Sprache als der angesehenen im Binder, steht die Sprache dabei. Decks zählen nicht mit: Sie sind eine Liste zum Spielen, kein Bestand.
+- Gelesen werden die Binder dieses Geräts.

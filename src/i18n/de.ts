@@ -673,6 +673,16 @@ export const de = {
     cancel: 'Abbrechen',
     confirm: (count: number) => (count === 1 ? '1 Binder einspielen' : `${count} Binder einspielen`),
   },
+  holdings: {
+    label: 'In deiner Sammlung',
+    none: 'Noch in keinem Binder',
+    copies: (copies: number) => (copies === 0 ? 'Kein Exemplar vorhanden' : copies === 1 ? '1 Exemplar' : `${copies} Exemplare`),
+    pages: (pages: readonly number[]) => (pages.length === 1 ? `Seite ${pages[0]}` : `Seiten ${pages.join(', ')}`),
+    state: (copies: number, missing: number) =>
+      [copies > 0 ? `${copies}× vorhanden` : '', missing > 0 ? (missing === 1 ? 'fehlt' : `${missing}× fehlt`) : '']
+        .filter(Boolean)
+        .join(', '),
+  },
   cardInfo: {
     open: (name: string) => `Infos zu ${name}`,
     languages: 'Erhältlich auf',

@@ -5,6 +5,7 @@ import { compareVariants, type CardLang, type CardVariant } from '../../types/bi
 import { useWatchlistStore } from '../../store/watchlistStore'
 import { useCardDetail, useCardLangs, usePrice } from '../binder/useCard'
 import { SimilarCardsSection } from '../similar/SimilarCardsSection'
+import { CardHoldingsInfo } from './CardHoldingsInfo'
 import { CardImage } from './CardImage'
 import { isSaved } from './watchlist'
 import { listName } from './listName'
@@ -112,6 +113,7 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
                 )}
               </dd>
             </div>
+            <CardHoldingsInfo cardId={card.id} lang={lang} />
           </dl>
 
           <fieldset className="space-y-2">

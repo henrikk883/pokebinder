@@ -268,3 +268,34 @@ test('beside a binder, the cards that fit its open pages are offered and dragged
   await expect(tiles).toHaveCount(2)
   await expect(fitting.locator('[data-card-id="sv03.5-025"]')).toHaveCount(0)
 })
+
+test('the info of a card says how often it is in the collection and in which binders', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await dialog.getByLabel('Name').fill('Kanto')
+  await dialog.getByRole('button', { name: 'Anlegen' }).click()
+  await expect(page.getByRole('heading', { name: 'Kanto' })).toBeVisible()
+  const column = page.getByTestId('column-left')
+  const pockets = page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket')
+  await column.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const bisasam = column.locator('[data-testid="card-tile"][data-card-id="sv03.5-001"]')
+  const glumanda = column.locator('[data-testid="card-tile"][data-card-id="sv03.5-004"]')
+
+  // a card that lies nowhere
+  await glumanda.hover()
+  await glumanda.getByRole('button', { name: 'Infos zu Glumanda' }).click()
+  await expect(page.getByTestId('card-info-holdings')).toHaveText('Noch in keinem Binder')
+  await page.getByRole('dialog').getByRole('button', { name: 'Schließen' }).click()
+
+  // twice in the binder: both pockets wait for the card until it is ticked off
+  await drag(page, bisasam.locator('img'), pockets.nth(0))
+  await drag(page, bisasam.locator('img'), pockets.nth(1))
+  await expect(pockets.nth(1)).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await bisasam.hover()
+  await bisasam.getByRole('button', { name: 'Infos zu Bisasam' }).click()
+  const holdings = page.getByTestId('card-info-holdings')
+  await expect(holdings).toContainText('Kanto · Seite 1')
+  await expect(holdings).toContainText(/2× (vorhanden|fehlt)/)
+})
