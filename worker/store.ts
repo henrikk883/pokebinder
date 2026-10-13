@@ -30,6 +30,8 @@ export interface ShareRecord {
   token: string
   binderId: string
   createdAt: string
+  /** Whether whoever opens the link is offered to copy the binder into a collection of their own. */
+  copyable: boolean
 }
 
 export interface SyncStore {
@@ -65,8 +67,10 @@ export interface SyncStore {
   createShare(user: string, binderId: string, token: string, createdAt: string): Promise<ShareRecord>
   /** Withdraws a link of this collector; `false` if there was none. */
   deleteShare(user: string, token: string): Promise<boolean>
+  /** Says whether a link of this collector offers copying; `false` if there is no such link. */
+  setShareCopyable(user: string, token: string, copyable: boolean): Promise<boolean>
   /** Whose binder a link shows; `undefined` for a link that does not exist (any more). */
-  findShare(token: string): Promise<{ user: string; binderId: string } | undefined>
+  findShare(token: string): Promise<{ user: string; binderId: string; copyable: boolean } | undefined>
 
   listAssets(user: string): Promise<AssetRecord[]>
   getAsset(user: string, id: string): Promise<{ record: AssetRecord; bytes: ArrayBuffer } | undefined>

@@ -14,9 +14,11 @@ interface FakeServer {
   images: Map<string, { record: Record<string, unknown>; body: Buffer }>
   /** Share links: token → binder id. */
   shares: Map<string, string>
+  /** The links whose binder is not offered to be copied. */
+  noCopy: Set<string>
 }
 
-const newServer = (): FakeServer => ({ email: 'ash@example.com', binders: new Map(), decks: new Map(), lists: null, images: new Map(), shares: new Map() })
+const newServer = (): FakeServer => ({ email: 'ash@example.com', binders: new Map(), decks: new Map(), lists: null, images: new Map(), shares: new Map(), noCopy: new Set() })
 
 /** A device with its own connection, which can be cut. */
 interface Connection {
@@ -30,7 +32,7 @@ async function connect(page: Page, server: FakeServer): Promise<Connection> {
     const [, , token] = new URL(route.request().url()).pathname.split('/')
     const binder = server.binders.get(server.shares.get(token ?? '') ?? '')
     return binder && !binder.deleted
-      ? route.fulfill({ json: { binder: binder.data } })
+      ? route.fulfill({ json: { binder: binder.data, copyable: !server.noCopy.has(token ?? '') } })
       : route.fulfill({ status: 404, json: { error: 'not found' } })
   })
   await page.route('**/api/**', (route: Route) => {
@@ -70,7 +72,16 @@ async function connect(page: Page, server: FakeServer): Promise<Connection> {
     if (resource === 'me') return route.fulfill({ json: { email: server.email } })
     if (resource === 'shares') {
       if (method === 'GET') {
-        return route.fulfill({ json: { shares: [...server.shares].map(([token, binderId]) => ({ token, binderId })) } })
+        return route.fulfill({
+          json: { shares: [...server.shares].map(([token, binderId]) => ({ token, binderId, copyable: !server.noCopy.has(token) })) },
+        })
+      }
+      if (method === 'PUT') {
+        if (!server.shares.has(id ?? '')) return route.fulfill({ status: 404, json: { error: 'not found' } })
+        const { copyable } = request.postDataJSON() as { copyable: boolean }
+        if (copyable) server.noCopy.delete(id ?? '')
+        else server.noCopy.add(id ?? '')
+        return route.fulfill({ json: { token: id, copyable } })
       }
       if (method === 'DELETE') {
         return server.shares.delete(id ?? '')
@@ -82,7 +93,7 @@ async function connect(page: Page, server: FakeServer): Promise<Connection> {
       const known = [...server.shares].find(([, shared]) => shared === binderId)?.[0]
       const token = known ?? `link${String(server.shares.size + 1).padStart(20, '0')}`
       server.shares.set(token, binderId)
-      return route.fulfill({ json: { share: { token, binderId } } })
+      return route.fulfill({ json: { share: { token, binderId, copyable: !server.noCopy.has(token) } } })
     }
     if ((resource === 'binders' || resource === 'decks') && id === undefined) {
       const entries = [...server[resource]].map(([key, entry]) => ({
@@ -391,6 +402,79 @@ test('a binder is shared by a link that anybody can open to look at it, until th
   await expect(dialog).toContainText('Für diesen Binder gibt es noch keinen Link.')
   await visitor.goto(link)
   await expect(visitor.getByRole('alert')).toContainText('Diesen Link gibt es nicht (mehr).')
+  await context.close()
+})
+
+test('a shared binder is copied into one\'s own collection, unless its collector switched that off', async ({ page, browser }) => {
+  const server = newServer()
+  await connect(page, server)
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Neuer Binder' }).click()
+  const wizard = page.getByRole('dialog', { name: 'Neuer Binder' })
+  await wizard.getByText('Master Set', { exact: true }).click()
+  await wizard.getByRole('button', { name: 'Set', exact: true }).click()
+  await wizard.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  await expect(wizard.getByTestId('master-set-summary')).toBeVisible()
+  await wizard.getByRole('button', { name: 'Anlegen' }).click()
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  const owned = page.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket').first()
+  await owned.click()
+  await expect(owned).toHaveAttribute('data-owned', 'true')
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Teilen …' }).click()
+  const dialog = page.getByRole('dialog', { name: '„151“ teilen' })
+  await dialog.getByRole('button', { name: 'Link erzeugen' }).click()
+  const link = await dialog.getByRole('textbox', { name: 'Link zum Binder' }).inputValue()
+  // a link offers copying until that is switched off
+  const allow = dialog.getByRole('checkbox', { name: /Darf in die eigene Sammlung kopiert werden/ })
+  await expect(allow).toBeChecked()
+
+  // a friend on another device, not signed in
+  const context = await browser.newContext({ serviceWorkers: 'block' })
+  const visitor = await context.newPage()
+  await visitor.route(/^https:/, (route) => route.abort())
+  const friend = { ...server, email: null }
+  await connect(visitor, friend)
+  await visitor.goto(link)
+  await expect(visitor.getByTestId('shared-progress')).toHaveText('1 von 207 Karten vorhanden')
+
+  await visitor.getByRole('button', { name: 'In meine Sammlung kopieren' }).click()
+  await expect(visitor.getByRole('status').filter({ hasText: 'Kopie' })).toContainText('Der Binder liegt jetzt als Kopie in deiner Sammlung.')
+  await expect(visitor.getByRole('button', { name: 'In meine Sammlung kopieren' })).toHaveCount(0)
+  await visitor.getByRole('button', { name: 'Kopie öffnen' }).click()
+
+  // the copy is a binder of the friend's own: all cards missing, and it can be changed
+  await expect(visitor.getByRole('heading', { name: '151', exact: true })).toBeVisible()
+  await expect(visitor.getByTestId('progress')).toContainText('0 / 207 Karten gesammelt')
+  const pockets = visitor.getByRole('region', { name: 'Seite 1', exact: true }).getByTestId('pocket')
+  await expect(pockets.first()).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await expect(pockets.first()).toHaveAttribute('data-owned', 'false')
+  await visitor.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  await pockets.nth(1).click()
+  await expect(visitor.getByTestId('progress')).toContainText('1 / 207 Karten gesammelt')
+  // it stays after a reload, among the friend's binders
+  await expect(visitor.getByRole('banner').getByRole('status')).toHaveText('Lokal gespeichert')
+  await visitor.goto('/')
+  await visitor.getByRole('banner').getByRole('button', { name: 'Meine Karten' }).click()
+  await expect(visitor.getByTestId('binder-tile')).toHaveCount(1)
+
+  // what the friend changed did not touch the binder that was shared
+  await visitor.goto(link)
+  await expect(visitor.getByTestId('shared-progress')).toHaveText('1 von 207 Karten vorhanden')
+  await expect(visitor.getByTestId('shared-pocket').nth(1)).toHaveAttribute('data-owned', 'false')
+  expect(server.binders.size).toBe(1)
+
+  // switched off by the collector, the link still shows the binder, without the offer
+  await allow.uncheck()
+  await expect.poll(() => server.noCopy.size).toBe(1)
+  await visitor.goto(link)
+  await expect(visitor.getByTestId('shared-progress')).toBeVisible()
+  await expect(visitor.getByRole('button', { name: 'In meine Sammlung kopieren' })).toHaveCount(0)
+  // the choice is kept with the link
+  await dialog.getByRole('button', { name: 'Schließen' }).click()
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Teilen …' }).click()
+  await expect(page.getByRole('dialog', { name: '„151“ teilen' }).getByRole('checkbox')).not.toBeChecked()
   await context.close()
 })
 

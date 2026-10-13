@@ -5,7 +5,7 @@ import type { SyncStore } from './store'
  * for, and the images that binder shows. Nothing else of the collector's, and not who the
  * collector is.
  *
- *   GET /shared/:token                 { binder }
+ *   GET /shared/:token                 { binder, copyable }
  *   GET /shared/:token/assets/:id      one picture of that binder
  */
 
@@ -81,7 +81,9 @@ export async function handleShared(request: Request, store: SyncStore): Promise<
   if (!share || data === undefined) return json({ error: 'not found' }, 404)
 
   if (kind === undefined) {
-    return new Response(`{"binder":${withoutTray(data)}}`, {
+    // `copyable` says whether the collector offers the binder to be copied; it is a wish the
+    // app follows, not a lock: whoever may look at a binder can write it down
+    return new Response(`{"binder":${withoutTray(data)},"copyable":${share.copyable ? 'true' : 'false'}}`, {
       headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
     })
   }

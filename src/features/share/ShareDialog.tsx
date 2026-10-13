@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { de } from '../../i18n/de'
 import type { Binder } from '../../types/binder'
-import { createShare, findShare, signIn, useSyncStore, withdrawShare } from '../sync/syncStore'
+import { createShare, findShare, setShareCopyable, signIn, useSyncStore, withdrawShare } from '../sync/syncStore'
 import { shareUrl } from './sharedBinder'
 
 type Share =
   | { status: 'loading' }
   | { status: 'none' }
-  | { status: 'shared'; token: string }
+  /** `copyable`: whoever opens the link is offered to copy the binder into their own collection. */
+  | { status: 'shared'; token: string; copyable: boolean }
   /** The server does not have the binder yet, or could not be reached. */
   | { status: 'failed' }
 
@@ -24,13 +25,14 @@ export function ShareDialog({ binder, onClose }: { binder: Binder; onClose: () =
   const available = useSyncStore((state) => state.status !== 'unavailable' && state.status !== 'unknown')
   const [share, setShare] = useState<Share>({ status: 'loading' })
   const [copied, setCopied] = useState(false)
+  const [copyFailed, setCopyFailed] = useState(false)
 
   useEffect(() => {
     if (!signedIn) return
     let cancelled = false
     findShare(binder.id).then(
-      (token) => {
-        if (!cancelled) setShare(token === undefined ? { status: 'none' } : { status: 'shared', token })
+      (found) => {
+        if (!cancelled) setShare(found === undefined ? { status: 'none' } : { status: 'shared', ...found })
       },
       () => {
         if (!cancelled) setShare({ status: 'failed' })
@@ -44,7 +46,25 @@ export function ShareDialog({ binder, onClose }: { binder: Binder; onClose: () =
   async function handleCreate() {
     setShare({ status: 'loading' })
     const token = await createShare(binder.id).catch(() => undefined)
-    setShare(token === undefined ? { status: 'failed' } : { status: 'shared', token })
+    if (token === undefined) {
+      setShare({ status: 'failed' })
+      return
+    }
+    // a binder that had a link keeps it, with what was chosen for it
+    const known = await findShare(binder.id).catch(() => undefined)
+    setShare({ status: 'shared', token, copyable: known?.copyable ?? true })
+  }
+
+  async function handleCopyable(token: string, copyable: boolean) {
+    setShare({ status: 'shared', token, copyable })
+    setCopyFailed(false)
+    try {
+      await setShareCopyable(token, copyable)
+    } catch {
+      // not taken by the server: the box goes back to what holds
+      setShare({ status: 'shared', token, copyable: !copyable })
+      setCopyFailed(true)
+    }
   }
 
   async function handleWithdraw(token: string) {
@@ -90,6 +110,23 @@ export function ShareDialog({ binder, onClose }: { binder: Binder; onClose: () =
               className="h-10 w-full rounded-control border border-line bg-raised px-3 text-sm focus:border-accent focus:outline-none"
             />
             <p className="text-xs text-muted">{de.share.live}</p>
+            <label className="flex cursor-pointer items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={share.copyable}
+                onChange={(event) => void handleCopyable(share.token, event.target.checked)}
+                className="mt-0.5 size-4 shrink-0 accent-accent"
+              />
+              <span>
+                {de.share.copyable}
+                <span className="block text-xs text-muted">{de.share.copyableHint}</span>
+              </span>
+            </label>
+            {copyFailed && (
+              <p role="alert" className="text-xs text-muted">
+                {de.share.copyableFailed}
+              </p>
+            )}
           </>
         ) : (
           <p className="text-sm">{share.status === 'failed' ? de.share.failed : de.share.none}</p>

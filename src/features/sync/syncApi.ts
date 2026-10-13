@@ -47,7 +47,9 @@ export interface SyncApi {
   getWatchlists(): Promise<{ updatedAt: string | null; lists: unknown }>
   putWatchlists(updatedAt: string, lists: unknown, base: string | null): Promise<boolean>
   /** The links this collector made, by binder. */
-  listShares(): Promise<{ token: string; binderId: string }[]>
+  listShares(): Promise<{ token: string; binderId: string; copyable: boolean }[]>
+  /** Says whether the binder of a link is offered to be copied by whoever opens it. */
+  setShareCopyable(token: string, copyable: boolean): Promise<void>
   /** Makes (or gets) the link for a binder; `undefined` if the server does not have the binder. */
   createShare(binderId: string): Promise<string | undefined>
   deleteShare(token: string): Promise<void>
@@ -161,9 +163,19 @@ export function createSyncApi(send: Send = sendFromBrowser): SyncApi {
       if (!Array.isArray(shares)) throw new Error('sync: no list of links')
       return (shares as unknown[]).flatMap((entry) =>
         isRecord(entry) && typeof entry.token === 'string' && typeof entry.binderId === 'string'
-          ? [{ token: entry.token, binderId: entry.binderId }]
+          ? // a server from before the choice existed says nothing, and allowed it
+            [{ token: entry.token, binderId: entry.binderId, copyable: entry.copyable !== false }]
           : [],
       )
+    },
+
+    async setShareCopyable(token, copyable) {
+      const response = await call(`/api/shares/${encodeURIComponent(token)}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ copyable }),
+      })
+      if (!response.ok) throw new Error(`sync: link answered ${response.status}`)
     },
 
     async createShare(binderId) {

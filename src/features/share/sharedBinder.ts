@@ -24,6 +24,8 @@ export interface SharedBinder {
   binder: Binder
   /** The pictures the binder shows, as far as they could be fetched. */
   assets: Asset[]
+  /** Whether its collector offers the binder to be copied into a collection of one's own. */
+  copyable: boolean
 }
 
 /**
@@ -37,8 +39,12 @@ export async function loadSharedBinder(token: string, send: Fetch = (path) => fe
   // where there is no server part, the app's own page answers every address
   if (!response.ok || !isJson) throw new SharedNotFoundError()
   let binder: Binder
+  let copyable: boolean
   try {
-    binder = readBinder(((await response.json()) as { binder?: unknown }).binder)
+    const body = (await response.json()) as { binder?: unknown; copyable?: unknown }
+    binder = readBinder(body.binder)
+    // only a plain "no" forbids it; a server from before the choice existed says nothing
+    copyable = body.copyable !== false
   } catch {
     throw new SharedNotFoundError()
   }
@@ -58,5 +64,5 @@ export async function loadSharedBinder(token: string, send: Fetch = (path) => fe
       height: Number(picture.headers.get('x-image-height')) || 0,
     })
   }
-  return { binder, assets }
+  return { binder, assets, copyable }
 }

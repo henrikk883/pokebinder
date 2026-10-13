@@ -69,6 +69,24 @@ describe('making a link', () => {
   })
 })
 
+describe('a database from before links could forbid copying', () => {
+  it('gets what it lacks, and its links allow copying as they always did', async () => {
+    const database = createTestDatabase()
+    await database
+      .prepare('CREATE TABLE shares (token TEXT PRIMARY KEY, user TEXT NOT NULL, binder_id TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE (user, binder_id))')
+      .run()
+    await database.prepare("INSERT INTO shares (token, user, binder_id, created_at) VALUES ('old-link-0123456789abcd', 'ash', 'kanto', ?)").bind(monday).run()
+    const old = createD1Store(database, createTestBucket())
+
+    expect(await old.listShares('ash')).toEqual([{ token: 'old-link-0123456789abcd', binderId: 'kanto', createdAt: monday, copyable: true }])
+    expect(await old.setShareCopyable('ash', 'old-link-0123456789abcd', false)).toBe(true)
+    expect((await old.findShare('old-link-0123456789abcd'))?.copyable).toBe(false)
+    // a second start finds the column there and leaves it alone
+    const again = createD1Store(database, createTestBucket())
+    expect((await again.findShare('old-link-0123456789abcd'))?.copyable).toBe(false)
+  })
+})
+
 describe('what a link shows', () => {
   it('shows the binder as it is now, to anybody, without saying whose it is', async () => {
     const token = await share('ash', 'kanto')
@@ -76,12 +94,34 @@ describe('what a link shows', () => {
     const first = await open(`/shared/${token}`)
     expect(first.status).toBe(200)
     expect(first.headers.get('cache-control')).toBe('no-store')
-    expect(await first.json()).toEqual({ binder: binder('kanto') })
+    expect(await first.json()).toEqual({ binder: binder('kanto'), copyable: true })
 
     await api('ash', 'PUT', '/api/binders/kanto', { binder: binder('kanto', tuesday, 'Kanto komplett'), base: monday })
     const text = await (await open(`/shared/${token}`)).text()
     expect(text).toContain('Kanto komplett')
     expect(text).not.toContain('ash')
+  })
+
+  it('says whether the binder may be copied, as its collector has set it', async () => {
+    const token = await share('ash', 'kanto')
+    const copyable = async () => ((await (await open(`/shared/${token}`)).json()) as { copyable: boolean }).copyable
+    // a link allows it until it is switched off
+    expect(await copyable()).toBe(true)
+    expect(await (await api('ash', 'GET', '/api/shares')).json()).toMatchObject({ shares: [{ token, copyable: true }] })
+
+    // nobody else can change that, and it takes a yes or a no
+    expect((await api('misty', 'PUT', `/api/shares/${token}`, { copyable: false })).status).toBe(404)
+    expect((await api('ash', 'PUT', `/api/shares/${token}`, { copyable: 'no' })).status).toBe(400)
+    expect(await copyable()).toBe(true)
+
+    expect((await api('ash', 'PUT', `/api/shares/${token}`, { copyable: false })).status).toBe(200)
+    expect(await copyable()).toBe(false)
+    expect(await (await api('ash', 'GET', '/api/shares')).json()).toMatchObject({ shares: [{ token, copyable: false }] })
+    // asking for the link again keeps what was set
+    expect(await share('ash', 'kanto')).toBe(token)
+    expect(await copyable()).toBe(false)
+    expect((await api('ash', 'PUT', `/api/shares/${token}`, { copyable: true })).status).toBe(200)
+    expect(await copyable()).toBe(true)
   })
 
   it('leaves out the cards laid aside while the binder is rearranged', async () => {

@@ -2,8 +2,11 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { de } from '../../i18n/de'
 import { useIsPhone } from '../../lib/phone'
 import { setIdOfCard } from '../../lib/tcgdex'
+import { binderRepository } from '../../db/binderRepository'
 import { assetStore, useAssetUrl } from '../../store/assetStore'
-import type { Binder, Page, Slot } from '../../types/binder'
+import { binderStore } from '../../store/binderStore'
+import { useEditorStore } from '../../store/editorStore'
+import type { Asset, Binder, Page, Slot } from '../../types/binder'
 import { countProgress, layoutDimensions } from '../binder/binderModel'
 import { buildSpreads, clampSpread, pageNumbersOf, type Spread } from '../binder/spreads'
 import { useCard } from '../binder/useCard'
@@ -11,10 +14,19 @@ import { useSetLogo } from '../binder/useSetLogo'
 import { PlacedImageLayer } from '../images/PlacedImageLayer'
 import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
+import { requestSync } from '../sync/syncStore'
+import { copyOfShared } from './copyShared'
 import { loadSharedBinder, SharedNotFoundError } from './sharedBinder'
 import { TradeMatchDialog } from './TradeMatchDialog'
 
-type Loaded = { status: 'loading' } | { status: 'ready'; binder: Binder } | { status: 'gone' } | { status: 'offline' }
+type Loaded =
+  | { status: 'loading' }
+  | { status: 'ready'; binder: Binder; assets: Asset[]; copyable: boolean }
+  | { status: 'gone' }
+  | { status: 'offline' }
+
+/** The copy of the shared binder in one's own collection: none yet, being made, made, or not possible. */
+type Copy = { status: 'none' } | { status: 'working' } | { status: 'done'; binder: Binder } | { status: 'failed' }
 
 const squareClass =
   'flex size-10 items-center justify-center rounded-control border border-line bg-raised hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
@@ -106,7 +118,35 @@ export function SharedBinderPage({ token }: { token: string }) {
   const [loaded, setLoaded] = useState<Loaded>({ status: 'loading' })
   const [spreadIndex, setSpreadIndex] = useState(0)
   const [matching, setMatching] = useState(false)
+  const [copy, setCopy] = useState<Copy>({ status: 'none' })
   const phone = useIsPhone()
+
+  /**
+   * Puts the binder into the collection of this device as a binder of its own, with its
+   * pictures. From then on the two have nothing to do with each other.
+   */
+  async function handleCopy(shared: Binder, assets: Asset[]) {
+    setCopy({ status: 'working' })
+    try {
+      const own = copyOfShared(shared)
+      // the pictures first: a binder must not point at one that is not there
+      await binderRepository.saveAssets(assets.map((asset) => ({ ...asset, createdAt: asset.createdAt ?? own.createdAt })))
+      await binderRepository.saveBinder(own)
+      useEditorStore.getState().refreshBinderList()
+      requestSync()
+      setCopy({ status: 'done', binder: own })
+    } catch {
+      setCopy({ status: 'failed' })
+    }
+  }
+
+  /** Leaves the shared binder for the copy, which lies open to be changed. */
+  function openCopy(own: Binder) {
+    binderStore.getState().openBinder(own)
+    const editor = useEditorStore.getState()
+    editor.reset(own.lang)
+    editor.showView('binders')
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -123,7 +163,7 @@ export function SharedBinderPage({ token }: { token: string }) {
         assetStore.setState((state) => ({
           assets: [...state.assets.filter((asset) => !ids.has(asset.id)), ...shared.assets],
         }))
-        setLoaded({ status: 'ready', binder: shared.binder })
+        setLoaded({ status: 'ready', binder: shared.binder, assets: shared.assets, copyable: shared.copyable })
       } catch (error) {
         if (!cancelled) setLoaded({ status: error instanceof SharedNotFoundError ? 'gone' : 'offline' })
       }
@@ -149,7 +189,7 @@ export function SharedBinderPage({ token }: { token: string }) {
     )
   }
 
-  const { binder } = loaded
+  const { binder, assets, copyable } = loaded
   const spreads = buildSpreads(binder.pages.length, phone)
   const current = clampSpread(spreadIndex, spreads.length)
   const spread = spreads[current]
@@ -177,6 +217,34 @@ export function SharedBinderPage({ token }: { token: string }) {
         >
           {de.trade.matchButton}
         </button>
+        {copyable && copy.status !== 'done' && (
+          <button
+            type="button"
+            title={de.share.copyHint}
+            disabled={copy.status === 'working'}
+            onClick={() => void handleCopy(binder, assets)}
+            className="mt-3 ml-3 h-10 rounded-control bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-wait disabled:opacity-70"
+          >
+            {copy.status === 'working' ? de.share.copying : de.share.copyBinder}
+          </button>
+        )}
+        {copy.status === 'done' && (
+          <p role="status" className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+            {de.share.copyDone}
+            <button
+              type="button"
+              onClick={() => openCopy(copy.binder)}
+              className="h-10 rounded-control border border-line bg-raised px-4 text-sm hover:border-accent"
+            >
+              {de.share.openCopy}
+            </button>
+          </p>
+        )}
+        {copy.status === 'failed' && (
+          <p role="alert" className="mt-3 text-sm text-muted">
+            {de.share.copyFailed}
+          </p>
+        )}
       </div>
       {matching && <TradeMatchDialog shared={binder} onClose={() => setMatching(false)} />}
       <div className="flex items-center justify-center gap-3">

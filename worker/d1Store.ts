@@ -66,9 +66,24 @@ interface ShareRow {
   token: string
   binder_id: string
   created_at: string
+  no_copy: number
 }
 
-const toShare = (row: ShareRow): ShareRecord => ({ token: row.token, binderId: row.binder_id, createdAt: row.created_at })
+const toShare = (row: ShareRow): ShareRecord => ({
+  token: row.token,
+  binderId: row.binder_id,
+  createdAt: row.created_at,
+  copyable: row.no_copy !== 1,
+})
+
+/**
+ * Columns that came after a table was first made. A database that has the table already
+ * gets them added; adding one that is there fails, which is all the same.
+ */
+const ADDED_COLUMNS = [
+  // 1 where the collector does not want the binder of a link to be copied; links from before allow it
+  `ALTER TABLE shares ADD COLUMN no_copy INTEGER NOT NULL DEFAULT 0`,
+]
 
 const toRecord = (row: BinderRow): BinderRecord => ({ id: row.id, updatedAt: row.updated_at, deleted: row.deleted === 1 })
 
@@ -87,7 +102,16 @@ const imageKey = (user: string, id: string) => `${user}/${id}`
  */
 export function createD1Store(db: D1Database, images: R2Bucket): SyncStore {
   let ready: Promise<unknown> | undefined
-  const prepared = () => (ready ??= db.batch(SCHEMA.map((sql) => db.prepare(sql))))
+  const prepared = () =>
+    (ready ??= db.batch(SCHEMA.map((sql) => db.prepare(sql))).then(async () => {
+      for (const sql of ADDED_COLUMNS) {
+        try {
+          await db.prepare(sql).run()
+        } catch {
+          // the column is there already
+        }
+      }
+    }))
 
   /** Binders and decks are kept the same way, each in a table of its own. */
   function records(table: 'binders' | 'decks') {
@@ -187,7 +211,7 @@ export function createD1Store(db: D1Database, images: R2Bucket): SyncStore {
     async listShares(user) {
       await prepared()
       const { results } = await db
-        .prepare('SELECT token, binder_id, created_at FROM shares WHERE user = ? ORDER BY created_at')
+        .prepare('SELECT token, binder_id, created_at, no_copy FROM shares WHERE user = ? ORDER BY created_at')
         .bind(user)
         .all<ShareRow>()
       return results.map(toShare)
@@ -203,10 +227,21 @@ export function createD1Store(db: D1Database, images: R2Bucket): SyncStore {
         .bind(token, user, binderId, createdAt)
         .run()
       const row = await db
-        .prepare('SELECT token, binder_id, created_at FROM shares WHERE user = ? AND binder_id = ?')
+        .prepare('SELECT token, binder_id, created_at, no_copy FROM shares WHERE user = ? AND binder_id = ?')
         .bind(user, binderId)
         .first<ShareRow>()
-      return row ? toShare(row) : { token, binderId, createdAt }
+      return row ? toShare(row) : { token, binderId, createdAt, copyable: true }
+    },
+
+    async setShareCopyable(user, token, copyable) {
+      await prepared()
+      const row = await db.prepare('SELECT token FROM shares WHERE user = ? AND token = ?').bind(user, token).first<{ token: string }>()
+      if (!row) return false
+      await db
+        .prepare('UPDATE shares SET no_copy = ? WHERE user = ? AND token = ?')
+        .bind(copyable ? 0 : 1, user, token)
+        .run()
+      return true
     },
 
     async deleteShare(user, token) {
@@ -220,10 +255,10 @@ export function createD1Store(db: D1Database, images: R2Bucket): SyncStore {
     async findShare(token) {
       await prepared()
       const row = await db
-        .prepare('SELECT user, binder_id FROM shares WHERE token = ?')
+        .prepare('SELECT user, binder_id, no_copy FROM shares WHERE token = ?')
         .bind(token)
-        .first<{ user: string; binder_id: string }>()
-      return row ? { user: row.user, binderId: row.binder_id } : undefined
+        .first<{ user: string; binder_id: string; no_copy: number }>()
+      return row ? { user: row.user, binderId: row.binder_id, copyable: row.no_copy !== 1 } : undefined
     },
 
     async listAssets(user) {

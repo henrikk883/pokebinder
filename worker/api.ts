@@ -14,6 +14,7 @@ import type { AssetRecord, SyncStore } from './store'
  *   …      /api/decks, /api/decks/:id   the same for decks, with { deck, base }
  *   GET    /api/shares                the links this collector made
  *   POST   /api/shares                { binderId }  a link under which anybody may look at that binder
+ *   PUT    /api/shares/:token         { copyable }  whether the binder of the link may be copied
  *   DELETE /api/shares/:token         withdraw a link
  *   GET    /api/watchlists            the lists, or none
  *   PUT    /api/watchlists            { updatedAt, lists, base }
@@ -124,6 +125,14 @@ export async function handleApi(request: Request, user: string, store: SyncStore
       return json({ share: await store.createShare(user, binderId, newShareToken(), new Date().toISOString()) })
     }
     if (!ID.test(id)) return refuse(400, 'id')
+    if (method === 'PUT') {
+      const body = await readJson(request)
+      if (body instanceof Response) return body
+      if (typeof body.copyable !== 'boolean') return refuse(400, 'body')
+      return (await store.setShareCopyable(user, id, body.copyable))
+        ? json({ token: id, copyable: body.copyable })
+        : refuse(404, 'not found')
+    }
     if (method !== 'DELETE') return refuse(405, 'method')
     return (await store.deleteShare(user, id)) ? json({ token: id }) : refuse(404, 'not found')
   }

@@ -235,8 +235,14 @@ export function startSync(): () => void {
 }
 
 /** The link under which a binder is shared, if there is one. Needs the collector to be signed in. */
-export async function findShare(binderId: string): Promise<string | undefined> {
-  return (await api.listShares()).find((share) => share.binderId === binderId)?.token
+export async function findShare(binderId: string): Promise<{ token: string; copyable: boolean } | undefined> {
+  const share = (await api.listShares()).find((entry) => entry.binderId === binderId)
+  return share && { token: share.token, copyable: share.copyable }
+}
+
+/** Says whether whoever opens a link is offered to copy its binder into their own collection. */
+export function setShareCopyable(token: string, copyable: boolean): Promise<void> {
+  return api.setShareCopyable(token, copyable)
 }
 
 /**
