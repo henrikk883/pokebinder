@@ -34,6 +34,7 @@ _Zurzeit keine._
 | Nr. | Gemeldet | Von | Fehler | Behoben mit | Stand |
 |---|---|---|---|---|---|
 | B-001 | 12.10.2026 | Henrik | Binder-Seiten laden langsam, „man sieht anfangs nur den Namen“ – in Sets, von denen TCGdex keine Bilder hat (gemeldet als „graue Karten laden langsam“) | `1ae913b`, Einzelheiten unten | bestätigt |
+| B-003 | 13.10.2026 | Henrik | Japanische Karten lassen sich mit deutschem oder englischem Namen nicht (immer) finden | siehe unten | behoben |
 | B-002 | 12.10.2026 | Henrik | Die Suche fand ein Pokémon nur unter dem Namen in der eingestellten Kartensprache („psyduck“ fand bei Deutsch nichts) | `fba67f8`, Einzelheiten unten | bestätigt |
 | – | 12.10.2026 | Henrik | Kartenbilder blieben in Suche, Binder und Info-Anzeige leer oder luden erst nach einem Fensterwechsel | `554a043` (TCGdex schickt eine Kopfzeile teils doppelt; Bilder werden jetzt schlicht angezeigt) | bestätigt |
 | – | 12.10.2026 | Henrik | Menüs der Werkzeugleiste schlossen nicht bei einem Klick daneben | `6188e97` | bestätigt |
@@ -59,3 +60,11 @@ _Zurzeit keine._
 - **Gemessen danach (Chromium, dieselbe Doppelseite):** zweites und drittes Aufschlagen 30–40 ms statt 520–550 ms; eine vorab geholte Seite steht nach 1 ms. Das erste Aufschlagen einer noch nie gesehenen Seite dauert weiterhin rund 1,5 s: Die Bilder müssen einmal aus dem Netz kommen.
 - **Nicht gemessen:** Firefox und das Handy, wo Henrik den Fehler sah. Von Henrik am 12.10.2026 bestätigt: „viel besser“.
 - **Aufgeräumt:** Der Schalter `?grau=aus` zum Vergleichen ist wieder entfernt.
+
+### B-003 – Japanische Karten unter deutschem oder englischem Namen
+
+- **Gemeldet:** „östliche Karten mit deutschen oder englischen Namen finden klappt nicht“, ohne Beispiel.
+- **Nachgestellt (13.10.2026, Live-Seite, Sprache Japanisch):** „Glurak“, „Charizard“, „Pikachu“, „Evoli“, „Mewtu“ finden die japanischen Karten (40–60 Stück). **„Eevee“ fand nur 5 Karten:** TCGdex führt ein paar alte japanische Karten unter englischem Namen. Weil der Name damit „etwas fand“, wurde nicht mehr nachgesehen, welches Pokémon gemeint ist.
+- **Behoben:** Bei Sprachen mit eigener Schrift (Japanisch, Koreanisch) wird ein Name in lateinischen Buchstaben immer auch als deutscher oder englischer Pokémon-Name verstanden; die Karten dieses Pokémon kommen zu den direkten Treffern dazu.
+- **Bleibt, weil TCGdex es nicht hergibt:** Trainer- und Energiekarten haben keine Pokédex-Nummer und lassen sich nur unter ihrem japanischen Namen finden („Professor Eich“ findet nichts). Einige japanische Karten haben bei TCGdex keine Pokédex-Nummer (für Glurak 45 von 50) und fehlen deshalb. Von vielen japanischen Karten hat TCGdex kein Bild (rund 3.900 von 13.000 haben eines).
+- **Offen:** Henriks Bestätigung, und ob er einen anderen Fall meinte.

@@ -1,4 +1,5 @@
 import type { CardPage, CardQuery, TcgdexClient } from '../../lib/tcgdex'
+import type { CardLang } from '../../types/binder'
 
 export interface SearchInput {
   text: string
@@ -103,12 +104,18 @@ async function searchByForeignName(
   return NOTHING
 }
 
+/** Languages whose cards are not named in Latin letters. */
+const OWN_SCRIPT: readonly CardLang[] = ['ja', 'ko']
+
+/** Typed in Latin letters, as German and English names are. */
+const isLatin = (text: string) => /^[\p{Script=Latin}\p{N}\p{P}\s]+$/u.test(text)
+
 /**
  * `others` are the clients of the other languages a name may have been typed in; without
  * them a name is looked for in the language of `client` only.
  */
 export async function runSearch(
-  client: Pick<TcgdexClient, 'getSetCards' | 'queryCards'>,
+  client: Pick<TcgdexClient, 'getSetCards' | 'queryCards'> & { lang?: CardLang },
   plan: SearchPlan,
   page: number,
   others: readonly Pick<TcgdexClient, 'dexIdsOfName'>[] = [],
@@ -121,7 +128,19 @@ export async function runSearch(
       return { cards: await client.getSetCards(plan.setId), hasMore: false }
     case 'query': {
       const found = await client.queryCards(plan.query, page)
-      if (found.cards.length > 0 || !plan.query.name || others.length === 0) return found
+      if (!plan.query.name || others.length === 0) return found
+      // A name in Latin letters among Japanese cards is a German or English one, whatever it
+      // happens to find as it is: a few old Japanese cards are listed under English names
+      // ("Eevee" finds five), which must not hide the cards of that Pokémon.
+      if (client.lang && OWN_SCRIPT.includes(client.lang) && isLatin(plan.query.name)) {
+        const meant = await searchByForeignName(client, plan.query, page, others)
+        const seen = new Set(found.cards.map((card) => card.id))
+        return {
+          cards: [...found.cards, ...meant.cards.filter((card) => !seen.has(card.id))],
+          hasMore: found.hasMore || meant.hasMore,
+        }
+      }
+      if (found.cards.length > 0) return found
       // Only a name that finds nothing at all is taken for another language's: a later
       // page that happens to be empty is just the end of the list.
       const first = page === 1 ? found : await client.queryCards(plan.query, 1)

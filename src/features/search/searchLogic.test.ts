@@ -160,6 +160,27 @@ describe('a name typed in another language', () => {
     expect(await runSearch(client, plan('psyduck'), 2, [other])).toEqual({ cards: many.slice(2), hasMore: false })
   })
 
+  it('is always asked about for Japanese cards, where a western name may find a stray card as it is', async () => {
+    const stray: CardSummary = { id: 'neo2-049', localId: '049', name: 'Eevee' }
+    const eievui: CardSummary = { id: 'SV2a-133', localId: '133', name: 'イーブイ' }
+    const japanese = {
+      lang: 'ja' as const,
+      getSetCards: vi.fn(async () => []),
+      queryCards: vi.fn(async (query: { name?: string; dexId?: number }) => ({
+        cards: query.dexId === 133 ? [eievui, stray] : query.name === 'Eevee' ? [stray] : query.name === 'イーブイ' ? [eievui] : [],
+        hasMore: false,
+      })),
+    }
+    const other = english([133])
+
+    // the card found as it is comes first, each card once
+    expect(await runSearch(japanese, plan('Eevee'), 1, [other])).toEqual({ cards: [stray, eievui], hasMore: false })
+    // a name in Japanese letters that finds cards is looked for as it is, nothing else
+    other.dexIdsOfName.mockClear()
+    expect(await runSearch(japanese, plan('イーブイ'), 1, [other])).toEqual({ cards: [eievui], hasMore: false })
+    expect(other.dexIdsOfName).not.toHaveBeenCalled()
+  })
+
   it('leaves an empty later page of a name that does find cards alone', async () => {
     const client = german({ 54: [entoron] })
     const other = english([54])
