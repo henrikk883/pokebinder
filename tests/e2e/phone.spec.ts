@@ -294,7 +294,7 @@ test('on a phone the tray takes the place of the search, and a tap brings a card
   // a card into the first pocket, by a tap in the search
   await bar(page).getByRole('button', { name: 'Suche' }).tap()
   await page.getByRole('searchbox', { name: 'Name, Set oder Nummer' }).fill('Glurak')
-  await page.getByTestId('search-results').locator('[data-card-id="sv03.5-006"]').getByRole('button', { name: /legen|platzieren|Pocket/ }).tap()
+  await page.getByTestId('search-results').locator('[data-card-id="sv03.5-006"]').getByRole('button', { name: /in den Binder legen$/ }).tap()
   await bar(page).getByRole('button', { name: 'Binder' }).tap()
   await expect(pockets.first()).toHaveAttribute('data-card-id', 'sv03.5-006')
 

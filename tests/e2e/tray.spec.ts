@@ -339,3 +339,38 @@ test('the side columns are made wider and narrower by dragging their edges', asy
   for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowLeft')
   expect(await widthOf(left)).toBe(280)
 })
+
+test('cards go from the search straight into the tray, and the tray is put in another order', async ({ page }) => {
+  await page.goto('/')
+  await createBinder(page, 'Kanto')
+  const column = page.getByTestId('column-left')
+  await column.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  const results = column.getByTestId('search-results')
+
+  // a button on the card found, between its star and its info
+  for (const [id, name] of [['sv03.5-007', 'Schiggy'], ['sv03.5-001', 'Bisasam'], ['sv03.5-004', 'Glumanda']] as const) {
+    const tile = results.locator(`[data-card-id="${id}"]`)
+    await tile.hover()
+    await tile.getByRole('button', { name: `${name} in die Ablage legen` }).click()
+  }
+  await expect(modes(page).getByRole('button', { name: 'Ablage (3)' })).toBeVisible()
+  // no pocket was filled
+  await expect(page.getByTestId('pocket').and(page.locator('[data-card-id=""]'))).toHaveCount(9)
+
+  await modes(page).getByRole('button', { name: 'Ablage (3)' }).click()
+  expect(await ids(trayCards(page))).toEqual(['sv03.5-007', 'sv03.5-001', 'sv03.5-004'])
+  const order = column.getByRole('combobox', { name: 'Reihenfolge' })
+  await expect(order.locator('option')).toHaveText(['Wie abgelegt', 'Nach Name', 'Nach Set und Nummer', 'Nach Farbe'])
+  await order.selectOption('Nach Name')
+  expect(await ids(trayCards(page))).toEqual(['sv03.5-001', 'sv03.5-004', 'sv03.5-007'])
+  // in another order the cards are dragged out as before
+  await drag(page, trayCards(page).first().locator('img'), pocket(page, 1))
+  await expect(pocket(page, 1)).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await order.selectOption('Wie abgelegt')
+  expect(await ids(trayCards(page))).toEqual(['sv03.5-007', 'sv03.5-004'])
+
+  // where nothing is dragged into a binder, the button is not offered
+  await page.getByRole('banner').getByRole('button', { name: 'Karten stöbern' }).click()
+  await expect(page.getByTestId('page').getByRole('button', { name: /in die Ablage legen$/ })).toHaveCount(0)
+})

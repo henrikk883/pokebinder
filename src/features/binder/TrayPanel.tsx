@@ -8,9 +8,11 @@ import { useEditorStore } from '../../store/editorStore'
 import type { Binder, TrayCard } from '../../types/binder'
 import { CardImage } from '../search/CardImage'
 import { LangFlag } from '../search/LanguageSelect'
-import { matchesListSearch } from '../search/listView'
+import { LIST_ORDERS, matchesListSearch, sortListed, type ListOrder } from '../search/listView'
 import { TapHint } from '../search/TapHint'
 import { useReadyCatalog } from '../search/useCatalog'
+import { sortByColour } from '../similar/similarColours'
+import { useColours } from '../similar/useColours'
 import { copiesOf, trayOf } from './binderModel'
 import type { DragSource, TrayTarget } from './dragDrop'
 import { buildSpreads, clampSpread, pageNumbersOf, spreadOfPage } from './spreads'
@@ -108,10 +110,22 @@ function Tray({ binder }: { binder: Binder }) {
   const pageToTray = useBinderStore((state) => state.pageToTray)
   const [typed, setTyped] = useState('')
   const cardOf = useCards(tray.map((entry) => entry.cardRef))
-  const found = tray.filter((entry) => {
+  const [order, setOrder] = useState<ListOrder>('added')
+  const colours = useColours(order === 'colour')
+  const listedOf = (entry: TrayCard) => {
     const card = cardOf(entry.cardRef.cardId, entry.cardRef.lang)
-    return matchesListSearch(typed, entry.cardRef.cardId, card ? { card } : undefined)
-  })
+    return card ? { card } : undefined
+  }
+  // Only how the tray is shown: the cards stay in it in the order they were laid there.
+  let found = sortListed(
+    tray.filter((entry) => matchesListSearch(typed, entry.cardRef.cardId, listedOf(entry))),
+    order,
+    listedOf,
+  )
+  if (order === 'colour' && colours) {
+    const rank = new Map(sortByColour(colours, [...new Set(found.map((entry) => entry.cardRef.cardId))]).map((id, index) => [id, index]))
+    found = [...found].sort((a, b) => (rank.get(a.cardRef.cardId) ?? 0) - (rank.get(b.cardRef.cardId) ?? 0))
+  }
   const target: TrayTarget = { kind: 'tray' }
   const { setNodeRef, isOver } = useDroppable({ id: 'tray', data: target })
 
@@ -156,14 +170,28 @@ function Tray({ binder }: { binder: Binder }) {
           ))}
         </div>
         {tray.length > 0 && (
-          <input
-            type="search"
-            value={typed}
-            onChange={(event) => setTyped(event.target.value)}
-            placeholder={de.tray.search}
-            aria-label={de.tray.search}
-            className="h-10 w-full rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
-          />
+          <>
+            <input
+              type="search"
+              value={typed}
+              onChange={(event) => setTyped(event.target.value)}
+              placeholder={de.tray.search}
+              aria-label={de.tray.search}
+              className="h-10 w-full rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
+            />
+            <select
+              aria-label={de.watchlist.order}
+              value={order}
+              onChange={(event) => setOrder(LIST_ORDERS.find((option) => option === event.target.value) ?? 'added')}
+              className="h-10 w-full rounded-control border border-line bg-raised px-3 text-sm focus:border-accent focus:outline-none"
+            >
+              {LIST_ORDERS.map((option) => (
+                <option key={option} value={option}>
+                  {de.tray.orders[option]}
+                </option>
+              ))}
+            </select>
+          </>
         )}
       </div>
       <div

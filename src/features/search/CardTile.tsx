@@ -6,6 +6,9 @@ import { useWatchlistStore } from '../../store/watchlistStore'
 import type { CardLang } from '../../types/binder'
 import type { DragSource } from '../binder/dragDrop'
 import { placeByTap } from '../binder/placeCard'
+import { layIntoBinder } from '../binder/trayTransfer'
+import { binderStore } from '../../store/binderStore'
+import { useEditorStore } from '../../store/editorStore'
 import { useIsPhone } from '../../lib/phone'
 import { CardImage } from './CardImage'
 import { CardInfoDialog } from './CardInfoDialog'
@@ -153,6 +156,28 @@ export function CardTile({
       >
         <Star filled={saved} />
       </button>
+      {/* beside a binder that is being arranged: into its tray, without picking a pocket */}
+      {draggable && !browsing && !onPick && (
+        <button
+          type="button"
+          aria-label={de.tray.layFound(card.name)}
+          title={de.tray.layFoundHint}
+          onClick={() => {
+            const binderId = binderStore.getState().binder?.id
+            if (binderId === undefined) return
+            layIntoBinder(binderId, [{ cardId: card.id, lang }]).catch(() =>
+              useEditorStore.getState().setNotice(de.tray.addFailed),
+            )
+          }}
+          // between the star and the info, at the top of the picture
+          className={`${overlayButtonClass} left-1/2 -translate-x-1/2 border-line opacity-0 group-hover:opacity-100`}
+        >
+          <svg viewBox="0 0 20 20" className="size-3.5 touch:size-4" aria-hidden="true">
+            <path d="M3 11v5h14v-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M10 3v8m-3-3 3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
       {!browsing && (
         <button
           type="button"

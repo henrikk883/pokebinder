@@ -675,3 +675,7 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - **27:** Rot bekommt eine zweite Bedeutung: Regelverstoß in einem Deck (CLAUDE.md entsprechend ergänzt). Nur echte Verstöße sind rot – zu viele Karten gleichen Namens, im Format nicht erlaubte Karten. Ein Deck, das noch nicht voll ist, wäre sonst beim Bauen dauerhaft rot.
 - **30:** Der Knopf sitzt unten rechts (oben links steht die Anzahl, oben rechts „fehlt“/„vorhanden“). Als Zeichen ein Pfeil in eine Ablage statt eines Plus, das nach Hinzufügen aussähe. Nicht im Modus „Sammlung“.
 - **31:** Beide Spalten getrennt verstellbar, auch mit den Pfeiltasten. Die Kartenraster in den Spalten füllen jetzt die Breite (vorher immer zwei nebeneinander); bei der üblichen Breite bleiben es zwei.
+
+## 2026-10-13 – Ablage ordnen; aus der Suche direkt in die Ablage
+- Von Henrik gewünscht. Die Ablage hat dieselbe Auswahl „Reihenfolge“ wie die Merklisten (wie abgelegt, Name, Set und Nummer, Farbe). Das ändert nur die Anzeige; gespeichert bleibt die Reihenfolge des Ablegens.
+- An jeder Karte, die sich in den Binder ziehen lässt (Suche, Merkliste und „Passend“ neben dem Binder), sitzt oben in der Mitte ein Knopf, der sie in die Ablage des offenen Binders legt – als „vorhanden“ und in ihrer Grundvariante, wie beim Hineinziehen. Unter „Karten stöbern“ und im Deck gibt es ihn nicht; dort führt „Zu Binder hinzufügen“ in der Karten-Info zum selben Ziel.

@@ -4,8 +4,8 @@ import { setIdOfCard, tcgdexFor, type SetSummary } from '../../lib/tcgdex'
 import type { CardLang } from '../../types/binder'
 import { BinderPicker } from '../binder/BinderPicker'
 import { layIntoBinder, type BinderName } from '../binder/trayTransfer'
-import { loadColourIndex } from '../similar/colourIndex'
-import { sortByColour, type ColourIndex } from '../similar/similarColours'
+import { sortByColour } from '../similar/similarColours'
+import { useColours } from '../similar/useColours'
 import { useBinderStore } from '../../store/binderStore'
 import { confirmDialog, promptDialog } from '../../store/dialogStore'
 import { useEditorStore } from '../../store/editorStore'
@@ -164,27 +164,6 @@ function useSetNames(langs: readonly CardLang[]): (lang: CardLang, setId: string
   }, [wanted])
 
   return (lang, setId) => names.get(lang)?.get(setId)?.name
-}
-
-/** The colours of the card pictures, once they are asked for. */
-function useColours(wanted: boolean): ColourIndex | undefined {
-  const [colours, setColours] = useState<ColourIndex>()
-
-  useEffect(() => {
-    if (!wanted) return
-    let cancelled = false
-    loadColourIndex().then(
-      (index) => {
-        if (!cancelled) setColours(index)
-      },
-      () => undefined,
-    )
-    return () => {
-      cancelled = true
-    }
-  }, [wanted])
-
-  return colours
 }
 
 const fieldClass =
