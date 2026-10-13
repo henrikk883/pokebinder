@@ -297,5 +297,8 @@ test('the info of a card says how often it is in the collection and in which bin
   await bisasam.getByRole('button', { name: 'Infos zu Bisasam' }).click()
   const holdings = page.getByTestId('card-info-holdings')
   await expect(holdings).toContainText('Kanto · Seite 1')
+  // each binder line names the language of the copies in it
+  await expect(holdings.getByRole('listitem')).toContainText('Deutsch')
+  if (process.env.SHOT_DIR) await page.getByRole('dialog').screenshot({ path: process.env.SHOT_DIR + '/holdings.png' })
   await expect(holdings).toContainText(/2× (vorhanden|fehlt)/)
 })

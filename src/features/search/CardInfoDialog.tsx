@@ -113,7 +113,7 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
                 )}
               </dd>
             </div>
-            <CardHoldingsInfo cardId={card.id} lang={lang} />
+            <CardHoldingsInfo cardId={card.id} />
           </dl>
 
           <fieldset className="space-y-2">

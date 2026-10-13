@@ -639,5 +639,5 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 ## 2026-10-13 – Karten-Info zeigt die eigene Sammlung
 - Von Henrik vorgeschlagen: Die Karten-Info nennt unter „In deiner Sammlung“, wie viele Exemplare der Karte vorhanden sind und in welchen Bindern sie liegt (Binder, Seiten, vorhanden oder fehlt).
 - Gezählt wird wie überall: ein abgehaktes Pocket mit seiner Anzahl. Pockets, in denen die Karte liegt, aber noch fehlt, erscheinen als „fehlt“.
-- Die Karte zählt in jeder Sprache und Variante; liegt sie in einer anderen Sprache als der angesehenen im Binder, steht die Sprache dabei. Decks zählen nicht mit: Sie sind eine Liste zum Spielen, kein Bestand.
+- Die Karte zählt in jeder Sprache und Variante. Jede Binder-Zeile trägt die Flagge der Sprache (Henrik, 13.10.2026: manche Karten hat er mehrfach in verschiedenen Sprachen); gibt es die Karte in mehr als einer Sprache, steht neben der Gesamtzahl die Anzahl je Sprache. Decks zählen nicht mit: Sie sind eine Liste zum Spielen, kein Bestand.
 - Gelesen werden die Binder dieses Geräts.

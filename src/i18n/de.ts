@@ -676,6 +676,7 @@ export const de = {
   holdings: {
     label: 'In deiner Sammlung',
     none: 'Noch in keinem Binder',
+    times: (copies: number) => `${copies}×`,
     copies: (copies: number) => (copies === 0 ? 'Kein Exemplar vorhanden' : copies === 1 ? '1 Exemplar' : `${copies} Exemplare`),
     pages: (pages: readonly number[]) => (pages.length === 1 ? `Seite ${pages[0]}` : `Seiten ${pages.join(', ')}`),
     state: (copies: number, missing: number) =>
