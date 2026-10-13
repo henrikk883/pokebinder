@@ -658,3 +658,6 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Master Set neu aufbauen: Karten des Sets aus der Ablage zählen als vorhanden und stehen danach wieder in ihrem Pocket; fremde Karten bleiben in der Ablage.
 - „Zu Binder hinzufügen“ in der Karten-Info legt die Karte als vorhanden in die Ablage des gewählten Binders, in der Sprache, in der sie angesehen wird, und in ihrer Grundvariante. Ein Auswahlmenü, das nach dem Wählen wieder auf dem ersten Eintrag steht: Das Wählen ist die Handlung.
 - Merklisten in der Karten-Info: eine eingeklappte Zeile statt eines Kästchens je Liste (Henrik: bei vielen Listen zu viele Anklickpunkte). Aufgeklappt wie bisher Ankreuzen und „Neue Liste“.
+
+## 2026-10-13 – Rechtsklick legt die Karte in die Ablage
+- Von Henrik gewünscht: Ein Rechtsklick auf eine Karte im Binder legt sie in die Ablage, statt sie aus dem Binder zu nehmen. Ganz entfernen geht weiter mit Entf, „Pocket leeren“ oder dem roten Kreuz in der Ablage. Wie bisher nur im Modus „Bearbeiten“.

@@ -159,7 +159,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
   const waiting = useEditorStore(
     (state) => state.moving?.pageId === pageId && state.moving.slotIndex === slot.index,
   )
-  const clearSlot = useBinderStore((state) => state.clearSlot)
+  const toTray = useBinderStore((state) => state.toTray)
   const setOwned = useBinderStore((state) => state.setOwned)
   const collecting = useEditorStore((state) => state.mode === 'collection')
   const card = useCard(slot.cardRef?.cardId, slot.cardRef?.lang ?? DEFAULT_LANG)
@@ -251,7 +251,8 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
       }}
       onContextMenu={(event) => {
         event.preventDefault()
-        if (slot.cardRef && !collecting) clearSlot(position)
+        // out of the pocket, not out of the binder: the card is laid aside in the tray
+        if (slot.cardRef && !collecting) toTray([position])
       }}
       data-over-image={overImage}
       data-moving={waiting || undefined}

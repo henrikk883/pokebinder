@@ -164,7 +164,7 @@ test('cards swap places on an occupied pocket and move across pages', async ({ p
   await expect(pocket(page, 2, 2)).toHaveAttribute('data-card-id', 'sv03.5-003')
 })
 
-test('a pocket is emptied by right click, the Delete key or the button', async ({ page }) => {
+test('a right click lays a card aside; the Delete key and the button empty the pocket', async ({ page }) => {
   await createBinder(page, 'Leeren')
   await showSet151(page)
   for (const [cardId, position] of [['sv03.5-001', 1], ['sv03.5-002', 2], ['sv03.5-003', 3]] as const) {
@@ -172,8 +172,11 @@ test('a pocket is emptied by right click, the Delete key or the button', async (
     await expect(pocket(page, 1, position)).toHaveAttribute('data-card-id', cardId)
   }
 
+  // out of the pocket, but not out of the binder: the card waits in the tray
   await pocket(page, 1, 1).click({ button: 'right' })
   await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', '')
+  const tray = page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: /^Ablage/ })
+  await expect(tray).toHaveText('Ablage (1)')
 
   await pocket(page, 1, 2).click()
   await page.keyboard.press('Delete')
@@ -183,6 +186,8 @@ test('a pocket is emptied by right click, the Delete key or the button', async (
   await page.getByRole('button', { name: 'Pocket leeren' }).click()
   await expect(pocket(page, 1, 3)).toHaveAttribute('data-card-id', '')
   await expect(page.getByRole('button', { name: 'Pocket leeren' })).toBeDisabled()
+  // those two took their cards out of the binder altogether
+  await expect(tray).toHaveText('Ablage (1)')
 })
 
 test('the selection column shows the chosen card and its place', async ({ page }) => {
