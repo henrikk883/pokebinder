@@ -162,3 +162,107 @@ test('the lists a card is noted on are behind one fold in its info', async ({ pa
   await dialog.getByRole('button', { name: 'Anlegen' }).click()
   await expect(lists.locator('summary')).toContainText(/Merken auf:\s*Schnellmerken, Kaufen/)
 })
+
+/** Notes the first three cards of "151" on the quick list, from the search beside the binder. */
+async function noteThreeCards(page: Page) {
+  const column = page.getByTestId('column-left')
+  for (const id of ['sv03.5-001', 'sv03.5-004', 'sv03.5-007']) {
+    const tile = column.locator(`[data-testid="card-tile"][data-card-id="${id}"]`)
+    await tile.hover()
+    await tile.getByRole('button', { name: /merken$/ }).click()
+  }
+  await column.getByRole('tab', { name: /^Merkliste/ }).click()
+}
+
+test('a watchlist is searched, put in another order and taken over into a binder as a whole', async ({ page }) => {
+  await binderWithThreeCards(page)
+  await noteThreeCards(page)
+  const column = page.getByTestId('column-left')
+  const noted = column.getByTestId('watchlist').getByTestId('card-tile')
+  // what was noted last comes first
+  expect(await ids(noted)).toEqual(['sv03.5-007', 'sv03.5-004', 'sv03.5-001'])
+
+  await column.getByRole('combobox', { name: 'Reihenfolge' }).selectOption('Nach Name')
+  expect(await ids(noted)).toEqual(['sv03.5-001', 'sv03.5-004', 'sv03.5-007'])
+  await column.getByRole('combobox', { name: 'Reihenfolge' }).selectOption('Nach Set und Nummer')
+  expect(await ids(noted)).toEqual(['sv03.5-001', 'sv03.5-004', 'sv03.5-007'])
+  await column.getByRole('combobox', { name: 'Reihenfolge' }).selectOption('Zuletzt gemerkt')
+
+  // by a part of the name, or by the number
+  await column.getByRole('searchbox', { name: 'In der Liste suchen' }).fill('glum')
+  await expect(noted).toHaveCount(1)
+  await expect(column.getByTestId('watchlist').getByRole('status')).toHaveText('1 von 3 Karten')
+  await column.getByRole('searchbox', { name: 'In der Liste suchen' }).fill('007')
+  expect(await ids(noted)).toEqual(['sv03.5-007'])
+  await column.getByRole('searchbox', { name: 'In der Liste suchen' }).fill('')
+  await expect(noted).toHaveCount(3)
+
+  // the whole list into the tray of a binder, after asking
+  await column.getByRole('combobox', { name: 'In Binder übernehmen' }).selectOption({ label: 'Kanto' })
+  const question = page.getByRole('alertdialog', { name: 'In „Kanto“ übernehmen?' })
+  await expect(question).toContainText('Die 3 gezeigten Karten von „Schnellmerken“')
+  await question.getByRole('button', { name: 'Übernehmen' }).click()
+  await expect(column.getByText('3 Karten liegen jetzt in der Ablage von „Kanto“.')).toBeVisible()
+  await expect(modes(page).getByRole('button', { name: 'Ablage (3)' })).toBeVisible()
+  // the list keeps its cards
+  await expect(noted).toHaveCount(3)
+
+  // in the tray, cards are found by name as well
+  await modes(page).getByRole('button', { name: 'Ablage (3)' }).click()
+  await column.getByRole('searchbox', { name: 'In der Ablage suchen' }).fill('schig')
+  expect(await ids(trayCards(page))).toEqual(['sv03.5-007'])
+  await column.getByRole('searchbox', { name: 'In der Ablage suchen' }).fill('zzz')
+  await expect(page.getByTestId('tray')).toContainText('Keine abgelegte Karte passt zur Suche.')
+})
+
+test('cards of the binder are noted on a watchlist from the selection, one or several', async ({ page }) => {
+  await binderWithThreeCards(page)
+  const right = page.getByTestId('column-right')
+  const column = page.getByTestId('column-left')
+
+  await pocket(page, 1).click()
+  await right.getByRole('combobox', { name: 'Auf Merkliste setzen' }).selectOption({ label: 'Schnellmerken' })
+  await expect(right.getByText('1 Karte auf „Schnellmerken“ gemerkt.')).toBeVisible()
+  await expect(page.getByTestId('saved-count')).toHaveText('1')
+
+  // several at once; the one that is on the list already stays as it is
+  await pocket(page, 1).click()
+  await pocket(page, 2).click({ modifiers: ['Control'] })
+  await pocket(page, 3).click({ modifiers: ['Control'] })
+  await right.getByTestId('multi-selection').getByRole('combobox', { name: 'Auf Merkliste setzen' }).selectOption({ label: 'Schnellmerken' })
+  await expect(page.getByTestId('saved-count')).toHaveText('3')
+  await column.getByRole('tab', { name: /^Merkliste/ }).click()
+  await expect(column.getByTestId('watchlist').getByTestId('card-tile')).toHaveCount(3)
+  // the cards stay in the binder
+  await expect(pocket(page, 1)).toHaveAttribute('data-card-id', 'sv03.5-001')
+})
+
+test('a card noted in one language shows that in another', async ({ page }) => {
+  await page.goto('/')
+  const column = page.getByTestId('column-left')
+  const openSet = async () => {
+    await column.getByRole('button', { name: 'Set', exact: true }).click()
+    await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  }
+  await openSet()
+  // the search, not the list of noted cards behind its tab
+  const results = column.getByTestId('search-results')
+  const tile = results.locator('[data-card-id="sv03.5-001"]')
+  await tile.hover()
+  await tile.getByRole('button', { name: 'Bisasam merken' }).click()
+
+  await column.getByRole('combobox', { name: 'Sprache der Karten' }).selectOption('en')
+  // not on a list in English, but the star says that it is noted in German
+  const star = tile.getByRole('button', { name: 'Bulbasaur merken' })
+  await page.mouse.move(700, 400)
+  await expect(star).toHaveCSS('opacity', '1')
+  await expect(star).toHaveAttribute('aria-pressed', 'false')
+  await expect(star).toHaveAttribute('title', 'Auf Deutsch gemerkt')
+  // a card that is noted nowhere shows nothing
+  await expect(results.locator('[data-card-id="sv03.5-004"]').getByRole('button', { name: /merken$/ })).toHaveCSS('opacity', '0')
+
+  // the info names the language and the list
+  await tile.hover()
+  await tile.getByRole('button', { name: 'Infos zu Bulbasaur' }).click()
+  await expect(page.getByTestId('card-info-other-lang')).toHaveText('Auf Deutsch gemerkt auf: Schnellmerken.')
+})

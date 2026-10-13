@@ -711,9 +711,15 @@ export function fromTray(binder: Binder, trayId: string, position: SlotPosition,
   return withTray(placed, tray.flatMap((entry) => (entry.id === trayId ? swapped : [entry])), ctx)
 }
 
-/** Lays a card aside that was in no pocket, e.g. one picked for the binder elsewhere. */
-export function addToTray(binder: Binder, cardRef: CardRef, owned = true, ctx: ModelContext = defaultContext): Binder {
-  return withTray(binder, [...trayOf(binder), { id: ctx.newId(), cardRef, owned }], ctx)
+/** Lays cards aside that were in no pocket, e.g. ones picked for the binder elsewhere. */
+export function addToTray(
+  binder: Binder,
+  cardRefs: readonly CardRef[],
+  owned = true,
+  ctx: ModelContext = defaultContext,
+): Binder {
+  if (cardRefs.length === 0) return binder
+  return withTray(binder, [...trayOf(binder), ...cardRefs.map((cardRef) => ({ id: ctx.newId(), cardRef, owned }))], ctx)
 }
 
 /** Takes a card out of the tray, and with that out of the binder. */

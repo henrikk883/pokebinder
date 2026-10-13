@@ -3,7 +3,9 @@ import { de } from '../../i18n/de'
 import { setIdOfCard } from '../../lib/tcgdex'
 import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
+import { useWatchlistStore } from '../../store/watchlistStore'
 import {
+  type CardLang,
   BASE_VARIANTS,
   compareVariants,
   DEFAULT_LANG,
@@ -11,11 +13,13 @@ import {
   type OpeningSide,
   type Page,
   type Slot,
+  type SlotPosition,
 } from '../../types/binder'
 import { CoverDialog } from '../images/CoverDialog'
 import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
 import { LanguageSelect } from '../search/LanguageSelect'
+import { listName } from '../search/listName'
 import { useReadyCatalog } from '../search/useCatalog'
 import { canCloseGap, copiesOf, MAX_COPIES } from './binderModel'
 import { isPhone } from '../../lib/phone'
@@ -165,6 +169,45 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
   )
 }
 
+/**
+ * Notes the cards given on a watchlist picked from a list. It always stands on its first
+ * entry, which says what picking does; cards that are on the list already stay as they are.
+ */
+function ToWatchlist({ cards }: { cards: readonly { cardId: string; lang: CardLang }[] }) {
+  const lists = useWatchlistStore((state) => state.lists)
+  const addMany = useWatchlistStore((state) => state.addMany)
+  const [noted, setNoted] = useState<string>()
+
+  return (
+    <div className="space-y-1">
+      <select
+        aria-label={de.watchlist.toList}
+        value=""
+        disabled={cards.length === 0}
+        onChange={(event) => {
+          const list = lists.find((entry) => entry.id === event.target.value)
+          if (!list) return
+          addMany(list.id, cards)
+          setNoted(de.watchlist.toListDone(cards.length, listName(list)))
+        }}
+        className="h-10 w-full min-w-0 rounded-control border border-line bg-raised px-3 text-sm focus:border-accent focus:outline-none disabled:text-muted"
+      >
+        <option value="">{`${de.watchlist.toList} …`}</option>
+        {lists.map((list) => (
+          <option key={list.id} value={list.id}>
+            {listName(list)}
+          </option>
+        ))}
+      </select>
+      {noted && (
+        <p role="status" className="text-xs text-muted">
+          {noted}
+        </p>
+      )}
+    </div>
+  )
+}
+
 /** Right column: what is selected, and settings for the page it is on. */
 export function SelectionPanel() {
   const binder = useBinderStore((state) => state.binder)
@@ -196,6 +239,13 @@ export function SelectionPanel() {
         (position) => binder?.pages.find((entry) => entry.id === position.pageId)?.slots[position.slotIndex]?.cardRef,
       ).length
     : 0
+
+  /** The cards in the pockets given, for noting them on a list. */
+  const cardsAt = (positions: readonly SlotPosition[]) =>
+    positions.flatMap((position) => {
+      const ref = binder?.pages.find((entry) => entry.id === position.pageId)?.slots[position.slotIndex]?.cardRef
+      return ref ? [{ cardId: ref.cardId, lang: ref.lang }] : []
+    })
 
   /** Turns to where the selected page lies after it moved, and keeps its pocket selected. */
   function follow(toIndex: number) {
@@ -229,6 +279,7 @@ export function SelectionPanel() {
                 {de.multi.allMissing}
               </button>
             </div>
+            <ToWatchlist cards={cardsAt(multi)} />
             <button
               type="button"
               disabled={selectedCards === 0}
@@ -293,6 +344,7 @@ export function SelectionPanel() {
                 {de.move.start}
               </button>
             )}
+            <ToWatchlist cards={cardsAt([{ pageId: page.id, slotIndex: slot.index }])} />
             {!collecting && (
               <button
                 type="button"

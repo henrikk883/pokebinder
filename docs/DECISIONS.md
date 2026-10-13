@@ -661,3 +661,11 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 
 ## 2026-10-13 – Rechtsklick legt die Karte in die Ablage
 - Von Henrik gewünscht: Ein Rechtsklick auf eine Karte im Binder legt sie in die Ablage, statt sie aus dem Binder zu nehmen. Ganz entfernen geht weiter mit Entf, „Pocket leeren“ oder dem roten Kreuz in der Ablage. Wie bisher nur im Modus „Bearbeiten“.
+
+## 2026-10-13 – Merklisten und Ablage: suchen, ordnen, übernehmen
+- Punkte 22, 23, 28, 29 und 32 zusammen gebaut. Wo Henrik Fragen offen gelassen hatte, habe ich so entschieden:
+- **22 – andere Sprache:** Die Merkliste hält weiter die Sprache fest (für Preis und Kauf nötig); nur die Anzeige ist sprachübergreifend. Der Stern ist dann farbig umrandet, aber nicht gefüllt, und nennt die Sprache.
+- **23 – Reihenfolge:** zuletzt gemerkt (wie bisher), Name, Set und Nummer, Farbe. Nach Preis nicht: Dafür müssten erst alle Preise der Liste geladen sein. Die Suche meint Name, Nummer, Set und Kennung; alle Wörter müssen vorkommen.
+- **28 – Merkliste in Binder:** in die Ablage, als „vorhanden“, die Karten bleiben auf der Liste – so, als hätte man jede einzeln hineingezogen. Übernommen wird, was gerade gezeigt wird; mit Rückfrage, weil es viele Karten auf einmal sind.
+- **29 – Binder auf Merkliste:** über die Auswahl rechts, für eine oder alle markierten Karten. Was schon auf der Liste steht, bleibt unverändert. Eine ganze Seite geht über „Mehrere auswählen“.
+- **32:** dieselbe Suche wie in den Merklisten.

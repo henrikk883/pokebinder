@@ -114,10 +114,16 @@ describe('taking cards back', () => {
 
 describe('cards that never lay in a pocket', () => {
   it('are laid aside as owned, and can be taken out of the binder again', () => {
-    const next = addToTray(binder, mew, true, ctx)
-    expect(trayOf(next)).toMatchObject([{ cardRef: mew, owned: true }])
+    const next = addToTray(binder, [mew, glurak], true, ctx)
+    expect(trayOf(next)).toMatchObject([
+      { cardRef: mew, owned: true },
+      { cardRef: glurak, owned: true },
+    ])
+    expect(addToTray(binder, [], true, ctx)).toBe(binder)
 
-    const gone = removeFromTray(next, trayOf(next)[0]?.id ?? '', ctx)
+    const one = removeFromTray(next, trayOf(next)[0]?.id ?? '', ctx)
+    expect(trayOf(one).map((card) => card.cardRef)).toEqual([glurak])
+    const gone = removeFromTray(one, trayOf(one)[0]?.id ?? '', ctx)
     expect(gone).not.toHaveProperty('tray')
     expect(removeFromTray(gone, 'nothing', ctx)).toBe(gone)
   })

@@ -1,4 +1,5 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
+import { useState } from 'react'
 import { de } from '../../i18n/de'
 import { useIsPhone } from '../../lib/phone'
 import { setIdOfCard } from '../../lib/tcgdex'
@@ -7,13 +8,14 @@ import { useEditorStore } from '../../store/editorStore'
 import type { Binder, TrayCard } from '../../types/binder'
 import { CardImage } from '../search/CardImage'
 import { LangFlag } from '../search/LanguageSelect'
+import { matchesListSearch } from '../search/listView'
 import { TapHint } from '../search/TapHint'
 import { useReadyCatalog } from '../search/useCatalog'
 import { copiesOf, trayOf } from './binderModel'
 import type { DragSource, TrayTarget } from './dragDrop'
 import { buildSpreads, clampSpread, pageNumbersOf, spreadOfPage } from './spreads'
 import { nextEmptyAfter, tapTarget } from './tapPlacement'
-import { useCard } from './useCard'
+import { useCard, useCards } from './useCard'
 
 const buttonClass =
   'h-10 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
@@ -104,6 +106,12 @@ function Tray({ binder }: { binder: Binder }) {
   const select = useEditorStore((state) => state.select)
   const toTray = useBinderStore((state) => state.toTray)
   const pageToTray = useBinderStore((state) => state.pageToTray)
+  const [typed, setTyped] = useState('')
+  const cardOf = useCards(tray.map((entry) => entry.cardRef))
+  const found = tray.filter((entry) => {
+    const card = cardOf(entry.cardRef.cardId, entry.cardRef.lang)
+    return matchesListSearch(typed, entry.cardRef.cardId, card ? { card } : undefined)
+  })
   const target: TrayTarget = { kind: 'tray' }
   const { setNodeRef, isOver } = useDroppable({ id: 'tray', data: target })
 
@@ -147,6 +155,16 @@ function Tray({ binder }: { binder: Binder }) {
             </button>
           ))}
         </div>
+        {tray.length > 0 && (
+          <input
+            type="search"
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+            placeholder={de.tray.search}
+            aria-label={de.tray.search}
+            className="h-10 w-full rounded-control border border-line bg-raised px-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
+          />
+        )}
       </div>
       <div
         ref={setNodeRef}
@@ -158,9 +176,11 @@ function Tray({ binder }: { binder: Binder }) {
       >
         {tray.length === 0 ? (
           <p className="text-sm text-muted">{de.tray.empty}</p>
+        ) : found.length === 0 ? (
+          <p className="text-sm text-muted">{de.tray.nothingFound}</p>
         ) : (
           <ul className="grid grid-cols-2 gap-x-3 gap-y-4">
-            {tray.map((entry) => (
+            {found.map((entry) => (
               <TrayTile key={entry.id} entry={entry} />
             ))}
           </ul>

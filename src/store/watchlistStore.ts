@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import {
   addList,
+  addToList,
   mergeWatchlists,
   parseWatchlists,
   QUICK_LIST_ID,
@@ -43,6 +44,8 @@ export interface WatchlistState {
   showList: (listId: string) => void
   /** Notes a card on a list, or takes it off if it is on it. */
   toggle: (listId: string, cardId: string, lang: CardLang) => void
+  /** Notes several cards on a list; those on it already stay as they are. */
+  addMany: (listId: string, cards: readonly { cardId: string; lang: CardLang }[]) => void
   /** Sets what the collector would pay for a card of a list; `undefined` takes that off. */
   setWishPrice: (listId: string, cardId: string, lang: CardLang, wishPrice: number | undefined) => void
   /** Makes a new list and returns its id; `undefined` for an empty name. */
@@ -68,6 +71,7 @@ export const useWatchlistStore = create<WatchlistState>()((set, get) => {
     showList: (activeListId) => set({ activeListId }),
     toggle: (listId, cardId, lang) =>
       update(toggleInList(get().lists, listId, cardId, lang, new Date().toISOString())),
+    addMany: (listId, cards) => update(addToList(get().lists, listId, cards, new Date().toISOString())),
     setWishPrice: (listId, cardId, lang, wishPrice) =>
       update(setWishPrice(get().lists, listId, cardId, lang, wishPrice)),
     create: (name) => {

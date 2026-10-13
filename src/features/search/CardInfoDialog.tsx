@@ -8,7 +8,7 @@ import { useCardDetail, useCardLangs, usePrice } from '../binder/useCard'
 import { SimilarCardsSection } from '../similar/SimilarCardsSection'
 import { CardHoldingsInfo } from './CardHoldingsInfo'
 import { CardImage } from './CardImage'
-import { isSaved } from './watchlist'
+import { isSaved, notedInOtherLangs } from './watchlist'
 import { listName } from './listName'
 
 interface CardInfoDialogProps {
@@ -46,6 +46,7 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
   // counted up when the card is put into a binder from here: what is in the collection is read anew
   const [added, setAdded] = useState(0)
   const savedOn = lists.filter((list) => isSaved(list.cards, card.id, lang)).map(listName)
+  const elsewhere = notedInOtherLangs(lists, card.id, lang)
   // the info of a similar card opens on top of this one, so the title needs an id of its own
   const titleId = useId()
 
@@ -163,6 +164,18 @@ export function CardInfoDialog({ card, set, lang, onClose }: CardInfoDialogProps
               </form>
             </div>
           </details>
+          {elsewhere.length > 0 && (
+            <p data-testid="card-info-other-lang" className="text-xs text-muted">
+              {elsewhere
+                .map((noted) =>
+                  de.watchlist.notedIn(
+                    de.languages[noted.lang],
+                    lists.filter((list) => noted.listIds.includes(list.id)).map(listName),
+                  ),
+                )
+                .join(' ')}
+            </p>
+          )}
 
           <div className="mt-auto flex flex-wrap justify-end gap-3">
             <button

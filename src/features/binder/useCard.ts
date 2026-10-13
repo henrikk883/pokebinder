@@ -134,3 +134,35 @@ export function useCardLangs(cardId: string | undefined, current: CardLang): Car
   const langs = loaded && loaded.cardId === cardId ? loaded.langs : []
   return OFFERED_LANGS.filter((lang) => lang === current || langs.includes(lang))
 }
+
+/**
+ * The cards behind several references at once, for lists that are searched or ordered by
+ * what is on the cards. Cards arrive as they are looked up; `get` gives `undefined` for one
+ * that is not there yet or not known.
+ */
+export function useCards(refs: readonly { cardId: string; lang: CardLang }[]): (cardId: string, lang: CardLang) => CardSummary | undefined {
+  const [, setArrived] = useState(0)
+  const wanted = refs.map((ref) => keyOf(ref.cardId, ref.lang)).join('|')
+
+  useEffect(() => {
+    let cancelled = false
+    for (const key of wanted === '' ? [] : wanted.split('|')) {
+      if (resolved.has(key)) continue
+      const [lang, ...rest] = key.split(':') as [CardLang, ...string[]]
+      tcgdexFor(lang)
+        .getCard(rest.join(':'))
+        .then(
+          (card) => {
+            resolved.set(key, card ?? null)
+            if (!cancelled) setArrived((count) => count + 1)
+          },
+          () => undefined,
+        )
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [wanted])
+
+  return (cardId, lang) => resolved.get(keyOf(cardId, lang)) ?? undefined
+}

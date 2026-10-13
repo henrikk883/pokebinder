@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   addList,
+  addToList,
   isSaved,
   listsWith,
   mergeWatchlists,
+  notedInOtherLangs,
   parseWatchlist,
   parseWatchlists,
   QUICK_LIST_ID,
@@ -163,5 +165,52 @@ describe('mergeWatchlists', () => {
     // untouched lists stay the very same objects, so nothing is redrawn or recalculated
     expect(merged[0]).toBe(local[0])
     expect(mergeWatchlists(local, [])).toEqual(local)
+  })
+})
+
+describe('addToList', () => {
+  const now = '2026-10-13T09:00:00.000Z'
+
+  it('notes several cards in front of the others, in the order given', () => {
+    const lists = addToList([quick([pikachu]), buy()], QUICK_LIST_ID, [{ cardId: 'a-1', lang: 'de' }, { cardId: 'a-2', lang: 'en' }], now)
+
+    expect(lists[0]?.cards).toEqual([
+      { cardId: 'a-1', lang: 'de', savedAt: now },
+      { cardId: 'a-2', lang: 'en', savedAt: now },
+      pikachu,
+    ])
+    expect(lists[1]?.cards).toEqual([])
+  })
+
+  it('leaves a card that is on the list already as it is, and takes each card once', () => {
+    const lists = addToList([quick([pikachu])], QUICK_LIST_ID, [pikachu, { cardId: 'a-1', lang: 'de' }, { cardId: 'a-1', lang: 'de' }], now)
+
+    expect(lists[0]?.cards).toEqual([{ cardId: 'a-1', lang: 'de', savedAt: now }, pikachu])
+  })
+
+  it('changes nothing where there is nothing new, or no such list', () => {
+    const before = [quick([pikachu])]
+    expect(addToList(before, QUICK_LIST_ID, [pikachu], now)[0]).toBe(before[0])
+    expect(addToList(before, 'nothing', [glurak], now)).toEqual(before)
+  })
+})
+
+describe('notedInOtherLangs', () => {
+  const english: SavedCard = { ...pikachu, lang: 'en' }
+  const japanese: SavedCard = { ...pikachu, lang: 'ja' }
+
+  it('says in which other languages a card is noted, and on which lists', () => {
+    const lists = [quick([english]), buy([english, japanese])]
+
+    expect(notedInOtherLangs(lists, pikachu.cardId, 'de')).toEqual([
+      { lang: 'en', listIds: [QUICK_LIST_ID, 'buy'] },
+      { lang: 'ja', listIds: ['buy'] },
+    ])
+  })
+
+  it('leaves out the language asked in, and knows of nothing for a card that is not noted', () => {
+    expect(notedInOtherLangs([quick([pikachu, english])], pikachu.cardId, 'de')).toEqual([{ lang: 'en', listIds: [QUICK_LIST_ID] }])
+    expect(notedInOtherLangs([quick([pikachu])], pikachu.cardId, 'de')).toEqual([])
+    expect(notedInOtherLangs([quick([pikachu])], glurak.cardId, 'en')).toEqual([])
   })
 })

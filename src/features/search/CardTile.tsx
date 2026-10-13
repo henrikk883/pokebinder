@@ -9,7 +9,7 @@ import { placeByTap } from '../binder/placeCard'
 import { useIsPhone } from '../../lib/phone'
 import { CardImage } from './CardImage'
 import { CardInfoDialog } from './CardInfoDialog'
-import { listsWith, QUICK_LIST_ID } from './watchlist'
+import { listsWith, notedInOtherLangs, QUICK_LIST_ID } from './watchlist'
 
 interface CardTileProps {
   card: CardSummary
@@ -70,7 +70,17 @@ export function CardTile({
   const listCount = useWatchlistStore((state) => listsWith(state.lists, card.id, lang).length)
   const saved = useWatchlistStore((state) => listsWith(state.lists, card.id, lang).includes(QUICK_LIST_ID))
   const toggleSaved = useWatchlistStore((state) => state.toggle)
-  const onOtherList = !saved && listCount > 0
+  // a list notes a card in one language; in another the collector still has it in mind
+  const otherLangs = useWatchlistStore((state) =>
+    notedInOtherLangs(state.lists, card.id, lang)
+      .map((noted) => noted.lang)
+      .join(','),
+  )
+  const notedElsewhere = listCount === 0 && otherLangs !== ''
+  const onOtherList = !saved && (listCount > 0 || notedElsewhere)
+  const elsewhereHint = notedElsewhere
+    ? de.watchlist.inOtherLang((otherLangs.split(',') as CardLang[]).map((other) => de.languages[other]))
+    : undefined
   const number = set ? `${card.localId}/${set.cardCount.official}` : card.localId
   const source: DragSource = { kind: 'search', card, lang }
   // Where nothing can be dragged across (a phone), a tap does what a drop does elsewhere.
@@ -131,8 +141,9 @@ export function CardTile({
         type="button"
         aria-label={saved ? de.watchlist.unsaveCard(card.name) : de.watchlist.saveCard(card.name)}
         aria-pressed={saved}
-        title={onOtherList ? de.watchlist.onOtherList : undefined}
+        title={elsewhereHint ?? (onOtherList ? de.watchlist.onOtherList : undefined)}
         data-on-list={listCount > 0}
+        data-other-lang={notedElsewhere ? otherLangs : undefined}
         onClick={() => toggleSaved(QUICK_LIST_ID, card.id, lang)}
         // A noted card keeps its star in view; that is how the lists show what is noted.
         // Filled: on the quick list. Outlined in colour: on another list only.

@@ -110,8 +110,8 @@ export interface BinderState {
   pageToTray: (pageId: string) => void
   /** Puts a card from the tray into a pocket; a card lying there takes its place in the tray. */
   fromTray: (trayId: string, position: SlotPosition) => void
-  /** Lays a card aside that was in no pocket. */
-  addToTray: (cardRef: CardRef) => void
+  /** Lays cards aside that were in no pocket. */
+  addToTray: (cardRefs: readonly CardRef[]) => void
   /** Takes a card out of the tray, and with that out of the binder. */
   removeFromTray: (trayId: string) => void
   setOwnedMany: (positions: SlotPosition[], owned: boolean) => void
@@ -284,7 +284,7 @@ export function createBinderStore(deps: BinderStoreDeps) {
       toTray: (positions) => change((binder) => toTray(binder, positions)),
       pageToTray: (pageId) => change((binder) => pageToTray(binder, pageId)),
       fromTray: (trayId, position) => change((binder) => fromTray(binder, trayId, position)),
-      addToTray: (cardRef) => change((binder) => addToTray(binder, cardRef)),
+      addToTray: (cardRefs) => change((binder) => addToTray(binder, cardRefs)),
       removeFromTray: (trayId) => change((binder) => removeFromTray(binder, trayId)),
       setOwnedMany: (positions, owned) => change((binder) => setOwnedMany(binder, positions, owned)),
       insertGap: (position) => change((binder) => insertGap(binder, position)),

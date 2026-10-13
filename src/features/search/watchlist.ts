@@ -76,6 +76,42 @@ export function setWishPrice(
   )
 }
 
+/**
+ * Notes cards on a list; a card that is on it already stays as it is. The cards added come
+ * first, in the order given. An unknown list changes nothing.
+ */
+export function addToList(
+  lists: readonly Watchlist[],
+  listId: string,
+  cards: readonly Pick<SavedCard, 'cardId' | 'lang'>[],
+  now: string,
+): Watchlist[] {
+  return lists.map((list) => {
+    if (list.id !== listId) return list
+    const added: SavedCard[] = []
+    for (const { cardId, lang } of cards) {
+      if (!isSaved(list.cards, cardId, lang) && !isSaved(added, cardId, lang)) added.push({ cardId, lang, savedAt: now })
+    }
+    return added.length === 0 ? list : { ...list, cards: [...added, ...list.cards] }
+  })
+}
+
+/**
+ * Where a card is noted in another language than `lang`: per language the ids of the lists.
+ * A list notes a card in the language it was found in, so the same card looked at in
+ * another language is not on that list, though the collector has it in mind.
+ */
+export function notedInOtherLangs(
+  lists: readonly Watchlist[],
+  cardId: string,
+  lang: CardLang,
+): { lang: CardLang; listIds: string[] }[] {
+  return OFFERED_LANGS.filter((other) => other !== lang).flatMap((other) => {
+    const listIds = listsWith(lists, cardId, other)
+    return listIds.length > 0 ? [{ lang: other, listIds }] : []
+  })
+}
+
 /** Ids of the lists a card is on. */
 export function listsWith(lists: readonly Watchlist[], cardId: string, lang: CardLang): string[] {
   return lists.filter((list) => isSaved(list.cards, cardId, lang)).map((list) => list.id)
