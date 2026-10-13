@@ -440,6 +440,28 @@ export function SelectionPanel() {
           {binder && !collecting && (
             <div className="space-y-3 border-t border-line pt-5">
               <h3 className="text-lg font-semibold">{de.selection.pageActions(page.index + 1)}</h3>
+              {/* straight to any place: step by step is a long way in a thick binder */}
+              <select
+                aria-label={de.selection.movePageTo}
+                value=""
+                disabled={binder.pages.length < 2}
+                onChange={(event) => {
+                  if (event.target.value === '') return
+                  const toIndex = Number(event.target.value)
+                  movePage(page.id, toIndex)
+                  follow(toIndex)
+                }}
+                className={`${fieldClass} w-full disabled:text-muted`}
+              >
+                <option value="">{`${de.selection.movePageTo} …`}</option>
+                {binder.pages.map((other) =>
+                  other.index === page.index ? null : (
+                    <option key={other.id} value={other.index}>
+                      {de.selection.movePagePlace(other.index + 1)}
+                    </option>
+                  ),
+                )}
+              </select>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"

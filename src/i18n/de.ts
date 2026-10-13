@@ -878,6 +878,8 @@ export const de = {
     closeGap: 'Lücke schließen',
     closeGapHint: 'Holt die folgenden Karten um ein Pocket nach vorn, bis zur nächsten Lücke.',
     pageActions: (page: number) => `Seite ${page}`,
+    movePageTo: 'Seite verschieben an Stelle',
+    movePagePlace: (place: number) => `Stelle ${place}`,
     movePageEarlier: 'Nach vorn',
     movePageLater: 'Nach hinten',
     duplicatePage: 'Duplizieren',

@@ -681,6 +681,17 @@ test('pages are moved, duplicated and inserted; the thumbnails are dragged onto 
   await drag(page, miniPage(3), miniPage(1))
   await expect.poll(cardPages).toEqual([1])
   await expect(label).toHaveText('Seite 1')
+  // straight to any place, by picking it: the other pages move up, the view follows
+  await pocket(page, 1, 1).click()
+  const place = page.getByRole('combobox', { name: 'Seite verschieben an Stelle' })
+  await expect(place.locator('option')).toHaveText(['Seite verschieben an Stelle …', 'Stelle 2', 'Stelle 3'])
+  await place.selectOption('Stelle 3')
+  await expect.poll(cardPages).toEqual([3])
+  await expect(label).toHaveText('Seiten 2 – 3')
+  await expect(pocket(page, 3, 1)).toHaveAttribute('aria-pressed', 'true')
+  await place.selectOption('Stelle 1')
+  await expect.poll(cardPages).toEqual([1])
+  await expect(label).toHaveText('Seite 1')
   // a click on a thumbnail still only turns the pages
   await page.getByRole('button', { name: 'Seiten 2 – 3' }).click()
   await expect(label).toHaveText('Seiten 2 – 3')
