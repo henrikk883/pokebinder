@@ -685,3 +685,7 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Die Kopie kommt ins nächste freie Pocket hinter der Karte (auch auf einer späteren Seite), mit derselben Sprache, Variante und demselben Stand „vorhanden“/„fehlt“. Ist dahinter nichts mehr frei, kommt sie in die Ablage; eine neue Seite wird dafür nicht angelegt. Eine Meldung nennt, wo die Kopie liegt.
 - Die Anzahl am ersten Pocket bleibt, wie sie ist: Die Kopie ist ein weiteres Pocket mit einem Exemplar.
 - Nur im Modus „Bearbeiten“, nur für eine einzelne gewählte Karte.
+
+## 2026-10-14 – Zeichen „liegt schon im Binder“; Seite an eine Stelle verschieben
+- **Punkt 35:** An Karten in der Spalte neben dem Binder (Suche, Merkliste, „Passend“) zeigt ein Haken unten links im Bild, dass die Karte schon im offenen Binder liegt. Henrik hatte die Einzelfragen offen gelassen; so entschieden: Die Ablage zählt mit. Die Sprache ist egal – liegt die Karte nur in einer anderen Sprache im Binder, nennt der Hinweis beim Zeigen die Sprache. Bei mehreren Pockets steht die Anzahl dabei. Auch eine Karte, die im Binder noch „fehlt“, gilt als im Binder: Sie hat dort ihr Pocket. Der Haken ist neutral gefärbt, weil Grün nur „gespeichert“ bedeutet. Unter „Karten stöbern“ und im Deck gibt es das Zeichen nicht, dort liegt kein Binder daneben.
+- **Punkt 37:** „Seite verschieben an Stelle …“ rechts bei der Seite, als Auswahl aller Stellen. Henrik meinte nicht das Verschieben in einen anderen Binder, sondern einen weiten Weg im selben Binder in einem Schritt.

@@ -401,3 +401,38 @@ test('a card is put into the binder once more from the selection', async ({ page
   await expect(page.getByText('Dahinter ist kein Pocket mehr frei: Die Kopie liegt in der Ablage.')).toBeVisible()
   await expect(modes(page).getByRole('button', { name: 'Ablage (1)' })).toBeVisible()
 })
+
+test('beside a binder, a card found shows whether it lies in the binder already', async ({ page }) => {
+  await binderWithThreeCards(page)
+  const results = page.getByTestId('column-left').getByTestId('search-results')
+  const mark = (id: string) => results.locator(`[data-card-id="${id}"]`).getByTestId('in-binder')
+
+  // the three cards in the binder are marked, the others are not
+  await expect(mark('sv03.5-001')).toBeVisible()
+  await expect(mark('sv03.5-001')).toHaveAttribute('title', 'Liegt schon im Binder')
+  await expect(mark('sv03.5-004')).toBeVisible()
+  await expect(mark('sv03.5-002')).toHaveCount(0)
+  await expect(results.getByTestId('in-binder')).toHaveCount(3)
+
+  // twice in the binder: the mark says how often
+  await pocket(page, 1).click()
+  await page.getByTestId('column-right').getByRole('button', { name: 'Karte duplizieren' }).click()
+  await expect(mark('sv03.5-001')).toHaveText(/2/)
+  await expect(mark('sv03.5-001')).toHaveAttribute('title', 'Liegt schon im Binder (2×)')
+
+  // laid aside, a card is still in the binder; taken out, it is not
+  await pocket(page, 2).click({ button: 'right' })
+  await expect(mark('sv03.5-004')).toBeVisible()
+  await pocket(page, 3).click()
+  await page.keyboard.press('Delete')
+  await expect(mark('sv03.5-007')).toHaveCount(0)
+
+  // looked for in another language, the card is marked too, and the language named
+  await page.getByTestId('column-left').getByRole('combobox', { name: 'Sprache der Karten' }).selectOption('en')
+  await expect(results.locator('[data-card-id="sv03.5-001"]')).toContainText('Bulbasaur')
+  await expect(mark('sv03.5-001')).toHaveAttribute('title', 'Liegt schon im Binder (2×), auf Deutsch')
+
+  // where no binder lies beside the cards, nothing is marked
+  await page.getByRole('banner').getByRole('button', { name: 'Karten stöbern' }).click()
+  await expect(page.getByTestId('page').getByTestId('in-binder')).toHaveCount(0)
+})

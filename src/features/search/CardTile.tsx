@@ -7,7 +7,8 @@ import type { CardLang } from '../../types/binder'
 import type { DragSource } from '../binder/dragDrop'
 import { placeByTap } from '../binder/placeCard'
 import { layIntoBinder } from '../binder/trayTransfer'
-import { binderStore } from '../../store/binderStore'
+import { binderStore, useBinderStore } from '../../store/binderStore'
+import { presenceIn } from '../binder/binderIndex'
 import { useEditorStore } from '../../store/editorStore'
 import { useIsPhone } from '../../lib/phone'
 import { CardImage } from './CardImage'
@@ -84,6 +85,14 @@ export function CardTile({
   const elsewhereHint = notedElsewhere
     ? de.watchlist.inOtherLang((otherLangs.split(',') as CardLang[]).map((other) => de.languages[other]))
     : undefined
+  // Beside a binder: whether the card lies in it already (see `presenceIn`). As text, so
+  // that an unchanged answer does not draw the tile anew.
+  const inBinder = useBinderStore((state) => {
+    if (browsing || onPick || !state.binder) return ''
+    const presence = presenceIn(state.binder, card.id)
+    return presence ? `${presence.pockets}:${presence.langs.join(',')}` : ''
+  })
+  const [inPockets, inLangs] = inBinder === '' ? [0, []] : [Number(inBinder.split(':')[0]), (inBinder.split(':')[1] ?? '').split(',') as CardLang[]]
   const number = set ? `${card.localId}/${set.cardCount.official}` : card.localId
   const source: DragSource = { kind: 'search', card, lang }
   // Where nothing can be dragged across (a phone), a tap does what a drop does elsewhere.
@@ -134,9 +143,26 @@ export function CardTile({
                 onClick: () => void placeByTap(card, lang),
               }
             : undefined)}
-          className={`${draggable && !tappable ? 'cursor-grab' : ''} ${isDragging ? 'opacity-40' : ''}`}
+          className={`relative ${draggable && !tappable ? 'cursor-grab' : ''} ${isDragging ? 'opacity-40' : ''}`}
         >
           <CardImage card={card} set={set} size="small" />
+          {inPockets > 0 && (
+            <span
+              data-testid="in-binder"
+              title={de.search.inBinder(
+                inPockets,
+                // named where the binder has the card in another language only
+                inLangs.includes(lang) ? [] : inLangs.map((other) => de.languages[other]),
+              )}
+              className="pointer-events-none absolute bottom-1 left-1 flex h-6 items-center gap-0.5 rounded-control border border-line bg-bg/90 px-1.5 text-xs font-semibold"
+            >
+              <svg viewBox="0 0 20 20" className="size-3.5" aria-hidden="true">
+                <path d="m4.5 10.5 3.5 3.5 7.5-8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {inPockets > 1 && <span>{inPockets}</span>}
+              <span className="sr-only">{de.search.inBinder(inPockets, [])}</span>
+            </span>
+          )}
         </div>
       )}
       {/* beside the picture, not in it: pressing these must not pick the card up */}

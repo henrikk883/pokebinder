@@ -261,6 +261,8 @@ export const de = {
   },
   search: {
     title: 'Karten suchen',
+    inBinder: (pockets: number, otherLangs: readonly string[]) =>
+      `Liegt schon im Binder${pockets > 1 ? ` (${pockets}×)` : ''}${otherLangs.length > 0 ? `, auf ${otherLangs.join(' und ')}` : ''}`,
     tabs: {
       cards: 'Karten',
       images: 'Bilder',
