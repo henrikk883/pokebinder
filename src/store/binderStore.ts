@@ -27,6 +27,7 @@ import {
   type NewBinderInput,
   type PlacedCard,
   addToTray,
+  duplicateCard,
   fromTray,
   pageToTray,
   removeFromTray,
@@ -104,6 +105,11 @@ export interface BinderState {
    */
   moveCards: (positions: SlotPosition[], dragged: SlotPosition, target: SlotPosition) => SlotPosition[] | null
   clearSlots: (positions: SlotPosition[]) => void
+  /**
+   * Puts the card of a pocket into the binder once more. Says where the copy went: the
+   * pocket, `'tray'` where the binder was full, `null` where there was no card.
+   */
+  duplicateCard: (position: SlotPosition) => SlotPosition | 'tray' | null
   /** Lays the cards of these pockets aside, into the tray of the binder. */
   toTray: (positions: SlotPosition[]) => void
   /** Lays all cards of a page aside. */
@@ -281,6 +287,14 @@ export function createBinderStore(deps: BinderStoreDeps) {
         return result.moved
       },
       clearSlots: (positions) => change((binder) => clearSlots(binder, positions)),
+      duplicateCard: (position) => {
+        const { binder } = get()
+        if (!binder) return null
+        const result = duplicateCard(binder, position)
+        if (result.binder === binder) return null
+        commit(binder, result.binder)
+        return result.placed ?? 'tray'
+      },
       toTray: (positions) => change((binder) => toTray(binder, positions)),
       pageToTray: (pageId) => change((binder) => pageToTray(binder, pageId)),
       fromTray: (trayId, position) => change((binder) => fromTray(binder, trayId, position)),

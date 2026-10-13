@@ -679,3 +679,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 ## 2026-10-13 – Ablage ordnen; aus der Suche direkt in die Ablage
 - Von Henrik gewünscht. Die Ablage hat dieselbe Auswahl „Reihenfolge“ wie die Merklisten (wie abgelegt, Name, Set und Nummer, Farbe). Das ändert nur die Anzeige; gespeichert bleibt die Reihenfolge des Ablegens.
 - An jeder Karte, die sich in den Binder ziehen lässt (Suche, Merkliste und „Passend“ neben dem Binder), sitzt oben in der Mitte ein Knopf, der sie in die Ablage des offenen Binders legt – als „vorhanden“ und in ihrer Grundvariante, wie beim Hineinziehen. Unter „Karten stöbern“ und im Deck gibt es ihn nicht; dort führt „Zu Binder hinzufügen“ in der Karten-Info zum selben Ziel.
+
+## 2026-10-13 – Karte duplizieren
+- Von Henrik gewünscht: rechts bei der gewählten Karte „Karte duplizieren“, um eine Karte mehrfach in den Binder zu legen.
+- Die Kopie kommt ins nächste freie Pocket hinter der Karte (auch auf einer späteren Seite), mit derselben Sprache, Variante und demselben Stand „vorhanden“/„fehlt“. Ist dahinter nichts mehr frei, kommt sie in die Ablage; eine neue Seite wird dafür nicht angelegt. Eine Meldung nennt, wo die Kopie liegt.
+- Die Anzahl am ersten Pocket bleibt, wie sie ist: Die Kopie ist ein weiteres Pocket mit einem Exemplar.
+- Nur im Modus „Bearbeiten“, nur für eine einzelne gewählte Karte.

@@ -689,7 +689,7 @@ test('pages are moved, duplicated and inserted; the thumbnails are dragged onto 
   // a copy lands right behind the page, with its cards
   await page.getByRole('button', { name: 'Seite 1', exact: true }).click()
   await pocket(page, 1, 1).click()
-  await page.getByRole('button', { name: 'Duplizieren' }).click()
+  await page.getByRole('button', { name: 'Duplizieren', exact: true }).click()
   await expect.poll(cardPages).toEqual([1, 2])
   await expect(page.getByTestId('mini-page')).toHaveCount(4)
 

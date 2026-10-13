@@ -234,6 +234,8 @@ export function SelectionPanel() {
   const multi = useEditorStore((state) => state.multi)
   const clearSlots = useBinderStore((state) => state.clearSlots)
   const toTray = useBinderStore((state) => state.toTray)
+  const duplicateCard = useBinderStore((state) => state.duplicateCard)
+  const setNotice = useEditorStore((state) => state.setNotice)
   const setOwnedMany = useBinderStore((state) => state.setOwnedMany)
   const [editingCover, setEditingCover] = useState(false)
 
@@ -349,6 +351,26 @@ export function SelectionPanel() {
                 className={pageButtonClass}
               >
                 {de.move.start}
+              </button>
+            )}
+            {!collecting && (
+              <button
+                type="button"
+                disabled={!slot.cardRef}
+                title={de.selection.duplicateHint}
+                onClick={() => {
+                  const placed = duplicateCard({ pageId: page.id, slotIndex: slot.index })
+                  if (placed === null) return
+                  if (placed === 'tray') {
+                    setNotice(de.selection.duplicatedToTray)
+                    return
+                  }
+                  const target = binder?.pages.find((entry) => entry.id === placed.pageId)
+                  setNotice(de.selection.duplicated((target?.index ?? 0) + 1, placed.slotIndex + 1))
+                }}
+                className={pageButtonClass}
+              >
+                {de.selection.duplicate}
               </button>
             )}
             <ToWatchlist cards={cardsAt([{ pageId: page.id, slotIndex: slot.index }])} />

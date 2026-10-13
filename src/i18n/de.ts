@@ -851,6 +851,10 @@ export const de = {
   },
   selection: {
     title: 'Auswahl',
+    duplicate: 'Karte duplizieren',
+    duplicateHint: 'Legt dieselbe Karte noch einmal in den Binder: ins nächste freie Pocket dahinter',
+    duplicated: (page: number, pocket: number) => `Die Kopie liegt auf Seite ${page}, Pocket ${pocket}.`,
+    duplicatedToTray: 'Dahinter ist kein Pocket mehr frei: Die Kopie liegt in der Ablage.',
     empty: 'Kein Pocket ausgewählt.',
     emptyPocket: 'Leerer Pocket',
     owned: 'Vorhanden',

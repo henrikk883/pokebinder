@@ -728,3 +728,26 @@ export function removeFromTray(binder: Binder, trayId: string, ctx: ModelContext
   const rest = tray.filter((entry) => entry.id !== trayId)
   return rest.length === tray.length ? binder : withTray(binder, rest, ctx)
 }
+
+/**
+ * Puts the card of a pocket into the binder once more: into the next empty pocket behind
+ * it in reading order, or, where the binder is full from there on, into the tray. The copy
+ * is the same card in the same language and finish, there or missing like the first; how
+ * many copies the first pocket stands for stays with that pocket. Says where the copy
+ * went (`undefined` for the tray). An empty pocket changes nothing.
+ */
+export function duplicateCard(
+  binder: Binder,
+  position: SlotPosition,
+  ctx: ModelContext = defaultContext,
+): { binder: Binder; placed: SlotPosition | undefined } {
+  const slot = findSlot(binder, position)
+  if (!slot.cardRef) return { binder, placed: undefined }
+  const { cardRef, owned } = slot
+  const from = pocketsInOrder(binder).findIndex((pocket) => samePosition(pocket.position, position))
+  const free = pocketsInOrder(binder)
+    .slice(from + 1)
+    .find((pocket) => !findSlot(binder, pocket.position).cardRef)
+  if (!free) return { binder: addToTray(binder, [cardRef], owned, ctx), placed: undefined }
+  return { binder: writeSlots(binder, [{ position: free.position, content: { cardRef, owned } }], ctx), placed: free.position }
+}

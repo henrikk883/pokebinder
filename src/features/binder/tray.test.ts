@@ -8,6 +8,7 @@ import {
   countedPages,
   countProgress,
   createBinder,
+  duplicateCard,
   fromTray,
   heldCards,
   pageToTray,
@@ -153,5 +154,41 @@ describe('counting', () => {
     const laid = toTray(binder, [at(binder, 0, 0)], ctx)
 
     expect(holdingsOf([laid], pikachu.cardId)).toMatchObject({ copies: 3, places: [{ copies: 3, pages: [TRAY_PAGE] }] })
+  })
+})
+
+describe('putting a card into the binder once more', () => {
+  it('fills the next empty pocket behind it with the same card', () => {
+    // pockets: Pikachu, Mew (missing), empty, Glurak
+    const { binder: next, placed } = duplicateCard(binder, at(binder, 0, 0), ctx)
+
+    expect(placed).toEqual(at(binder, 0, 2))
+    expect(slot(next, 0, 2)).toEqual({ index: 2, cardRef: pikachu, owned: true })
+    // the three copies stay with the first pocket
+    expect(slot(next, 0, 0)).toMatchObject({ cardRef: pikachu, count: 3 })
+  })
+
+  it('copies a missing card as missing, and looks only behind the pocket', () => {
+    const { binder: next, placed } = duplicateCard(binder, at(binder, 0, 3), ctx)
+    expect(placed).toEqual(at(binder, 0, 4))
+
+    const missing = duplicateCard(next, at(next, 0, 1), ctx)
+    expect(missing.placed).toEqual(at(next, 0, 2))
+    expect(slot(missing.binder, 0, 2)).toEqual({ index: 2, cardRef: mew, owned: false })
+  })
+
+  it('goes on to the next page, and into the tray where the binder is full', () => {
+    let full = binder
+    for (let index = 0; index < 9; index++) full = setCard(full, at(full, 0, index), glurak, true, ctx)
+    const laid = duplicateCard(full, at(full, 0, 4), ctx)
+    expect(laid.placed).toBeUndefined()
+    expect(trayOf(laid.binder)).toMatchObject([{ cardRef: glurak, owned: true }])
+
+    const twoPages = addPage(full, ctx)
+    expect(duplicateCard(twoPages, at(twoPages, 0, 8), ctx).placed).toEqual(at(twoPages, 1, 0))
+  })
+
+  it('changes nothing for an empty pocket', () => {
+    expect(duplicateCard(binder, at(binder, 0, 2), ctx)).toEqual({ binder, placed: undefined })
   })
 })

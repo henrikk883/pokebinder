@@ -374,3 +374,30 @@ test('cards go from the search straight into the tray, and the tray is put in an
   await page.getByRole('banner').getByRole('button', { name: 'Karten stöbern' }).click()
   await expect(page.getByTestId('page').getByRole('button', { name: /in die Ablage legen$/ })).toHaveCount(0)
 })
+
+test('a card is put into the binder once more from the selection', async ({ page }) => {
+  await binderWithThreeCards(page)
+  const right = page.getByTestId('column-right')
+
+  // into the next free pocket behind it
+  await pocket(page, 1).click()
+  await right.getByRole('button', { name: 'Karte duplizieren' }).click()
+  await expect(pocket(page, 4)).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await expect(page.getByText('Die Kopie liegt auf Seite 1, Pocket 4.')).toBeVisible()
+  await right.getByRole('button', { name: 'Karte duplizieren' }).click()
+  await expect(pocket(page, 5)).toHaveAttribute('data-card-id', 'sv03.5-001')
+
+  // it can be taken back
+  await page.keyboard.press('Control+z')
+  await expect(pocket(page, 5)).toHaveAttribute('data-card-id', '')
+
+  // with no pocket free behind it, the copy waits in the tray
+  await pocket(page, 9).click()
+  await expect(right.getByRole('button', { name: 'Karte duplizieren' })).toBeDisabled()
+  await pocket(page, 4).click()
+  for (let copies = 0; copies < 5; copies++) await right.getByRole('button', { name: 'Karte duplizieren' }).click()
+  await expect(pocket(page, 9)).toHaveAttribute('data-card-id', 'sv03.5-001')
+  await right.getByRole('button', { name: 'Karte duplizieren' }).click()
+  await expect(page.getByText('Dahinter ist kein Pocket mehr frei: Die Kopie liegt in der Ablage.')).toBeVisible()
+  await expect(modes(page).getByRole('button', { name: 'Ablage (1)' })).toBeVisible()
+})
