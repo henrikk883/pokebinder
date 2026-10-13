@@ -108,7 +108,10 @@ describe('a name typed in another language', () => {
       }),
     }
   }
-  const english = (dexIds: number[]) => ({ dexIdsOfName: vi.fn(async () => dexIds) })
+  /** Another language: the Pokémon a name is part of, and those called exactly that. */
+  const english = (dexIds: number[], exact: number[] = []) => ({
+    dexIdsOfName: vi.fn(async (_name: string, exactly?: boolean) => (exactly ? exact : dexIds)),
+  })
   const plan = (name: string, setId?: string) =>
     ({ kind: 'query', query: { name, ...(setId ? { setId } : {}) } }) as const
 
@@ -123,12 +126,31 @@ describe('a name typed in another language', () => {
     expect(client.queryCards).toHaveBeenLastCalledWith({ setId: 'sv03.5', dexId: 54 }, 1)
   })
 
-  it('is not asked about while the name finds something as it is', async () => {
+  it('is only asked for a whole name while the name finds something as it is', async () => {
     const client = german({})
+    // "Enton" is part of English names, but no Pokémon is called just that in English
     const other = english([54])
 
     expect(await runSearch(client, plan('Enton'), 1, [other])).toEqual({ cards: [enton], hasMore: false })
-    expect(other.dexIdsOfName).not.toHaveBeenCalled()
+    expect(other.dexIdsOfName).toHaveBeenCalledTimes(1)
+    expect(other.dexIdsOfName).toHaveBeenCalledWith('Enton', true)
+  })
+
+  it('takes a name for another language where it is a Pokémon there, though it finds a chance hit as it is', async () => {
+    // English cards: "Enton" is part of "Professor Laventon", and what Psyduck is called in German
+    const laventon: CardSummary = { id: 'swsh12-162', localId: '162', name: 'Professor Laventon' }
+    const psyduck: CardSummary = { id: 'sv03.5-054', localId: '054', name: 'Psyduck' }
+    const englishCards = {
+      getSetCards: vi.fn(async () => []),
+      queryCards: vi.fn(async (query: { name?: string; dexId?: number }) => ({
+        cards: query.dexId === 54 ? [psyduck] : query.name === 'Enton' ? [laventon] : [],
+        hasMore: false,
+      })),
+    }
+    const germanNames = english([54], [54])
+
+    // the Pokémon meant comes first, the chance hit stays
+    expect(await runSearch(englishCards, plan('Enton'), 1, [germanNames])).toEqual({ cards: [psyduck, laventon], hasMore: false })
   })
 
   it('may stand for several Pokémon, each card once', async () => {
@@ -173,12 +195,12 @@ describe('a name typed in another language', () => {
     }
     const other = english([133])
 
-    // the card found as it is comes first, each card once
-    expect(await runSearch(japanese, plan('Eevee'), 1, [other])).toEqual({ cards: [stray, eievui], hasMore: false })
+    // the cards of the Pokémon meant come first, each card once
+    expect(await runSearch(japanese, plan('Eevee'), 1, [other])).toEqual({ cards: [eievui, stray], hasMore: false })
     // a name in Japanese letters that finds cards is looked for as it is, nothing else
     other.dexIdsOfName.mockClear()
     expect(await runSearch(japanese, plan('イーブイ'), 1, [other])).toEqual({ cards: [eievui], hasMore: false })
-    expect(other.dexIdsOfName).not.toHaveBeenCalled()
+    expect(other.dexIdsOfName).toHaveBeenCalledWith('イーブイ', true)
   })
 
   it('leaves an empty later page of a name that does find cards alone', async () => {

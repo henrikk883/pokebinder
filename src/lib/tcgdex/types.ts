@@ -102,9 +102,10 @@ export interface TcgdexClient {
   /**
    * Pokédex numbers of the Pokémon whose name in this client's language contains `name`,
    * the most frequent first; empty for trainers, energy and names nothing matches. This is
-   * how a name typed in one language leads to the cards in another.
+   * how a name typed in one language leads to the cards in another. With `exactly`, only
+   * Pokémon whose cards are called just that count, not those the name is merely part of.
    */
-  dexIdsOfName(name: string): Promise<number[]>
+  dexIdsOfName(name: string, exactly?: boolean): Promise<number[]>
   /**
    * The card as TCGdex has it in English, unprocessed: Cardmarket lists cards by their
    * English name and attacks. `undefined` where there is no English card of that id (cards

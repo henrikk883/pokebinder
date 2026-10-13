@@ -455,11 +455,13 @@ test('a Pokémon is found by its English name while German cards are shown', asy
   expect(tcgdex.requests).toContain('graphql:names:en:psyduck')
   expect(tcgdex.requests).toContain('de/cards?dexId=eq:54&pagination:page=1&pagination:itemsPerPage=60')
 
-  // a name that finds cards as it is asks no other language
-  const before = tcgdex.requests.filter((request) => request.startsWith('graphql:names:')).length
+  // A name that finds cards as it is may still be a Pokémon's name elsewhere ("Enton" finds
+  // an English professor): the other languages are asked, and where none knows it as a
+  // name, the cards found stay as they are.
   await page.getByRole('searchbox', { name: searchField }).fill('Glurak')
   await expect(tiles.filter({ hasText: 'Glurak' }).first()).toBeVisible()
-  expect(tcgdex.requests.filter((request) => request.startsWith('graphql:names:')).length).toBe(before)
+  await expect.poll(() => tcgdex.requests).toContain('graphql:names:en:glurak')
+  await expect(tiles.filter({ hasText: 'Glurak' })).toHaveCount(await tiles.count())
 })
 
 test('cards are found by who drew them, alone or together with a name and a kind of card', async ({ page }) => {

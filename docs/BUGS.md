@@ -33,6 +33,7 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 | Nr. | Gemeldet | Von | Fehler | Behoben mit | Stand |
 |---|---|---|---|---|---|
 | B-001 | 12.10.2026 | Henrik | Binder-Seiten laden langsam, „man sieht anfangs nur den Namen“ – in Sets, von denen TCGdex keine Bilder hat (gemeldet als „graue Karten laden langsam“) | `1ae913b`, Einzelheiten unten | bestätigt |
+| B-005 | 13.10.2026 | Henrik | „Enton“ bei englischen Karten findet keine Psyduck-Karten | siehe unten | behoben |
 | B-003 | 13.10.2026 | Henrik | Japanische Karten lassen sich mit deutschem oder englischem Namen nicht (immer) finden | siehe unten | behoben |
 | B-002 | 12.10.2026 | Henrik | Die Suche fand ein Pokémon nur unter dem Namen in der eingestellten Kartensprache („psyduck“ fand bei Deutsch nichts) | `fba67f8`, Einzelheiten unten | bestätigt |
 | – | 12.10.2026 | Henrik | Kartenbilder blieben in Suche, Binder und Info-Anzeige leer oder luden erst nach einem Fensterwechsel | `554a043` (TCGdex schickt eine Kopfzeile teils doppelt; Bilder werden jetzt schlicht angezeigt) | bestätigt |
@@ -67,3 +68,11 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 - **Behoben:** Bei Sprachen mit eigener Schrift (Japanisch, Koreanisch) wird ein Name in lateinischen Buchstaben immer auch als deutscher oder englischer Pokémon-Name verstanden; die Karten dieses Pokémon kommen zu den direkten Treffern dazu.
 - **Bleibt, weil TCGdex es nicht hergibt:** Trainer- und Energiekarten haben keine Pokédex-Nummer und lassen sich nur unter ihrem japanischen Namen finden („Professor Eich“ findet nichts). Einige japanische Karten haben bei TCGdex keine Pokédex-Nummer (für Glurak 45 von 50) und fehlen deshalb. Von vielen japanischen Karten hat TCGdex kein Bild (rund 3.900 von 13.000 haben eines).
 - **Offen:** Henriks Bestätigung, und ob er einen anderen Fall meinte.
+
+### B-005 – „Enton“ findet bei englischen Karten kein Psyduck
+
+- **Gemeldet:** Suche nach „Enton“, Sprache der Karten Englisch: keine Psyduck-Karten, „weil es eine Karte auf Englisch gibt, die enton mit im Namen hat“.
+- **Nachgestellt (13.10.2026, TCGdex):** Die englische Suche nach „Enton“ findet genau eine Karte, „Professor Laventon“. Weil der Name damit etwas fand, wurde nicht mehr nachgesehen, ob er in einer anderen Sprache ein Pokémon ist. Über die Pokédex-Nummer gibt es 43 englische Psyduck-Karten. Derselbe Fehler wie B-003, dort nur für Japanisch behoben.
+- **Behoben:** Findet ein Name in der eingestellten Sprache etwas, wird zusätzlich gefragt, ob er in einer anderen Sprache **genau** der Name eines Pokémon ist. Dann kommen dessen Karten zuerst, die Zufallstreffer dahinter. Ein Namensteil („Ento“) gilt nicht als Name, damit beim Tippen keine fremden Pokémon dazwischengeraten.
+- **Nebenwirkung:** Je Suchbegriff eine zusätzliche Anfrage je anderer Sprache an TCGdex; die Antwort wird wie alle einen Tag aufbewahrt.
+- **Offen:** Henriks Bestätigung.

@@ -121,13 +121,19 @@ export const MAX_FOREIGN_POKEMON = 6
 /** Asks which Pokémon carry a name: the Pokédex numbers of the cards the name is found on. */
 export function dexIdsQuery(name: string, lang: CardLang): string {
   return `{
-  cards(filters: { name: ${JSON.stringify(name)} }, pagination: { page: 1, itemsPerPage: 100 }) @locale(lang: "${lang}") { dexId }
+  cards(filters: { name: ${JSON.stringify(name)} }, pagination: { page: 1, itemsPerPage: 100 }) @locale(lang: "${lang}") { name dexId }
 }`
 }
 
-/** The Pokédex numbers on the cards found, the most frequent first; cards showing several Pokémon are left out. */
-export function dexIdsOf(data: unknown): number[] {
-  const cards = (data as { cards?: { dexId?: number[] | null }[] | null } | null)?.cards ?? []
+/**
+ * The Pokédex numbers on the cards found, the most frequent first; cards showing several
+ * Pokémon are left out. With `named`, only cards called exactly that count (whatever the
+ * case): "Enton" is a Pokémon's name, while "enton" is merely part of "Professor Laventon".
+ */
+export function dexIdsOf(data: unknown, named?: string): number[] {
+  const all = (data as { cards?: { name?: string | null; dexId?: number[] | null }[] | null } | null)?.cards ?? []
+  const wanted = named?.trim().toLowerCase()
+  const cards = wanted === undefined ? all : all.filter((card) => card.name?.trim().toLowerCase() === wanted)
   const counts = new Map<number, number>()
   for (const card of cards) {
     const [only, ...others] = card.dexId ?? []
@@ -378,14 +384,14 @@ export function createTcgdexClient({
       return raw ? toCard(raw) : undefined
     },
 
-    async dexIdsOfName(name) {
+    async dexIdsOfName(name, exactly = false) {
       const wanted = name.trim()
       if (wanted === '') return []
       // kept like any other answer, so that typing on does not ask again
-      const data = await cache.fetch(`${lang}/graphql/dexIds?name=${wanted.toLowerCase()}`, () =>
+      const data = await cache.fetch(`${lang}/graphql/dexIds/v2?name=${wanted.toLowerCase()}`, () =>
         graphql(dexIdsQuery(wanted, lang)),
       )
-      return dexIdsOf(data)
+      return exactly ? dexIdsOf(data, wanted) : dexIdsOf(data)
     },
 
     async queryCards(query: CardQuery, page: number): Promise<CardPage> {

@@ -90,11 +90,13 @@ async function searchByForeignName(
   query: CardQuery,
   page: number,
   others: readonly Pick<TcgdexClient, 'dexIdsOfName'>[],
+  /** Only where the name is a Pokémon's whole name in the other language, not a part of one. */
+  exactly = false,
 ): Promise<CardPage> {
   const { name, ...rest } = query
   if (!name) return NOTHING
   for (const other of others) {
-    const dexIds = await other.dexIdsOfName(name).catch(() => [])
+    const dexIds = await (exactly ? other.dexIdsOfName(name, true) : other.dexIdsOfName(name)).catch(() => [])
     if (dexIds.length === 0) continue
     const pages = await Promise.all(dexIds.map((dexId) => client.queryCards({ ...rest, dexId }, page)))
     const seen = new Set<string>()
@@ -102,6 +104,15 @@ async function searchByForeignName(
     if (cards.length > 0 || page > 1) return { cards, hasMore: pages.some((found) => found.hasMore) }
   }
   return NOTHING
+}
+
+/** The cards of the Pokémon meant, then what the name found as it is; each card once. */
+function together(meant: CardPage, found: CardPage): CardPage {
+  const seen = new Set(meant.cards.map((card) => card.id))
+  return {
+    cards: [...meant.cards, ...found.cards.filter((card) => !seen.has(card.id))],
+    hasMore: meant.hasMore || found.hasMore,
+  }
 }
 
 /** Languages whose cards are not named in Latin letters. */
@@ -133,14 +144,15 @@ export async function runSearch(
       // happens to find as it is: a few old Japanese cards are listed under English names
       // ("Eevee" finds five), which must not hide the cards of that Pokémon.
       if (client.lang && OWN_SCRIPT.includes(client.lang) && isLatin(plan.query.name)) {
-        const meant = await searchByForeignName(client, plan.query, page, others)
-        const seen = new Set(found.cards.map((card) => card.id))
-        return {
-          cards: [...found.cards, ...meant.cards.filter((card) => !seen.has(card.id))],
-          hasMore: found.hasMore || meant.hasMore,
-        }
+        return together(await searchByForeignName(client, plan.query, page, others), found)
       }
-      if (found.cards.length > 0) return found
+      if (found.cards.length > 0) {
+        // What a name finds as it is may be a chance hit: "Enton" among English cards finds
+        // "Professor Laventon". Where the name is exactly what a Pokémon is called in
+        // another language, that Pokémon is meant, and its cards come first.
+        const meant = await searchByForeignName(client, plan.query, page, others, true)
+        return meant.cards.length > 0 ? together(meant, found) : found
+      }
       // Only a name that finds nothing at all is taken for another language's: a later
       // page that happens to be empty is just the end of the list.
       const first = page === 1 ? found : await client.queryCards(plan.query, 1)

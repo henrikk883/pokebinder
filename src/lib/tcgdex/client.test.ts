@@ -153,6 +153,12 @@ describe('which Pokémon a name stands for', () => {
     const cards = Array.from({ length: 30 }, (_, i) => ({ dexId: [i % 10] }))
 
     expect(dexIdsOf({ cards: [...cards, { dexId: [7] }] })).toEqual([7, 0, 1, 2, 3, 4].slice(0, MAX_FOREIGN_POKEMON))
+    // only the cards called exactly so: a name that is merely part of another is no Pokémon's name
+    const named = { cards: [{ name: 'Enton', dexId: [54] }, { name: 'enton ', dexId: [54] }, { name: 'Mistys Enton', dexId: [54] }, { name: 'Entoron', dexId: [55] }] }
+    expect(dexIdsOf(named)).toEqual([54, 55])
+    expect(dexIdsOf(named, 'ENTON')).toEqual([54])
+    expect(dexIdsOf(named, 'Ento')).toEqual([])
+    expect(dexIdsOf({ cards: [{ dexId: [54] }] }, 'Enton')).toEqual([])
     expect(dexIdsOf({ cards: null })).toEqual([])
     expect(dexIdsOf(undefined)).toEqual([])
   })
