@@ -12,7 +12,7 @@ import { LanguageSelect } from './LanguageSelect'
 import { SearchResults } from './SearchResults'
 import { SetPicker } from './SetPicker'
 import { TapHint } from './TapHint'
-import { useCardSearchForm } from './useCardSearchForm'
+import { useCardSearchForm, useCarriedSearch, type SearchCarrier } from './useCardSearchForm'
 import { savedCardCount } from './watchlist'
 import { useWishAlarms } from './wishPrice'
 import { WatchlistPanel } from './WatchlistPanel'
@@ -21,10 +21,11 @@ const tabClass = 'shrink-0 border-b-2 px-2 pb-2 text-sm font-medium whitespace-n
 
 /**
  * Search in the cards of one language. Names, sets, rarities and types all differ between
- * languages, so the search starts afresh when the language changes (see the `key` below).
+ * languages, so the search starts afresh when the language changes (see the `key` below),
+ * with what was typed and chosen before carried over.
  */
-function CardSearch({ lang }: { lang: CardLang }) {
-  const form = useCardSearchForm(lang)
+function CardSearch({ lang, carried }: { lang: CardLang; carried: SearchCarrier }) {
+  const form = useCardSearchForm(lang, carried)
   const setSearchLang = useEditorStore((state) => state.setSearchLang)
 
   // cards are dragged into a binder while arranging it, not while ticking off the collection
@@ -104,6 +105,7 @@ type Tab = 'cards' | 'images' | 'saved' | 'fitting'
  */
 export function SearchPanel() {
   const [tab, setTab] = useState<Tab>('cards')
+  const carried = useCarriedSearch()
   const searchLang = useEditorStore((state) => state.searchLang)
   const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
   const alarms = useWishAlarms(useWatchlistStore((state) => state.lists))
@@ -144,7 +146,7 @@ export function SearchPanel() {
 
       {/* all stay mounted, so the search keeps its results while another tab is shown */}
       <div className={tab === 'cards' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
-        <CardSearch key={searchLang} lang={searchLang} />
+        <CardSearch key={searchLang} lang={searchLang} carried={carried} />
       </div>
       <div className={tab === 'images' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
         <ImageLibrary />

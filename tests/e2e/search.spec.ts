@@ -487,3 +487,27 @@ test('cards are found by who drew them, alone or together with a name and a kind
   await illustrator.fill('')
   await expect(page.locator('[data-card-id="sv03.5-006"]')).toBeVisible()
 })
+
+test('what was chosen in the search stays when the language of the cards is changed', async ({ page }) => {
+  await page.goto('/')
+  const column = page.getByTestId('column-left')
+  const tiles = column.getByTestId('search-results').getByTestId('card-tile')
+  await column.getByRole('button', { name: 'Set', exact: true }).click()
+  await page.getByRole('listbox', { name: 'Set' }).getByRole('option', { name: /^151/ }).click()
+  await expect(tiles).toHaveCount(207)
+  await expect(tiles.first()).toContainText('Bisasam')
+  await column.getByLabel('Illustrator').fill('x')
+
+  await column.getByRole('combobox', { name: 'Sprache der Karten' }).selectOption('Englisch')
+
+  // the same set, now with its English cards; what was typed is still there
+  await expect(tiles.first()).toContainText('Bulbasaur')
+  await expect(tiles).toHaveCount(207)
+  await expect(column.getByRole('button', { name: 'Set', exact: true })).toContainText('151')
+  await expect(column.getByLabel('Illustrator')).toHaveValue('x')
+
+  // and back again
+  await column.getByRole('combobox', { name: 'Sprache der Karten' }).selectOption('Deutsch')
+  await expect(tiles.first()).toContainText('Bisasam')
+  await expect(column.getByLabel('Illustrator')).toHaveValue('x')
+})

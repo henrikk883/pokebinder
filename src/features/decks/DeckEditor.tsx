@@ -13,6 +13,7 @@ import { uploadErrorText, uploadImages } from '../images/uploadActions'
 import { WideSearch } from '../search/CardBrowser'
 import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
+import { useCarriedSearch } from '../search/useCardSearchForm'
 import { copiesAtHand, deckCoverage, deckWorth, ownedCopies, type OwnedCopies } from './deckCollection'
 import {
   addCard,
@@ -138,6 +139,7 @@ export function DeckEditor({ deck }: { deck: Deck }) {
   // narrows the cards shown under "Deck" to those with this in their name or number
   const [filter, setFilter] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
+  const carried = useCarriedSearch()
   const infoOf = useDeckInfo(deck.cards)
   const owned = useOwnedCopies()
   const check = checkDeck(deck, infoOf)
@@ -310,6 +312,7 @@ export function DeckEditor({ deck }: { deck: Deck }) {
         <WideSearch
           key={searchLang}
           lang={searchLang}
+          carried={carried}
           dragIdPrefix="deck"
           onPick={(card, lang) => change((current) => addCard(current, card.id, lang, 1))}
           countOf={(cardId, lang) => countInDeck(deck, cardId, lang)}

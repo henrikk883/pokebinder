@@ -14,6 +14,7 @@ export {
   sortByNumber,
 } from './cardIds'
 export { baseVariant } from './variants'
+export { filterNameIn } from './filterNames'
 export { mapWithConcurrency } from './prices'
 export {
   cardImageAt,

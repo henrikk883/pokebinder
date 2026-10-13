@@ -641,3 +641,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Gezählt wird wie überall: ein abgehaktes Pocket mit seiner Anzahl. Pockets, in denen die Karte liegt, aber noch fehlt, erscheinen als „fehlt“.
 - Die Karte zählt in jeder Sprache und Variante. Jede Binder-Zeile trägt die Flagge der Sprache (Henrik, 13.10.2026: manche Karten hat er mehrfach in verschiedenen Sprachen); gibt es die Karte in mehr als einer Sprache, steht neben der Gesamtzahl die Anzahl je Sprache. Decks zählen nicht mit: Sie sind eine Liste zum Spielen, kein Bestand.
 - Gelesen werden die Binder dieses Geräts.
+
+## 2026-10-13 – Die Suche behält ihre Eingaben beim Sprachwechsel
+- Von Henrik gewünscht: Wechselt man in einer Suche die Sprache der Karten, bleiben Suchbegriff, Set und Filter stehen. Bisher begann die Suche leer, weil Sets, Typen und Seltenheiten in jeder Sprache anders heißen.
+- Suchtext, Set und Illustrator werden unverändert übernommen. Typ, Kartenart und Seltenheit werden in den Namen der neuen Sprache übersetzt (feste Tabelle Deutsch ↔ Englisch in `src/lib/tcgdex/filterNames.ts`; Japanisch nutzt bei TCGdex die englischen Namen).
+- Was es in der neuen Sprache nicht gibt, fällt weg: ein Set, das dort nie erschienen ist (japanische Sets haben eigene Kennungen), oder eine Seltenheit, die die Sprache nicht kennt.
+- Gilt für alle drei Suchen: neben dem Binder, „Karten stöbern“ und im Deck.

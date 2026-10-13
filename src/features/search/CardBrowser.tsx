@@ -9,7 +9,7 @@ import { IllustratorInput } from './IllustratorInput'
 import { LanguageSelect } from './LanguageSelect'
 import { SearchResults } from './SearchResults'
 import { SetPicker } from './SetPicker'
-import { useCardSearchForm } from './useCardSearchForm'
+import { useCardSearchForm, useCarriedSearch, type SearchCarrier } from './useCardSearchForm'
 import { savedCardCount } from './watchlist'
 import { WatchlistPanel } from './WatchlistPanel'
 import { useWishAlarms } from './wishPrice'
@@ -25,6 +25,8 @@ const WIDE_GRID =
  */
 interface WideSearchProps {
   lang: CardLang
+  /** Where what was typed and chosen is kept, so that it survives a change of language. */
+  carried?: SearchCarrier
   /** Tells the tiles of this search from those of another that is mounted as well. */
   dragIdPrefix?: string
   /** For a deck: a click on a card picks it, and its picture says how often it was picked. */
@@ -32,8 +34,8 @@ interface WideSearchProps {
   countOf?: (cardId: string, lang: CardLang) => number
 }
 
-export function WideSearch({ lang, dragIdPrefix = 'browse', onPick, countOf }: WideSearchProps) {
-  const form = useCardSearchForm(lang)
+export function WideSearch({ lang, carried, dragIdPrefix = 'browse', onPick, countOf }: WideSearchProps) {
+  const form = useCardSearchForm(lang, carried)
   const setSearchLang = useEditorStore((state) => state.setSearchLang)
 
   return (
@@ -104,6 +106,7 @@ export function CardBrowser() {
   const [tab, setTab] = useState<Tab>('all')
   // the themes bring a file of their own along, which is only loaded once they are looked at
   const [themesOpened, setThemesOpened] = useState(false)
+  const carried = useCarriedSearch()
   const searchLang = useEditorStore((state) => state.searchLang)
   const savedCount = useWatchlistStore((state) => savedCardCount(state.lists))
   const alarms = useWishAlarms(useWatchlistStore((state) => state.lists))
@@ -142,7 +145,7 @@ export function CardBrowser() {
 
       {/* both stay mounted, so the search keeps its results while the list is shown */}
       <div className={tab === 'all' ? 'mt-5' : 'hidden'}>
-        <WideSearch key={searchLang} lang={searchLang} />
+        <WideSearch key={searchLang} lang={searchLang} carried={carried} />
       </div>
       <div className={tab === 'themes' ? 'mt-5' : 'hidden'}>
         {themesOpened && <ThemeBrowser lang={searchLang} gridClass={WIDE_GRID} />}
