@@ -1,5 +1,5 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import type { PointerEvent } from 'react'
+import { useState, type PointerEvent } from 'react'
 import { de } from '../../i18n/de'
 import { setIdOfCard } from '../../lib/tcgdex'
 import { binderStore, useBinderStore } from '../../store/binderStore'
@@ -15,6 +15,7 @@ import { CardImage } from '../search/CardImage'
 import { useReadyCatalog } from '../search/useCatalog'
 import { copiesOf, pocketsBetween } from './binderModel'
 import { pocketId, type DragSource, type DropTarget } from './dragDrop'
+import { PocketCardInfo } from './PocketCardInfo'
 import { useCard } from './useCard'
 
 const samePocket = (a: SlotPosition, b: SlotPosition) => a.pageId === b.pageId && a.slotIndex === b.slotIndex
@@ -182,10 +183,10 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
   const waiting = useEditorStore(
     (state) => state.moving?.pageId === pageId && state.moving.slotIndex === slot.index,
   )
-  const toTray = useBinderStore((state) => state.toTray)
   const setOwned = useBinderStore((state) => state.setOwned)
   const collecting = useEditorStore((state) => state.mode === 'collection')
   const card = useCard(slot.cardRef?.cardId, slot.cardRef?.lang ?? DEFAULT_LANG)
+  const [showingInfo, setShowingInfo] = useState(false)
 
   function handleClick(modifiers: { toggle: boolean; range: boolean } = { toggle: false, range: false }) {
     const editor = useEditorStore.getState()
@@ -274,8 +275,8 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
       }}
       onContextMenu={(event) => {
         event.preventDefault()
-        // out of the pocket, not out of the binder: the card is laid aside in the tray
-        if (slot.cardRef && !collecting) toTray([position])
+        // the card's info, in any mode: a right click once took the card out, mostly by mistake
+        if (slot.cardRef) setShowingInfo(true)
       }}
       data-over-image={overImage}
       data-moving={waiting || undefined}
@@ -314,6 +315,7 @@ export function Pocket({ pageId, pageNumber, slot, opening, imageAssetId }: Pock
           opening === 'left' ? 'left-0' : 'right-0'
         }`}
       />
+      {showingInfo && slot.cardRef && <PocketCardInfo cardRef={slot.cardRef} onClose={() => setShowingInfo(false)} />}
     </div>
   )
 }

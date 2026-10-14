@@ -696,3 +696,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Kopiert wird auf dem Gerät dessen, der den Link öffnet, ohne Anmeldung. Ist er angemeldet, gleicht sich die Kopie wie jeder Binder mit seinen Geräten ab.
 - Der Schalter „Darf in die eigene Sammlung kopiert werden“ steht im Teilen-Fenster und gehört zum Link; voreingestellt ist erlaubt, auch für Links von früher. Er nimmt nur den Knopf weg: Wer einen Binder ansehen darf, bekommt seine Daten ohnehin. So steht es auch im Hinweis am Schalter.
 - Server: Die Tabelle der Links bekommt eine Spalte dazu; eine bestehende Datenbank wird beim ersten Zugriff ergänzt. Neu ist `PUT /api/shares/:token { copyable }`, und `/shared/:token` nennt `copyable`.
+
+## 2026-10-15 – Rechtsklick öffnet die Karten-Info
+- Henrik: Die Karte per Rechtsklick abzulegen ist inzwischen unnötig und passiert nur aus Versehen. Ein Rechtsklick auf eine Karte im Binder öffnet jetzt ihre Karten-Info (Preise, Sammlung, „Ähnliche Karten“, Cardmarket), in jedem Modus. Damit ersetzt das die Regel vom 13.10.2026 („Rechtsklick legt die Karte in die Ablage“).
+- Ablegen geht über den Knopf an der Karte, „In die Ablage“ bei der Auswahl, Ziehen in die Ablage; ganz entfernen weiter mit Entf oder „Pocket leeren“.
+- Auf dem Handy gibt es keinen Rechtsklick: Rechts bei der gewählten Karte (unten „Auswahl“) steht der Knopf „Karten-Info“, der dasselbe öffnet. Er steht auch am PC dort.
+- Den einfachen Linksklick habe ich nicht umgewidmet: Er wählt das Pocket und schaltet in „Sammlung“ zwischen vorhanden und fehlt um.

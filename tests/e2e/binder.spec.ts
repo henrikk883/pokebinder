@@ -164,7 +164,7 @@ test('cards swap places on an occupied pocket and move across pages', async ({ p
   await expect(pocket(page, 2, 2)).toHaveAttribute('data-card-id', 'sv03.5-003')
 })
 
-test('a right click lays a card aside; the Delete key and the button empty the pocket', async ({ page }) => {
+test('a right click opens the info of a card; the Delete key and the button empty the pocket', async ({ page }) => {
   await createBinder(page, 'Leeren')
   await showSet151(page)
   for (const [cardId, position] of [['sv03.5-001', 1], ['sv03.5-002', 2], ['sv03.5-003', 3]] as const) {
@@ -172,10 +172,25 @@ test('a right click lays a card aside; the Delete key and the button empty the p
     await expect(pocket(page, 1, position)).toHaveAttribute('data-card-id', cardId)
   }
 
-  // out of the pocket, but not out of the binder: the card waits in the tray
+  // a right click shows the card's info and leaves the card where it is
   await pocket(page, 1, 1).click({ button: 'right' })
-  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', '')
+  const info = page.getByRole('dialog', { name: 'Bisasam' })
+  await expect(info.getByTestId('card-info-rarity')).toBeVisible()
+  await expect(info.getByRole('button', { name: 'Ähnliche Karten' })).toBeVisible()
+  await info.getByRole('button', { name: 'Schließen' }).click()
+  await expect(info).toBeHidden()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', 'sv03.5-001')
+  // the same from the selection, which is the way on a phone
+  await pocket(page, 1, 1).click()
+  await page.getByTestId('column-right').getByRole('button', { name: 'Karten-Info' }).click()
+  await expect(page.getByRole('dialog', { name: 'Bisasam' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Bisasam' })).toBeHidden()
   const tray = page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: /^Ablage/ })
+  // laying it aside is the button on the card now
+  await pocket(page, 1, 1).hover()
+  await pocket(page, 1, 1).getByRole('button', { name: 'In die Ablage legen', exact: true }).click()
+  await expect(pocket(page, 1, 1)).toHaveAttribute('data-card-id', '')
   await expect(tray).toHaveText('Ablage (1)')
 
   await pocket(page, 1, 2).click()

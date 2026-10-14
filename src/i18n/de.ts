@@ -863,6 +863,7 @@ export const de = {
   },
   selection: {
     title: 'Auswahl',
+    cardInfo: 'Karten-Info',
     duplicate: 'Karte duplizieren',
     duplicateHint: 'Legt dieselbe Karte noch einmal in den Binder: ins nächste freie Pocket dahinter',
     duplicated: (page: number, pocket: number) => `Die Kopie liegt auf Seite ${page}, Pocket ${pocket}.`,

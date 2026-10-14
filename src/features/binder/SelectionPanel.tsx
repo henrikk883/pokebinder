@@ -16,6 +16,7 @@ import {
   type SlotPosition,
 } from '../../types/binder'
 import { CardmarketLink } from '../export/CardmarketLink'
+import { PocketCardInfo } from './PocketCardInfo'
 import { CoverDialog } from '../images/CoverDialog'
 import { ImageControls } from '../images/ImageControls'
 import { CardImage } from '../search/CardImage'
@@ -43,6 +44,7 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
   const catalog = useReadyCatalog(lang)
   const set = card ? catalog?.setsById.get(setIdOfCard(card)) : undefined
   const position = { pageId: page.id, slotIndex: slot.index }
+  const [showingInfo, setShowingInfo] = useState(false)
   const setVariant = useBinderStore((state) => state.setVariant)
   const setCardLang = useBinderStore((state) => state.setCardLang)
   const setCount = useBinderStore((state) => state.setCount)
@@ -76,8 +78,19 @@ function SelectedCard({ page, slot }: { page: Page; slot: Slot }) {
               {set ? `${set.name} · ${card.localId}/${set.cardCount.official}` : card.localId}
             </p>
           )}
+          {card && (
+            // what a right click on the card opens; on a phone the way there
+            <button
+              type="button"
+              onClick={() => setShowingInfo(true)}
+              className="mt-2 h-9 rounded-control border border-line bg-raised px-3 text-sm hover:border-accent"
+            >
+              {de.selection.cardInfo}
+            </button>
+          )}
         </div>
       </div>
+      {showingInfo && slot.cardRef && <PocketCardInfo cardRef={slot.cardRef} onClose={() => setShowingInfo(false)} />}
 
       <div className="space-y-1 text-sm">
         <p className="text-muted">{de.selection.language}</p>

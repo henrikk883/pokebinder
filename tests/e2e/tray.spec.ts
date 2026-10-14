@@ -421,7 +421,9 @@ test('beside a binder, a card found shows whether it lies in the binder already'
   await expect(mark('sv03.5-001')).toHaveAttribute('title', 'Liegt schon im Binder (2×)')
 
   // laid aside, a card is still in the binder; taken out, it is not
-  await pocket(page, 2).click({ button: 'right' })
+  await pocket(page, 2).hover()
+  await pocket(page, 2).getByRole('button', { name: 'In die Ablage legen', exact: true }).click()
+  await expect(modes(page).getByRole('button', { name: 'Ablage (1)' })).toBeVisible()
   await expect(mark('sv03.5-004')).toBeVisible()
   await pocket(page, 3).click()
   await page.keyboard.press('Delete')
