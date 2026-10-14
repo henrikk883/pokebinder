@@ -702,3 +702,9 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Ablegen geht über den Knopf an der Karte, „In die Ablage“ bei der Auswahl, Ziehen in die Ablage; ganz entfernen weiter mit Entf oder „Pocket leeren“.
 - Auf dem Handy gibt es keinen Rechtsklick: Rechts bei der gewählten Karte (unten „Auswahl“) steht der Knopf „Karten-Info“, der dasselbe öffnet. Er steht auch am PC dort.
 - Den einfachen Linksklick habe ich nicht umgewidmet: Er wählt das Pocket und schaltet in „Sammlung“ zwischen vorhanden und fehlt um.
+
+## 2026-10-15 – Spielen: eigene App (Empfehlung, nicht entschieden)
+- Henriks Frage: gegen Freunde spielen in dieser App oder in einer zweiten App mit demselben Konto? Meine Empfehlung: eine zweite App im selben Repo und unter derselben Adresse (z. B. `/play`), mit derselben Anmeldung (Cloudflare Access), demselben Server-Teil (Decks lesen) und denselben Bausteinen (TCGdex-Zugriff, Typen). Für den Sammler fühlt es sich wie ein Konto an; der Deck Builder bleibt hier und bekommt „Spielen“.
+- Gründe: Ein Spielbrett ist eine andere Oberfläche (Vollbild, quer, Echtzeit) und eine andere Last (Verbindungen, die offen bleiben); die Binder-App bleibt schlank und stabil; beide lassen sich getrennt ausliefern – und, falls nötig, getrennt anbieten oder verkaufen.
+- Der eigentliche Aufwand ist nicht die Frage „eine oder zwei Apps“, sondern die Regeln: die Effekte von Tausenden Karten automatisch auszuführen ist ein Großprojekt. Realistischer Anfang: ein „Spieltisch“ ohne Regelautomatik (Mischen, Ziehen, Preiskarten, Schadensmarken, beide sehen dasselbe Brett; die Spieler halten die Regeln selbst ein).
+- Vorsicht für den Fall eines Verkaufs: Ein Spiel mit den Karten und Bildern ist rechtlich heikler als ein Binder-Planer.
