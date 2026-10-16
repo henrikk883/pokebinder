@@ -26,7 +26,6 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 
 | Nr. | Gemeldet | Von | Fehler | Stand |
 |---|---|---|---|---|
-| B-003 | 13.10.2026 | Henrik | Japanische Karten lassen sich mit deutschem oder englischem Namen nicht (immer) finden | wieder offen (16.10.2026): Henrik meldet, es sei nach der Korrektur vom 13.10. noch fehlerhaft; was genau, ist noch nicht beschrieben |
 | B-004 | 13.10.2026 | Henrik | Der Import einer Cardmarket-Wunschliste geht mit echten, größeren Listen aus mehreren Sets nicht | offen – es fehlt eine Liste, mit der es schiefgeht, und was dabei passiert (Fehlermeldung, nichts erkannt, falsche Karten) |
 
 ## Behobene Fehler
@@ -34,6 +33,7 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 | Nr. | Gemeldet | Von | Fehler | Behoben mit | Stand |
 |---|---|---|---|---|---|
 | B-001 | 12.10.2026 | Henrik | Binder-Seiten laden langsam, „man sieht anfangs nur den Namen“ – in Sets, von denen TCGdex keine Bilder hat (gemeldet als „graue Karten laden langsam“) | `1ae913b`, Einzelheiten unten | bestätigt |
+| B-003 | 13.10.2026 | Henrik | Japanische Karten lassen sich mit deutschem oder englischem Namen nicht (immer) finden | 589b17c, Einzelheiten unten | bestätigt (16.10.2026): Die Suche funktioniert; was fehlt, sind Karten, die TCGdex nicht hat – weiter als Punkt 40 in REQUIREMENTS.md |
 | B-006 | 13.10.2026 | Henrik | Im Fenster „Cover bearbeiten“ lassen sich schon hochgeladene Bilder nicht wählen; ein hochgeladenes Bild ließ sich „nicht mehr löschen“ | siehe unten | bestätigt (16.10.2026) |
 | B-005 | 13.10.2026 | Henrik | „Enton“ bei englischen Karten findet keine Psyduck-Karten | siehe unten | bestätigt (16.10.2026) |
 | B-002 | 12.10.2026 | Henrik | Die Suche fand ein Pokémon nur unter dem Namen in der eingestellten Kartensprache („psyduck“ fand bei Deutsch nichts) | `fba67f8`, Einzelheiten unten | bestätigt |
@@ -68,7 +68,7 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 - **Nachgestellt (13.10.2026, Live-Seite, Sprache Japanisch):** „Glurak“, „Charizard“, „Pikachu“, „Evoli“, „Mewtu“ finden die japanischen Karten (40–60 Stück). **„Eevee“ fand nur 5 Karten:** TCGdex führt ein paar alte japanische Karten unter englischem Namen. Weil der Name damit „etwas fand“, wurde nicht mehr nachgesehen, welches Pokémon gemeint ist.
 - **Behoben:** Bei Sprachen mit eigener Schrift (Japanisch, Koreanisch) wird ein Name in lateinischen Buchstaben immer auch als deutscher oder englischer Pokémon-Name verstanden; die Karten dieses Pokémon kommen zu den direkten Treffern dazu.
 - **Bleibt, weil TCGdex es nicht hergibt:** Trainer- und Energiekarten haben keine Pokédex-Nummer und lassen sich nur unter ihrem japanischen Namen finden („Professor Eich“ findet nichts). Einige japanische Karten haben bei TCGdex keine Pokédex-Nummer (für Glurak 45 von 50) und fehlen deshalb. Von vielen japanischen Karten hat TCGdex kein Bild (rund 3.900 von 13.000 haben eines).
-- **Offen:** Henrik meldet am 16.10.2026, dass es noch nicht stimmt. Es fehlen Beispiele: welcher Name, welche Karten erwartet, was stattdessen kam.
+- **Geklärt (16.10.2026):** Henrik: „Die Karten sind nicht hinterlegt, tendenziell funktioniert es.“ Die Suche arbeitet richtig; es fehlen Karten und Bilder in den Daten von TCGdex. Das ist kein Fehler der App, sondern Punkt 40 (zweite Datenquelle).
 
 ### B-005 – „Enton“ findet bei englischen Karten kein Psyduck
 
