@@ -95,7 +95,8 @@ test('on a phone the binder lies open one page at a time, as wide as the screen'
   await expect(page.getByTestId('mini-page')).toHaveCount(3)
   await page.getByRole('button', { name: 'Seite 3', exact: true }).tap()
   await expect(label).toHaveText('Seite 3')
-  await expect(page.getByRole('button', { name: 'Weiterblättern' })).toBeDisabled()
+  // the last page: the arrow would make the next one
+  await expect(page.getByRole('button', { name: 'Weiterblättern' })).toHaveAttribute('data-makes-page', 'true')
 
   // the zoom is the app's business here
   await expect(page.getByRole('group', { name: 'Zoom' })).toBeHidden()

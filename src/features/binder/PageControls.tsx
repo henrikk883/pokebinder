@@ -1,9 +1,11 @@
 import { de } from '../../i18n/de'
+import { isPhone } from '../../lib/phone'
+import { useBinderStore } from '../../store/binderStore'
 import { useEditorStore } from '../../store/editorStore'
 import type { Binder } from '../../types/binder'
 import { BinderFind } from './BinderFind'
 import { trayOf } from './binderModel'
-import { MAX_ZOOM, MIN_ZOOM, pageNumbersOf, ZOOM_STEP, type Spread } from './spreads'
+import { MAX_ZOOM, MIN_ZOOM, pageNumbersOf, spreadOfPage, ZOOM_STEP, type Spread } from './spreads'
 
 const squareClass =
   'flex size-10 items-center justify-center rounded-control border border-line bg-raised hover:border-accent disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-line'
@@ -39,6 +41,10 @@ export function PageControls({ binder, spread, spreadCount }: PageControlsProps)
   const openTray = useEditorStore((state) => state.openTray)
   const laidAside = trayOf(binder).length
   const multiMode = useEditorStore((state) => state.multiMode)
+  const addPage = useBinderStore((state) => state.addPage)
+  // past the last page while arranging, the arrow makes the next one
+  const atEnd = spread.index >= spreadCount - 1
+  const makesPage = atEnd && mode === 'edit'
   const setMultiMode = useEditorStore((state) => state.setMultiMode)
 
   return (
@@ -101,8 +107,19 @@ export function PageControls({ binder, spread, spreadCount }: PageControlsProps)
         <button
           type="button"
           aria-label={de.binder.next}
-          disabled={spread.index >= spreadCount - 1}
-          onClick={() => showSpread(spread.index + 1)}
+          title={makesPage ? de.binder.nextMakesPage : undefined}
+          data-makes-page={makesPage || undefined}
+          disabled={atEnd && !makesPage}
+          onClick={() => {
+            if (!makesPage) {
+              showSpread(spread.index + 1)
+              return
+            }
+            // the new page comes after the last one; the binder opens where it lies
+            const newPage = binder.pages.length
+            addPage()
+            showSpread(spreadOfPage(newPage, isPhone()))
+          }}
           className={squareClass}
         >
           <Chevron direction="right" />

@@ -252,6 +252,36 @@ test('a card marked as missing turns black and white, also after a reload', asyn
   await expect(pocket(page, 1, 1)).toHaveAttribute('data-owned', 'true')
 })
 
+test('turning on past the last page makes a new one, while arranging only', async ({ page }) => {
+  await createBinder(page, 'Weiter')
+  const label = page.getByTestId('spread-label')
+  const next = page.getByRole('button', { name: 'Weiterblättern' })
+  await expect(label).toHaveText('Seite 1')
+  await expect(page.getByTestId('mini-page')).toHaveCount(1)
+
+  // page 2 does not exist yet: the arrow makes it and turns to it
+  await next.click()
+  await expect(page.getByTestId('mini-page')).toHaveCount(2)
+  await expect(label).toHaveText('Seite 2')
+  await expect(page.getByRole('region', { name: 'Seite 2', exact: true })).toBeVisible()
+  // the right side of that spread is next: it is made the same way
+  await next.click()
+  await expect(page.getByTestId('mini-page')).toHaveCount(3)
+  await expect(label).toHaveText('Seiten 2 – 3')
+  await next.click()
+  await expect(page.getByTestId('mini-page')).toHaveCount(4)
+  await expect(label).toHaveText('Seite 4')
+
+  // it can be taken back like any other change
+  await page.keyboard.press('Control+z')
+  await expect(page.getByTestId('mini-page')).toHaveCount(3)
+
+  // while cards are ticked off, the binder is not changed: the arrow stops at the end
+  await page.getByRole('group', { name: 'Modus' }).getByRole('button', { name: 'Sammlung' }).click()
+  await page.getByRole('button', { name: 'Seiten 2 – 3' }).click()
+  await expect(next).toBeDisabled()
+})
+
 test('pages turn with buttons, arrow keys and thumbnails', async ({ page }) => {
   await createBinder(page, 'Blättern')
   for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Seite hinzufügen' }).click()
@@ -259,7 +289,8 @@ test('pages turn with buttons, arrow keys and thumbnails', async ({ page }) => {
 
   // a new page opens the binder where that page is
   await expect(label).toHaveText('Seiten 4 – 5')
-  await expect(page.getByRole('button', { name: 'Weiterblättern' })).toBeDisabled()
+  // at the end the arrow makes a new page (see the test of its own below)
+  await expect(page.getByRole('button', { name: 'Weiterblättern' })).toHaveAttribute('data-makes-page', 'true')
 
   await page.getByRole('button', { name: 'Zurückblättern' }).click()
   await expect(label).toHaveText('Seiten 2 – 3')

@@ -26,6 +26,7 @@ Damit sich ein Fehler nachstellen lässt, hilft bei jeder Meldung:
 
 | Nr. | Gemeldet | Von | Fehler | Stand |
 |---|---|---|---|---|
+| B-007 | 12.11.2026 | Henrik | Einige Karten, die es gibt, lassen sich in der Suche nicht finden | offen – es fehlen Beispiele: welche Karte (Name, Set, Nummer), in welcher Sprache gesucht, was eingegeben |
 | B-004 | 13.10.2026 | Henrik | Der Import einer Cardmarket-Wunschliste geht mit echten, größeren Listen aus mehreren Sets nicht | offen – es fehlt eine Liste, mit der es schiefgeht, und was dabei passiert (Fehlermeldung, nichts erkannt, falsche Karten) |
 
 ## Behobene Fehler

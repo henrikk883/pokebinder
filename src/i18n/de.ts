@@ -532,6 +532,7 @@ export const de = {
     collectionHint: 'Ein Klick auf eine Karte schaltet zwischen „vorhanden“ und „fehlt“ um.',
     previous: 'Zurückblättern',
     next: 'Weiterblättern',
+    nextMakesPage: 'Weiterblättern: Hier endet der Binder, eine neue Seite wird angelegt',
     spreadLabel: (pages: number[]) =>
       pages.length === 0 ? 'Cover' : pages.length === 1 ? `Seite ${pages[0]}` : `Seiten ${pages.join(' – ')}`,
     thumbnailLabel: (pages: number[]) => (pages.length === 0 ? 'Cover' : pages.join(' – ')),

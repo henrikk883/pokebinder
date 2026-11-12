@@ -708,3 +708,10 @@ Für eine gewählte Karte gibt es „Verschieben“ (rechte Spalte, auf dem Hand
 - Gründe: Ein Spielbrett ist eine andere Oberfläche (Vollbild, quer, Echtzeit) und eine andere Last (Verbindungen, die offen bleiben); die Binder-App bleibt schlank und stabil; beide lassen sich getrennt ausliefern – und, falls nötig, getrennt anbieten oder verkaufen.
 - Der eigentliche Aufwand ist nicht die Frage „eine oder zwei Apps“, sondern die Regeln: die Effekte von Tausenden Karten automatisch auszuführen ist ein Großprojekt. Realistischer Anfang: ein „Spieltisch“ ohne Regelautomatik (Mischen, Ziehen, Preiskarten, Schadensmarken, beide sehen dasselbe Brett; die Spieler halten die Regeln selbst ein).
 - Vorsicht für den Fall eines Verkaufs: Ein Spiel mit den Karten und Bildern ist rechtlich heikler als ein Binder-Planer.
+
+## 2026-11-12 – Weiterblättern am Ende legt eine Seite an
+- Von Henrik gewünscht: Wer auf der letzten Seite weiterblättert, bekommt eine neue Seite statt eines gesperrten Pfeils. Das gilt nur beim Bearbeiten; im Modus „Sammlung“ ändert der Pfeil den Binder nicht und bleibt am Ende gesperrt.
+- Angelegt wird jeweils genau eine Seite, und der Binder blättert zu ihr. Liegt die letzte Seite links, entsteht die neue rechts daneben. Rückgängig nimmt sie wieder weg. Der Hinweis am Pfeil sagt, dass eine Seite angelegt wird.
+
+## 2026-11-12 – Unit-Tests laufen in der Betriebsart „vmThreads“
+- Auf Henriks Rechner läuft inzwischen Node 26. Damit fanden die Unit-Tests in den üblichen Betriebsarten des Test-Runners (Vitest 5.0.3) ihre Testgruppe nicht mehr und fielen alle mit „no tests“ aus. In der Betriebsart `vmThreads` laufen alle 785 Tests. Sie steht jetzt in `vite.config.ts`; keine neue oder geänderte Abhängigkeit. Die früheren seltenen Ausfälle derselben Art dürften dieselbe Ursache gehabt haben.
